@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "bitset": "cpp",
+        "memory": "cpp",
+        "random": "cpp",
+        "optional": "cpp",
+        "mutex": "cpp"
+    }
+}
