@@ -1,12 +1,10 @@
-#include "Singleton.hpp"
+#include "manage.hpp"
 #include <iostream>
 
-int main() {
-    // 获取单例实例
+int main(int argc, char** argv) {
     Singleton& instance = Singleton::getInstance();
     instance.printMessage();
 
-    // 再次获取验证单例
     Singleton& sameInstance = Singleton::getInstance();
     sameInstance.printMessage();
 
