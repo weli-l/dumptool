@@ -4,9 +4,7 @@
 int main() {
     TraceManage& s1 = TraceManage::getInstance();
     s1.log("First access");
-
-    TraceManage& s2 = TraceManage::getInstance();
-    s2.log("Second access");
+    s1.Start();
 
     return 0;
 }
