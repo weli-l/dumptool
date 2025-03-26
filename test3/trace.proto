@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+message StackFrame {
+  string id = 1;
+  string name = 2;
+  string category = 3;
+  string parent = 4;  // proto3中parent是optional类型，不需要显式声明
+}
+
+message Arguments {
+  int32 count = 1;
+  string thread_name = 2;
+  repeated string futex_top = 3;
+  string event_type = 4;
+}
+
+message Event {
+  string name = 1;
+  string cat = 2;
+  uint32 pid = 3;
+  uint32 tid = 4;
+  uint64 ts = 5;
+  uint64 dur = 6;
+  string track = 7;
+  
+  Arguments args = 8;
+  repeated StackFrame stack_frames = 9;
+}
+
+message TraceData {
+  repeated Event trace_events = 1;
+  map<string, StackFrame> stack_frames = 2;
+  repeated string samples = 3;
+}
