@@ -1,0 +1,217 @@
+{
+  "stages": [
+    {
+      "stageId": 1,
+      "stageType": "STAGE_FORWARD",
+      "rank": 1,
+      "stepId": 38,
+      "comm": "kuYWkGXH",
+      "startUs": "556069",
+      "endUs": "1122063",
+      "stackFrames": [
+        {
+          "address": "8939172533651007822",
+          "soName": "libOymUR.so"
+        },
+        {
+          "address": "9665719152969363711",
+          "soName": "libudWNI.so"
+        },
+        {
+          "address": "17740270172851263032",
+          "soName": "libxQJOJ.so"
+        },
+        {
+          "address": "17615103133676349995",
+          "soName": "libNmRjI.so"
+        }
+      ]
+    },
+    {
+      "stageId": 2,
+      "stageType": "STAGE_BACKWARD",
+      "rank": 2,
+      "stepId": 2,
+      "comm": "grgElOck",
+      "startUs": "715310",
+      "endUs": "1852669",
+      "stackFrames": [
+        {
+          "address": "10989851765383020437",
+          "soName": "libsKMjJ.so"
+        },
+        {
+          "address": "6549065099850931362",
+          "soName": "libBOivA.so"
+        },
+        {
+          "address": "11320309818376466613",
+          "soName": "libjtmBD.so"
+        }
+      ]
+    },
+    {
+      "stageId": 3,
+      "rank": 3,
+      "stepId": 49,
+      "comm": "IpbsvUgI",
+      "startUs": "172472",
+      "endUs": "1172741",
+      "stackFrames": [
+        {
+          "address": "5709849022669555319",
+          "soName": "libByktg.so"
+        },
+        {
+          "address": "11981990492418305466",
+          "soName": "librBKdC.so"
+        },
+        {
+          "address": "2624910066059786507",
+          "soName": "libvwYDh.so"
+        },
+        {
+          "address": "9530686929026245837",
+          "soName": "libOCTyq.so"
+        },
+        {
+          "address": "553482175308538537",
+          "soName": "libTpepG.so"
+        }
+      ]
+    },
+    {
+      "stageId": 4,
+      "rank": 2,
+      "stepId": 43,
+      "comm": "NLVUthgD",
+      "startUs": "567117",
+      "endUs": "1585379",
+      "stackFrames": [
+        {
+          "address": "9179344055315772131",
+          "soName": "libQPPlq.so"
+        },
+        {
+          "address": "604540017165779789",
+          "soName": "libEegmA.so"
+        }
+      ]
+    },
+    {
+      "stageId": 5,
+      "rank": 1,
+      "stepId": 74,
+      "comm": "puayGrzx",
+      "startUs": "175364",
+      "endUs": "1358051",
+      "stackFrames": [
+        {
+          "address": "2623596778378030625",
+          "soName": "libmwALT.so"
+        },
+        {
+          "address": "2186840201317415356",
+          "soName": "libXvKyn.so"
+        }
+      ]
+    },
+    {
+      "stageId": 6,
+      "stageType": "STAGE_FORWARD",
+      "rank": 1,
+      "stepId": 40,
+      "comm": "fNUtDXEG",
+      "startUs": "819583",
+      "endUs": "1035177",
+      "stackFrames": [
+        {
+          "address": "3881769482559698140",
+          "soName": "libqoSeD.so"
+        }
+      ]
+    },
+    {
+      "stageId": 7,
+      "stageType": "STAGE_BACKWARD",
+      "stepId": 96,
+      "comm": "uzJZtAoE",
+      "startUs": "176196",
+      "endUs": "1317823",
+      "stackFrames": [
+        {
+          "address": "8603007161276107561",
+          "soName": "libtGtBD.so"
+        }
+      ]
+    },
+    {
+      "stageId": 8,
+      "stageType": "STAGE_BACKWARD",
+      "rank": 2,
+      "stepId": 32,
+      "comm": "INbErlld",
+      "startUs": "932399",
+      "endUs": "1416199",
+      "stackFrames": [
+        {
+          "address": "16483753609361132616",
+          "soName": "libGgacd.so"
+        },
+        {
+          "address": "2350571079839410182",
+          "soName": "libmvWWw.so"
+        },
+        {
+          "address": "767918057802807619",
+          "soName": "libnDbgt.so"
+        }
+      ]
+    },
+    {
+      "stageId": 9,
+      "stageType": "STAGE_BACKWARD",
+      "rank": 1,
+      "stepId": 41,
+      "comm": "sSPfPqeT",
+      "startUs": "398710",
+      "endUs": "1398189",
+      "stackFrames": [
+        {
+          "address": "17277766340428793939",
+          "soName": "libWDWAA.so"
+        },
+        {
+          "address": "7911765709394224147",
+          "soName": "libtYsRu.so"
+        }
+      ]
+    },
+    {
+      "stageId": 10,
+      "rank": 3,
+      "stepId": 66,
+      "comm": "jcGgpcFq",
+      "startUs": "119834",
+      "endUs": "1661934",
+      "stackFrames": [
+        {
+          "address": "85712556959815296",
+          "soName": "libGVDuJ.so"
+        },
+        {
+          "address": "11450197294091467205",
+          "soName": "libjvqJc.so"
+        },
+        {
+          "address": "6912787430971545405",
+          "soName": "libsTufs.so"
+        },
+        {
+          "address": "2279468419310312171",
+          "soName": "libXhpKi.so"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+# convert_to_chrome_json.py
+import json
+import timeline_pb2
+from typing import Dict, List
+
+def stage_type_to_name(stage_type: int) -> str:
+    """将StageType枚举值转换为可读的字符串名称"""
+    return timeline_pb2.StageType.Name(stage_type)
+
+def convert_to_chrome_json(timeline: timeline_pb2.Timeline) -> Dict:
+    """
+    将Timeline protobuf对象转换为Chrome JSON格式
+    Args:
+        timeline: 包含多个Stage的Timeline对象
+    Returns:
+        符合Chrome Tracing JSON格式的字典
+    """
+    events = []  # 存储所有trace事件的列表
+    
+    for stage in timeline.stages:
+        # 为每个Stage创建一个完整的持续时间事件(X类型)
+        event = {
+            "name": stage_type_to_name(stage.stage_type),  # 事件名称
+            "cat": stage.comm,  # 事件类别
+            "ph": "X",  # 事件类型: X表示完整持续时间事件
+            "ts": stage.start_us,  # 开始时间(微秒)
+            "dur": stage.end_us - stage.start_us,  # 持续时间(微秒)
+            "pid": stage.rank,  # 进程ID(这里用rank表示)
+            #"tid": stage.step_id,  # 线程ID(这里用step_id表示)
+            "args": {  # 附加参数
+                "stage_id": stage.stage_id,
+                "step_id": stage.step_id,
+                "stack_frames": [  # 转换堆栈帧信息
+                    {
+                        "address": hex(frame.address),  # 地址转为16进制
+                        "so_name": frame.so_name  # 共享库名称
+                    }
+                    for frame in stage.stack_frames
+                ]
+            }
+        }
+        events.append(event)
+    
+    # 返回完整的Chrome Tracing JSON结构
+    return {
+        "traceEvents": events,  # 包含所有事件的主数组
+        "displayTimeUnit": "ms",  # 显示时间单位(毫秒)
+        "metadata": {  # 元数据
+            "format": "Perfetto Chrome JSON"  # 指定格式类型
+        }
+    }
+
+def load_from_binary(filename: str) -> timeline_pb2.Timeline:
+    """从二进制文件加载Timeline对象"""
+    timeline = timeline_pb2.Timeline()  # 创建空Timeline对象
+    with open(filename, 'rb') as f:  # 以二进制模式打开文件
+        timeline.ParseFromString(f.read())  # 解析protobuf二进制数据
+    return timeline
+
+if __name__ == "__main__":
+    import sys
+    
+    # 检查命令行参数
+    if len(sys.argv) != 3:
+        print("Usage: python convert_to_chrome_json.py <input.bin> <output.json>")
+        sys.exit(1)
+    
+    input_file = sys.argv[1]  # 第一个参数是输入二进制文件
+    output_file = sys.argv[2]  # 第二个参数是输出JSON文件
+    
+    # 加载并转换数据
+    timeline = load_from_binary(input_file)
+    chrome_json = convert_to_chrome_json(timeline)
+    
+    # 写入JSON文件
+    with open(output_file, 'w') as f:
+        json.dump(chrome_json, f, indent=2)  # 使用2空格缩进格式化输出
+    
+    print(f"Converted {input_file} to Chrome JSON format in {output_file}")

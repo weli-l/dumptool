@@ -1,0 +1,480 @@
+{
+  "traceEvents": [
+    {
+      "name": "STAGE_DATALOADER",
+      "cat": "qqAE",
+      "ph": "X",
+      "ts": 174941,
+      "dur": 3922,
+      "pid": 2,
+      "args": {
+        "stage_id": 0,
+        "step_id": 1,
+        "stack_frames": [
+          {
+            "address": "0x60f32ca914320235",
+            "so_name": "libJZwcQUrq.so"
+          }
+        ]
+      }
+    },
+    {
+      "name": "STAGE_FORWARD",
+      "cat": "oRYJ",
+      "ph": "X",
+      "ts": 97596,
+      "dur": 9616,
+      "pid": 0,
+      "args": {
+        "stage_id": 1,
+        "step_id": 2,
+        "stack_frames": [
+          {
+            "address": "0xbd01881c13fe82f4",
+            "so_name": "libzSQHjjmT.so"
+          }
+        ]
+      }
+    },
+    {
+      "name": "STAGE_DATALOADER",
+      "cat": "nfgE",
+      "ph": "X",
+      "ts": 715243,
+      "dur": 6040,
+      "pid": 1,
+      "args": {
+        "stage_id": 2,
+        "step_id": 0,
+        "stack_frames": [
+          {
+            "address": "0x46315cfe0354886",
+            "so_name": "libgqOReosv.so"
+          }
+        ]
+      }
+    },
+    {
+      "name": "STAGE_DATALOADER",
+      "cat": "DJxF",
+      "ph": "X",
+      "ts": 751350,
+      "dur": 345,
+      "pid": 1,
+      "args": {
+        "stage_id": 3,
+        "step_id": 0,
+        "stack_frames": [
+          {
+            "address": "0xbf7aaafa0110ac96",
+            "so_name": "libvDRDrzov.so"
+          },
+          {
+            "address": "0x71ed2f542ffc2654",
+            "so_name": "librYDzgker.so"
+          }
+        ]
+      }
+    },
+    {
+      "name": "STAGE_FORWARD",
+      "cat": "pWcK",
+      "ph": "X",
+      "ts": 668956,
+      "dur": 4027,
+      "pid": 2,
+      "args": {
+        "stage_id": 4,
+        "step_id": 3,
+        "stack_frames": [
+          {
+            "address": "0x84026d211f612377",
+            "so_name": "libuaaxnpbo.so"
+          },
+          {
+            "address": "0x85c2b416a9492aa3",
+            "so_name": "libtYwuPjqa.so"
+          },
+          {
+            "address": "0x4002fa0d7605d12a",
+            "so_name": "libYtAiQPbW.so"
+          },
+          {
+            "address": "0x3ba7a2558279ecb0",
+            "so_name": "libZmYVcDKe.so"
+          }
+        ]
+      }
+    },
+    {
+      "name": "STAGE_BACKWARD",
+      "cat": "pEmr",
+      "ph": "X",
+      "ts": 752962,
+      "dur": 2063,
+      "pid": 2,
+      "args": {
+        "stage_id": 5,
+        "step_id": 3,
+        "stack_frames": [
+          {
+            "address": "0x68afbb60f3933570",
+            "so_name": "librLJcoHwS.so"
+          },
+          {
+            "address": "0xc3459efdfb270421",
+            "so_name": "libDzHldIQo.so"
+          }
+        ]
+      }
+    },
+    {
+      "name": "STAGE_DATALOADER",
+      "cat": "VwVi",
+      "ph": "X",
+      "ts": 580119,
+      "dur": 4009,
+      "pid": 2,
+      "args": {
+        "stage_id": 6,
+        "step_id": 0,
+        "stack_frames": [
+          {
+            "address": "0x9d38cb90df5c7bbd",
+            "so_name": "libIfTKvAnj.so"
+          }
+        ]
+      }
+    },
+    {
+      "name": "STAGE_FORWARD",
+      "cat": "RElV",
+      "ph": "X",
+      "ts": 272029,
+      "dur": 5530,
+      "pid": 2,
+      "args": {
+        "stage_id": 7,
+        "step_id": 3,
+        "stack_frames": [
+          {
+            "address": "0x2b81e1e7737823c",
+            "so_name": "libvXaifsch.so"
+          }
+        ]
+      }
+    },
+    {
+      "name": "STAGE_BACKWARD",
+      "cat": "dHKW",
+      "ph": "X",
+      "ts": 339364,
+      "dur": 8635,
+      "pid": 2,
+      "args": {
+        "stage_id": 8,
+        "step_id": 1,
+        "stack_frames": [
+          {
+            "address": "0x9013fbe7e15e914c",
+            "so_name": "libvthSNbib.so"
+          },
+          {
+            "address": "0xb12dd760f56b3304",
+            "so_name": "libgpBJMNHd.so"
+          }
+        ]
+      }
+    },
+    {
+      "name": "STAGE_FORWARD",
+      "cat": "ZrJG",
+      "ph": "X",
+      "ts": 166321,
+      "dur": 1528,
+      "pid": 1,
+      "args": {
+        "stage_id": 9,
+        "step_id": 2,
+        "stack_frames": [
+          {
+            "address": "0xbd0bc3a68fd5800",
+            "so_name": "liboGRMoNYl.so"
+          },
+          {
+            "address": "0x53a408d5060e8169",
+            "so_name": "libBTjfSTtq.so"
+          },
+          {
+            "address": "0x637086e7060685df",
+            "so_name": "libPnAfiKhs.so"
+          },
+          {
+            "address": "0xe0d0e3aceb1a7e90",
+            "so_name": "libJuSLFCwh.so"
+          }
+        ]
+      }
+    },
+    {
+      "name": "STAGE_BACKWARD",
+      "cat": "ISLx",
+      "ph": "X",
+      "ts": 949363,
+      "dur": 5862,
+      "pid": 2,
+      "args": {
+        "stage_id": 10,
+        "step_id": 1,
+        "stack_frames": [
+          {
+            "address": "0x5d61d5ecb6f98b40",
+            "so_name": "libryJImgUP.so"
+          },
+          {
+            "address": "0x6c169c4f0ea348c6",
+            "so_name": "libhBJnFYsF.so"
+          },
+          {
+            "address": "0xfef37c0873324d4a",
+            "so_name": "libTjKQZxta.so"
+          }
+        ]
+      }
+    },
+    {
+      "name": "STAGE_BACKWARD",
+      "cat": "GExD",
+      "ph": "X",
+      "ts": 822692,
+      "dur": 7466,
+      "pid": 0,
+      "args": {
+        "stage_id": 11,
+        "step_id": 0,
+        "stack_frames": [
+          {
+            "address": "0xa3b098961e6e2be",
+            "so_name": "libmyPzrIBp.so"
+          }
+        ]
+      }
+    },
+    {
+      "name": "STAGE_DATALOADER",
+      "cat": "ozLK",
+      "ph": "X",
+      "ts": 641492,
+      "dur": 1387,
+      "pid": 2,
+      "args": {
+        "stage_id": 12,
+        "step_id": 2,
+        "stack_frames": [
+          {
+            "address": "0x8af43b9c7482009e",
+            "so_name": "libTnVizLDf.so"
+          },
+          {
+            "address": "0x6d52491d71af883e",
+            "so_name": "libFCeHlnNJ.so"
+          },
+          {
+            "address": "0xcb795e2441e71131",
+            "so_name": "libYSIZiiON.so"
+          },
+          {
+            "address": "0x329dd23c7fc9d5b",
+            "so_name": "libIdScalyg.so"
+          }
+        ]
+      }
+    },
+    {
+      "name": "STAGE_FORWARD",
+      "cat": "SLOa",
+      "ph": "X",
+      "ts": 866981,
+      "dur": 1701,
+      "pid": 3,
+      "args": {
+        "stage_id": 13,
+        "step_id": 1,
+        "stack_frames": [
+          {
+            "address": "0x932c4b2ac62d9ecf",
+            "so_name": "libxQnzRAjy.so"
+          },
+          {
+            "address": "0xcc50e4b4ae6e98e0",
+            "so_name": "libsKEfsVCb.so"
+          },
+          {
+            "address": "0x38e79bb186cda628",
+            "so_name": "libTMrAQRby.so"
+          },
+          {
+            "address": "0x42611ccc158eabaf",
+            "so_name": "libPrzbluSx.so"
+          },
+          {
+            "address": "0x73cc0bef5abea9b8",
+            "so_name": "libdFkcymQC.so"
+          }
+        ]
+      }
+    },
+    {
+      "name": "STAGE_FORWARD",
+      "cat": "OlkD",
+      "ph": "X",
+      "ts": 898374,
+      "dur": 4607,
+      "pid": 2,
+      "args": {
+        "stage_id": 14,
+        "step_id": 0,
+        "stack_frames": [
+          {
+            "address": "0x25c5a8b20859df8e",
+            "so_name": "libObKqotPi.so"
+          },
+          {
+            "address": "0x83bb6709402f7e56",
+            "so_name": "libGdVUqUDG.so"
+          },
+          {
+            "address": "0x1f1a4d46707a464a",
+            "so_name": "libsnQXjYnY.so"
+          },
+          {
+            "address": "0x6baad7ccd9349797",
+            "so_name": "libjLSDSSLv.so"
+          }
+        ]
+      }
+    },
+    {
+      "name": "STAGE_BACKWARD",
+      "cat": "zZFm",
+      "ph": "X",
+      "ts": 74851,
+      "dur": 4962,
+      "pid": 0,
+      "args": {
+        "stage_id": 15,
+        "step_id": 1,
+        "stack_frames": [
+          {
+            "address": "0x9d91b7e4ee466e4",
+            "so_name": "libRxKFQcdU.so"
+          },
+          {
+            "address": "0x72c43d47795286fa",
+            "so_name": "libwYZIiAcu.so"
+          },
+          {
+            "address": "0xe94526ae87706796",
+            "so_name": "libZeMqGAsM.so"
+          }
+        ]
+      }
+    },
+    {
+      "name": "STAGE_FORWARD",
+      "cat": "csDO",
+      "ph": "X",
+      "ts": 403438,
+      "dur": 2625,
+      "pid": 1,
+      "args": {
+        "stage_id": 16,
+        "step_id": 1,
+        "stack_frames": [
+          {
+            "address": "0xa21a8f07b9a83c75",
+            "so_name": "libIXktAQks.so"
+          },
+          {
+            "address": "0xf98ae5009409239",
+            "so_name": "libQQqoYwqa.so"
+          },
+          {
+            "address": "0xc2e9efd6df522dcc",
+            "so_name": "libLVIGjbAq.so"
+          }
+        ]
+      }
+    },
+    {
+      "name": "STAGE_DATALOADER",
+      "cat": "EQHX",
+      "ph": "X",
+      "ts": 226609,
+      "dur": 429,
+      "pid": 1,
+      "args": {
+        "stage_id": 17,
+        "step_id": 0,
+        "stack_frames": [
+          {
+            "address": "0x62896a7f4752447e",
+            "so_name": "libAfLdweSX.so"
+          },
+          {
+            "address": "0xfa9318e943f55def",
+            "so_name": "libRJROOjYY.so"
+          }
+        ]
+      }
+    },
+    {
+      "name": "STAGE_DATALOADER",
+      "cat": "VUcZ",
+      "ph": "X",
+      "ts": 129272,
+      "dur": 286,
+      "pid": 2,
+      "args": {
+        "stage_id": 18,
+        "step_id": 1,
+        "stack_frames": [
+          {
+            "address": "0x32422ba86c243faa",
+            "so_name": "libOCBDdLrK.so"
+          }
+        ]
+      }
+    },
+    {
+      "name": "STAGE_FORWARD",
+      "cat": "NWvB",
+      "ph": "X",
+      "ts": 565854,
+      "dur": 7773,
+      "pid": 2,
+      "args": {
+        "stage_id": 19,
+        "step_id": 2,
+        "stack_frames": [
+          {
+            "address": "0x33ebe836b79f9589",
+            "so_name": "libsVhcbMNV.so"
+          },
+          {
+            "address": "0x454cbc16f5745af4",
+            "so_name": "libxwhyoXPF.so"
+          },
+          {
+            "address": "0x5aabe2c8c70e6d0d",
+            "so_name": "libttwFhvUo.so"
+          }
+        ]
+      }
+    }
+  ],
+  "displayTimeUnit": "ms",
+  "metadata": {
+    "format": "Perfetto Chrome JSON"
+  }
+}

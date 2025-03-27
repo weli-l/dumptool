@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+message StackFrame {
+    uint64 address = 1;
+    string so_name = 2;
+}
+
+message MemStack {
+    uint64 alloc_ptr = 1;
+    uint32 stage_id = 2;
+    uint64 mem_size = 3;
+    bool is_alloc = 4; // alloc is 1; free is 0
+    repeated StackFrame stack_frames = 5;
+}
+
+message ProcMemStack {
+    uint32 pid = 1;
+    repeated MemStack mem_stack = 2;
+}
