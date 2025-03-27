@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+message StackFrame {
+    uint64 address = 1;
+    string so_name = 2;
+}
+
+enum StageType {
+  STAGE_DATALOADER = 0;
+  STAGE_FORWARD = 1;
+  STAGE_BACKWARD = 2;
+}
+
+message Stage {
+    uint32 stage_id = 1;
+    StageType stage_type = 2;
+    uint32 rank = 3;
+    uint32 step_id = 4;
+    string comm = 5;
+    uint64 start_us = 6;
+    uint64 end_us = 7;
+    repeated StackFrame stack_frames = 8;
+}
+
+message Timeline {
+    repeated Stage stages = 1;
+}
