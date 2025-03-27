@@ -1,5 +1,6 @@
 #include "tracemanage.hpp"
 
+namespace sys_trace {
 std::unique_ptr<TraceManage> TraceManage::instance;
 std::once_flag TraceManage::init_flag;
 
@@ -42,4 +43,5 @@ void TraceManage::dowork() {
         log("Worker is running");
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
+}
 }

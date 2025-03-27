@@ -8,6 +8,7 @@
 #include <thread>
 #include <iostream>
 
+namespace sys_trace {
 class TraceManage {
 public:
     static TraceManage& getInstance();
@@ -29,11 +30,13 @@ private:
     void StopWork();
     void dowork();
 
-    static std::unique_ptr<TraceManage> instance;
+    static std::unique_ptr<sys_trace::TraceManage> instance;
     static std::once_flag init_flag;
 
     std::atomic<bool> running_{false};
     std::thread worker_thread_;
 };
+    
+}
 
 #endif // TRACEMANAGE_HPP

@@ -2,7 +2,7 @@
 #include <string>
 
 int main() {
-    TraceManage& s1 = TraceManage::getInstance();
+    sys_trace::TraceManage& s1 = sys_trace::TraceManage::getInstance();
     s1.log("First access");
     s1.Start();
 
