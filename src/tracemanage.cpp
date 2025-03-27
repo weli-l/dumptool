@@ -15,7 +15,12 @@ void TraceManage::log(const std::string& message) const {
     std::cout << "[TraceManage@" << this << "] " << message << std::endl;
 }
 
-void TraceManage::Start() {
+void TraceManage::Start(DumpConfig config) {
+    if (!config.IsValid()) {
+        log("Invalid config");
+        return;
+    }
+    SetDumpConfig(DumpConfig(config));
     StartWork();
 }
 
