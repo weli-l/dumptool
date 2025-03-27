@@ -1,13 +1,13 @@
 import json
-import timeline_pb2
+import pytorch_pb2
 from typing import Dict, List
 
 def stage_type_to_name(stage_type: int) -> str:
-    return timeline_pb2.StageType.Name(stage_type)
+    return pytorch_pb2.StageType.Name(stage_type)
 
-def convert_to_chrome_json(timeline: timeline_pb2.Timeline) -> Dict:
+def convert_to_chrome_json(pytorch_data: pytorch_pb2.Pytorch) -> Dict:
     events = []
-    for stage in timeline.stages:
+    for stage in pytorch_data.pytorch_stages:
         event = {
             "name": stage_type_to_name(stage.stage_type),
             "cat": stage.comm,
@@ -36,11 +36,11 @@ def convert_to_chrome_json(timeline: timeline_pb2.Timeline) -> Dict:
         }
     }
 
-def load_from_binary(filename: str) -> timeline_pb2.Timeline:
-    timeline = timeline_pb2.Timeline()
+def load_from_binary(filename: str) -> pytorch_pb2.Pytorch:
+    pytorch_data = pytorch_pb2.Pytorch()
     with open(filename, 'rb') as f:
-        timeline.ParseFromString(f.read())
-    return timeline
+        pytorch_data.ParseFromString(f.read())
+    return pytorch_data
 
 if __name__ == "__main__":
     import sys
@@ -52,8 +52,8 @@ if __name__ == "__main__":
     input_file = sys.argv[1]
     output_file = sys.argv[2]
 
-    timeline = load_from_binary(input_file)
-    chrome_json = convert_to_chrome_json(timeline)
+    pytorch_data = load_from_binary(input_file)
+    chrome_json = convert_to_chrome_json(pytorch_data)
 
     with open(output_file, 'w') as f:
         json.dump(chrome_json, f, indent=2)

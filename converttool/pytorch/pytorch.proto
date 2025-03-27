@@ -11,7 +11,7 @@ enum StageType {
   STAGE_BACKWARD = 2;
 }
 
-message Stage {
+message PytorchStage {
     uint32 stage_id = 1;
     StageType stage_type = 2;
     uint32 rank = 3;
@@ -22,6 +22,6 @@ message Stage {
     repeated StackFrame stack_frames = 8;
 }
 
-message Timeline {
-    repeated Stage stages = 1;
+message Pytorch {
+  repeated PytorchStage pytorch_stages = 1;
 }
