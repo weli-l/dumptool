@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+message StackFrame {
+    uint64 address = 1;
+    string so_name = 2;
+}
+
+message MemAllocEntry {
+    uint64 alloc_ptr = 1;
+    uint32 stage_id = 2;
+    uint64 mem_size = 3;
+    repeated StackFrame stack_frames = 4;
+}
+
+message MemFreeEntry {
+    uint64 alloc_ptr = 1;
+}
+
+message ProcMem {
+    uint32 pid = 1;
+    StageType stage_type = 2;
+    repeated MemAllocEntry mem_alloc_stacks = 3;
+    repeated MemFreeEntry mem_free_stacks = 4;
+}
+
+enum StageType {
+  STAGE_DATALOADER = 0;
+  STAGE_FORWARD = 1;
+  STAGE_BACKWARD = 2;
+}
+
+
+message Mem {
+  repeated ProcMem proc_mem = 1;
+}
