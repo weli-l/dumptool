@@ -1,0 +1,113 @@
+{
+  "traceEvents": [
+    {
+      "name": "STAGE_FORWARD",
+      "cat": "FORWARD",
+      "ph": "X",
+      "ts": 0,
+      "dur": 2560,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 0,
+        "mem_bytes": 2560
+      }
+    },
+    {
+      "name": "main@16384",
+      "cat": "main@16384",
+      "ph": "X",
+      "ts": 0,
+      "dur": 2560,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 1,
+        "mem_bytes": 2560
+      }
+    },
+    {
+      "name": "libA@20480",
+      "cat": "libA@20480",
+      "ph": "X",
+      "ts": 0,
+      "dur": 1536,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 2,
+        "mem_bytes": 1536
+      }
+    },
+    {
+      "name": "funcX@24576",
+      "cat": "funcX@24576",
+      "ph": "X",
+      "ts": 0,
+      "dur": 1024,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 3,
+        "mem_bytes": 1024
+      }
+    },
+    {
+      "name": "funcY@28672",
+      "cat": "funcY@28672",
+      "ph": "X",
+      "ts": 1024,
+      "dur": 512,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 3,
+        "mem_bytes": 512
+      }
+    },
+    {
+      "name": "libB@32768",
+      "cat": "libB@32768",
+      "ph": "X",
+      "ts": 1536,
+      "dur": 1024,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 2,
+        "mem_bytes": 1024
+      }
+    },
+    {
+      "name": "kernel1@36864",
+      "cat": "kernel1@36864",
+      "ph": "X",
+      "ts": 1536,
+      "dur": 768,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 3,
+        "mem_bytes": 768
+      }
+    },
+    {
+      "name": "kernel2@40960",
+      "cat": "kernel2@40960",
+      "ph": "X",
+      "ts": 2304,
+      "dur": 256,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 3,
+        "mem_bytes": 256
+      }
+    }
+  ],
+  "displayTimeUnit": "ns",
+  "metadata": {
+    "description": "Memory FlameGraph (Horizontal Stages)",
+    "card_count": 1
+  }
+}

@@ -1,0 +1,219 @@
+{
+  "traceEvents": [
+    {
+      "name": "STAGE_DATALOADER",
+      "cat": "DATALOADER",
+      "ph": "X",
+      "ts": 0,
+      "dur": 1200,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 0,
+        "mem_bytes": 1200,
+        "stage_id": 0
+      }
+    },
+    {
+      "name": "dl_main@4096",
+      "cat": "DATALOADER",
+      "ph": "X",
+      "ts": 0,
+      "dur": 1200,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 1,
+        "mem_bytes": 1200,
+        "stage_id": 0
+      }
+    },
+    {
+      "name": "loader@8192",
+      "cat": "DATALOADER",
+      "ph": "X",
+      "ts": 0,
+      "dur": 1200,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 2,
+        "mem_bytes": 1200,
+        "stage_id": 0
+      }
+    },
+    {
+      "name": "decode@16384",
+      "cat": "DATALOADER",
+      "ph": "X",
+      "ts": 0,
+      "dur": 400,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 3,
+        "mem_bytes": 400,
+        "stage_id": 0
+      }
+    },
+    {
+      "name": "io_task@12288",
+      "cat": "DATALOADER",
+      "ph": "X",
+      "ts": 400,
+      "dur": 800,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 3,
+        "mem_bytes": 800,
+        "stage_id": 0
+      }
+    },
+    {
+      "name": "STAGE_FORWARD",
+      "cat": "FORWARD",
+      "ph": "X",
+      "ts": 1200,
+      "dur": 600,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 0,
+        "mem_bytes": 600,
+        "stage_id": 1
+      }
+    },
+    {
+      "name": "main@20480",
+      "cat": "FORWARD",
+      "ph": "X",
+      "ts": 1200,
+      "dur": 600,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 1,
+        "mem_bytes": 600,
+        "stage_id": 1
+      }
+    },
+    {
+      "name": "libtorch@24576",
+      "cat": "FORWARD",
+      "ph": "X",
+      "ts": 1200,
+      "dur": 600,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 2,
+        "mem_bytes": 600,
+        "stage_id": 1
+      }
+    },
+    {
+      "name": "linear@32768",
+      "cat": "FORWARD",
+      "ph": "X",
+      "ts": 1200,
+      "dur": 600,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 3,
+        "mem_bytes": 600,
+        "stage_id": 1
+      }
+    },
+    {
+      "name": "STAGE_BACKWARD",
+      "cat": "BACKWARD",
+      "ph": "X",
+      "ts": 1800,
+      "dur": 1200,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 0,
+        "mem_bytes": 1200,
+        "stage_id": 2
+      }
+    },
+    {
+      "name": "main@20480",
+      "cat": "BACKWARD",
+      "ph": "X",
+      "ts": 1800,
+      "dur": 1200,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 1,
+        "mem_bytes": 1200,
+        "stage_id": 2
+      }
+    },
+    {
+      "name": "autograd@36864",
+      "cat": "BACKWARD",
+      "ph": "X",
+      "ts": 1800,
+      "dur": 900,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 2,
+        "mem_bytes": 900,
+        "stage_id": 2
+      }
+    },
+    {
+      "name": "backward@40960",
+      "cat": "BACKWARD",
+      "ph": "X",
+      "ts": 1800,
+      "dur": 900,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 3,
+        "mem_bytes": 900,
+        "stage_id": 2
+      }
+    },
+    {
+      "name": "optimizer@45056",
+      "cat": "BACKWARD",
+      "ph": "X",
+      "ts": 2700,
+      "dur": 300,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 2,
+        "mem_bytes": 300,
+        "stage_id": 2
+      }
+    },
+    {
+      "name": "step@49152",
+      "cat": "BACKWARD",
+      "ph": "X",
+      "ts": 2700,
+      "dur": 300,
+      "pid": 0,
+      "tid": 0,
+      "args": {
+        "depth": 3,
+        "mem_bytes": 300,
+        "stage_id": 2
+      }
+    }
+  ],
+  "displayTimeUnit": "ns",
+  "metadata": {
+    "description": "Memory FlameGraph with Stage IDs",
+    "card_count": 1
+  }
+}
