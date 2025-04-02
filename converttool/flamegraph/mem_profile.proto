@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package mem_profile;
+
+message StackFrame {
+    string so_name = 1;
+    uint64 address = 2;
+}
+
+message MemAlloc {
+    uint64 alloc_ptr = 1;
+    uint64 mem_size = 2;
+    repeated StackFrame stack_frames = 3;
+    uint32 stage_id = 4;
+    string stage_type = 5;
+}
+
+message MemFree {
+    uint64 alloc_ptr = 1;
+    repeated StackFrame stack_frames = 2;
+}
+
+message ProcMem {
+    uint32 pid = 1;
+    repeated MemAlloc mem_alloc_stacks = 2;
+    repeated MemFree mem_free_stacks = 3;
+}
+
+message Mem {
+    repeated ProcMem proc_mem = 1;
+}

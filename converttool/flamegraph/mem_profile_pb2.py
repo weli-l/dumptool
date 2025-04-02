@@ -13,23 +13,21 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x11mem_profile.proto\".\n\nStackFrame\x12\x0f\n\x07\x61\x64\x64ress\x18\x01 \x01(\x04\x12\x0f\n\x07so_name\x18\x02 \x01(\t\"i\n\rMemAllocEntry\x12\x11\n\talloc_ptr\x18\x01 \x01(\x04\x12\x10\n\x08stage_id\x18\x02 \x01(\r\x12\x10\n\x08mem_size\x18\x03 \x01(\x04\x12!\n\x0cstack_frames\x18\x04 \x03(\x0b\x32\x0b.StackFrame\"!\n\x0cMemFreeEntry\x12\x11\n\talloc_ptr\x18\x01 \x01(\x04\"\x88\x01\n\x07ProcMem\x12\x0b\n\x03pid\x18\x01 \x01(\r\x12\x1e\n\nstage_type\x18\x02 \x01(\x0e\x32\n.StageType\x12(\n\x10mem_alloc_stacks\x18\x03 \x03(\x0b\x32\x0e.MemAllocEntry\x12&\n\x0fmem_free_stacks\x18\x04 \x03(\x0b\x32\r.MemFreeEntry\"!\n\x03Mem\x12\x1a\n\x08proc_mem\x18\x01 \x03(\x0b\x32\x08.ProcMem*H\n\tStageType\x12\x14\n\x10STAGE_DATALOADER\x10\x00\x12\x11\n\rSTAGE_FORWARD\x10\x01\x12\x12\n\x0eSTAGE_BACKWARD\x10\x02\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x11mem_profile.proto\x12\x0bmem_profile\".\n\nStackFrame\x12\x0f\n\x07so_name\x18\x01 \x01(\t\x12\x0f\n\x07\x61\x64\x64ress\x18\x02 \x01(\x04\"\x84\x01\n\x08MemAlloc\x12\x11\n\talloc_ptr\x18\x01 \x01(\x04\x12\x10\n\x08mem_size\x18\x02 \x01(\x04\x12-\n\x0cstack_frames\x18\x03 \x03(\x0b\x32\x17.mem_profile.StackFrame\x12\x10\n\x08stage_id\x18\x04 \x01(\r\x12\x12\n\nstage_type\x18\x05 \x01(\t\"K\n\x07MemFree\x12\x11\n\talloc_ptr\x18\x01 \x01(\x04\x12-\n\x0cstack_frames\x18\x02 \x03(\x0b\x32\x17.mem_profile.StackFrame\"v\n\x07ProcMem\x12\x0b\n\x03pid\x18\x01 \x01(\r\x12/\n\x10mem_alloc_stacks\x18\x02 \x03(\x0b\x32\x15.mem_profile.MemAlloc\x12-\n\x0fmem_free_stacks\x18\x03 \x03(\x0b\x32\x14.mem_profile.MemFree\"-\n\x03Mem\x12&\n\x08proc_mem\x18\x01 \x03(\x0b\x32\x14.mem_profile.ProcMemb\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'mem_profile_pb2', globals())
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
-  _STAGETYPE._serialized_start=385
-  _STAGETYPE._serialized_end=457
-  _STACKFRAME._serialized_start=21
-  _STACKFRAME._serialized_end=67
-  _MEMALLOCENTRY._serialized_start=69
-  _MEMALLOCENTRY._serialized_end=174
-  _MEMFREEENTRY._serialized_start=176
-  _MEMFREEENTRY._serialized_end=209
-  _PROCMEM._serialized_start=212
-  _PROCMEM._serialized_end=348
-  _MEM._serialized_start=350
-  _MEM._serialized_end=383
+  _STACKFRAME._serialized_start=34
+  _STACKFRAME._serialized_end=80
+  _MEMALLOC._serialized_start=83
+  _MEMALLOC._serialized_end=215
+  _MEMFREE._serialized_start=217
+  _MEMFREE._serialized_end=292
+  _PROCMEM._serialized_start=294
+  _PROCMEM._serialized_end=412
+  _MEM._serialized_start=414
+  _MEM._serialized_end=459
 # @@protoc_insertion_point(module_scope)
