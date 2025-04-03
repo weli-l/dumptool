@@ -1,0 +1,38 @@
+#pragma once
+#include <stdint.h>
+
+#ifndef PY_TRACING_BUFFER_SIZE
+#define PY_TRACING_BUFFER_SIZE 512
+#define PY_TRACING_MAX_THREADS 256
+#endif
+#define PY_TRACING_READY_POOL 0
+#define PY_TRACING_EMPTY_POOL 1
+#define PY_TRACING_GC 0
+#define PY_DATALOADER 1
+
+#define MAX_STACK_DEPTH 32
+#define MAX_STACK_FRAME_LENGTH 256
+
+typedef enum {
+  PAYLOAD_UNINITIALIZED = 0,
+  PAYLOAD_GC = 1,
+} PayloadType;
+
+typedef union {
+  int gc_debug[2];
+} Payload;
+
+typedef struct {
+  uint64_t start;
+  uint64_t end;
+  uint32_t count;
+  Payload payload;
+  PayloadType type;
+  char stack[MAX_STACK_DEPTH][MAX_STACK_FRAME_LENGTH]; // 二维数组存储堆栈
+  int stack_depth;                               // 实际堆栈深度
+} PyTorchTracingData;
+
+typedef struct {
+  PyTorchTracingData data[PY_TRACING_BUFFER_SIZE];
+  uint64_t cur;
+} PyTorchTracingDataArray;
