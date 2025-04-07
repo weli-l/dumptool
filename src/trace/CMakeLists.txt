@@ -1,19 +1,13 @@
-add_library(trace STATIC
-    systrace_manager.cc
-    library_loader.cc
+add_definitions(-DSYSTRACE_EXPORTS -D_GLIBCXX_USE_CXX11_ABI=1)
+
+set(PYTHON_TRACING_SOURCES
     python/pytorch_tracing_loader.cc
     python/pytorch_tracing_manager.cc
 )
 
-target_include_directories(trace PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${PROJECT_SOURCE_DIR}/include
-    ${Python3_INCLUDE_DIRS}
-)
-
-target_link_libraries(trace
-    common
-    general_pb2
-    ${Python3_LIBRARIES}
-    absl::base
+set_source_files_properties(
+    systrace_manager.cc
+    library_loader.cc
+    ${PYTHON_TRACING_SOURCES}
+    PROPERTIES COMPILE_FLAGS "-fPIC -Wall -Wextra"
 )

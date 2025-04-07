@@ -3,6 +3,8 @@ project(sysTrace)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 
 find_package(absl REQUIRED)
 find_package(Python3 REQUIRED COMPONENTS Development)
@@ -23,15 +25,24 @@ target_link_libraries(common
     protobuf::libprotobuf
 )
 
-add_subdirectory(src/trace)
 add_subdirectory(protos)
+add_subdirectory(src/trace)
 
-add_executable(${PROJECT_NAME} main.cpp)
+add_library(sysTrace_hook SHARED
+    ${PROJECT_SOURCE_DIR}/src/trace/systrace_manager.cc
+    ${PROJECT_SOURCE_DIR}/src/trace/library_loader.cc
+    ${PROJECT_SOURCE_DIR}/src/trace/python/pytorch_tracing_loader.cc
+    ${PROJECT_SOURCE_DIR}/src/trace/python/pytorch_tracing_manager.cc
+)
 
-target_link_libraries(${PROJECT_NAME}
-    trace
+set_target_properties(sysTrace_hook PROPERTIES
+    OUTPUT_NAME "sysTrace"
+)
+
+target_link_libraries(sysTrace_hook
     common
     general_pb2
     ${Python3_LIBRARIES}
-   protobuf::libprotobuf
+    protobuf::libprotobuf
+    -ldl
 )
