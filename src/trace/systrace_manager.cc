@@ -18,6 +18,7 @@ namespace systrace {
 
 PyTorchTrace& PyTorchTrace::getInstance() {
   std::call_once(init_flag_, &PyTorchTrace::initSingleton);
+  std::cout << "PyTorchTrace::getInstance()" << std::endl;
   return *instance_;
   // std::cout <<"sb" << std::endl;
   // static PyTorchTrace instance;  // This will be initialized on first call
@@ -99,7 +100,7 @@ void PyTorchTrace::reset(const std::string& barrier_name) {
   // make sure all training ranks into reset
   util::InterProcessBarrier(config::GlobalConfig::local_world_size,
                             config::GlobalConfig::local_rank, barrier_name);
-  switch_->getObj()->start_dump = 0;
+  //switch_->getObj()->start_dump = 0;
   STLOG(INFO) << barrier_name << " reset start_dump to "
              << switch_->getObj()->start_dump;
 }

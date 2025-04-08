@@ -42,7 +42,7 @@ void ShmSwitch::reset(const std::string& path, const std::string& oss_args,
   strncpy(oss_dump_args, oss_args.data(), sizeof(oss_dump_args)-1);
   oss_dump_args[sizeof(oss_dump_args)-1] = '\0';
 
-  start_dump = 0;
+  start_dump = 1;
   timestamp = stamp;
   reset_flag = false;  // Default reset_flag to false
 }
