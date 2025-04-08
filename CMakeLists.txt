@@ -33,6 +33,7 @@ add_library(sysTrace_hook SHARED
     ${PROJECT_SOURCE_DIR}/src/trace/library_loader.cc
     ${PROJECT_SOURCE_DIR}/src/trace/python/pytorch_tracing_loader.cc
     ${PROJECT_SOURCE_DIR}/src/trace/python/pytorch_tracing_manager.cc
+    ${PROJECT_SOURCE_DIR}/src/trace/python/pytorch_tracing.c
 )
 
 set_target_properties(sysTrace_hook PROPERTIES
