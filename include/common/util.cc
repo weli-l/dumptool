@@ -62,8 +62,8 @@ InterProcessBarrierImpl::InterProcessBarrierImpl(std::string name,
   
   bip::managed_shared_memory managed_shm(bip::open_or_create, name.c_str(),
                                          4096);  // one page is enough
-  LOG(INFO) << "Barrier name in shm is " << name;
-  LOG(INFO) << "World size " << world_size;
+  LOG(INFO) << "Barrier name in shm is " << name << std::endl;
+  LOG(INFO) << "World size " << world_size << std::endl;
   
   InterProcessBarrierImpl::Inner*
       barriers[world_size];  // world size is small, allocate on stack is safe
@@ -91,7 +91,7 @@ InterProcessBarrierImpl::InterProcessBarrierImpl(std::string name,
         managed_shm.find<InterProcessBarrierImpl::Inner>(name.c_str());
     if (this_bar.first) {
       barriers[index] = this_bar.first;
-      LOG(INFO) << "rank " << rank << " found index is " << index;
+      LOG(INFO) << "rank " << rank << " found index is " << index << std::endl;
       index++;
     } else {
       std::this_thread::sleep_for(std::chrono::microseconds(100));
@@ -142,6 +142,7 @@ InterProcessBarrierImpl::~InterProcessBarrierImpl() {
 
 void InterProcessBarrier(int world_size, int rank, std::string name) {
   try {
+    LOG(INFO) << "InterProcessBarrier name is " << name;
     detail::InterProcessBarrierImpl(name, world_size, rank);
   } catch (const std::exception& e) {
     LOG(ERROR) << "InterProcessBarrier failed: " << e.what();

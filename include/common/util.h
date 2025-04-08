@@ -123,8 +123,12 @@ class ShmType {
                                                  shm_name_.c_str(), total_size);
       obj_ = shm_area_->construct<T>(obj_name.c_str())();
       obj_->reset();
+      LOG(INFO) << "ShmType rank " << local_rank
+                << " create shared memory object " << shm_name_;
       InterProcessBarrier(local_world_size, local_rank, barrier_name.c_str());
     } else {
+      LOG(INFO) << "ShmType rank " << local_rank
+                << " open shared memory object " << shm_name_ << std::endl;
       InterProcessBarrier(local_world_size, local_rank, barrier_name.c_str());
       shm_area_ =
           new bip::managed_shared_memory(bip::open_only, shm_name_.c_str());

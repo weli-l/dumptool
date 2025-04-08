@@ -32,7 +32,7 @@ void PyTorchTrace::initSingleton() {
 
   instance_->switch_ = std::make_unique<util::ShmSwitch>(
       config::GlobalConfig::local_world_size + 1,
-      config::GlobalConfig::local_rank, false);
+      config::GlobalConfig::local_rank, true);
 
   instance_->pytorch_tracing_library_ =
       new pytorch_tracing::PyTorchTracingLibrary("libpytorch_tracing.so");
@@ -71,6 +71,7 @@ void PyTorchTrace::initSingleton() {
 
 bool PyTorchTrace::triggerTrace() {
   if (switch_->getObj()->reset_flag) {
+    LOG(INFO) << "Reset flag is true, trigger trace";
     // ensure all ranks into reseting and set reset_flag to false
     util::InterProcessBarrier(config::GlobalConfig::local_world_size,
                               config::GlobalConfig::local_rank,
