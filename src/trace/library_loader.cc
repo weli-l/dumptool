@@ -5,11 +5,12 @@
 
 namespace systrace {
     LibraryLoader::LibraryLoader(const std::string& lib_name) 
-        : handle_(nullptr), can_use_(false), library_path_(library_path_) {
+        : handle_(nullptr), can_use_(false), library_path_(lib_name) {
         LoadLibrary();
     }
 
     void LibraryLoader::LoadLibrary() {
+        LOG(INFO) << "Loading library: " << library_path_;
         handle_ = dlopen(library_path_.c_str(), RTLD_LAZY);
         if (!handle_) {
             STLOG(WARNING) << "Failed to load library: " << dlerror();

@@ -17,56 +17,78 @@ namespace bip = boost::interprocess;
 namespace systrace {
 
 PyTorchTrace& PyTorchTrace::getInstance() {
+  LOG(INFO) << "[PyTorchTrace] Entering getInstance()" << std::endl;
+  
+  LOG(INFO) << "[PyTorchTrace] Checking singleton initialization status" << std::endl;
   std::call_once(init_flag_, &PyTorchTrace::initSingleton);
-  std::cout << "PyTorchTrace::getInstance()" << std::endl;
+  
+  LOG(INFO) << "[PyTorchTrace] Returning singleton instance" << std::endl;
   return *instance_;
-  // std::cout <<"sb" << std::endl;
-  // static PyTorchTrace instance;  // This will be initialized on first call
-  // return instance;
 }
 
 void PyTorchTrace::initSingleton() {
+  LOG(INFO) << "[PyTorchTrace] Initializing singleton instance" << std::endl;
+  
   instance_ = new PyTorchTrace;
+  LOG(INFO) << "[PyTorchTrace] Singleton instance created at address: " << instance_ << std::endl;
 
+  LOG(INFO) << "[PyTorchTrace] Setting rank from GlobalConfig" << std::endl;
   instance_->pytorch_trace_.set_rank(config::GlobalConfig::rank);
+  LOG(INFO) << "[PyTorchTrace] Rank set to: " << config::GlobalConfig::rank << std::endl;
 
-  instance_->switch_ = std::make_unique<util::ShmSwitch>(
-      config::GlobalConfig::local_world_size + 1,
-      config::GlobalConfig::local_rank, true);
+  LOG(INFO) << "[PyTorchTrace] Loading PyTorch tracing library" << std::endl;
+  instance_->pytorch_tracing_library_ = new pytorch_tracing::PyTorchTracingLibrary("libsysTrace.so");
+  LOG(INFO) << "[PyTorchTrace] Tracing library loaded at address: " << instance_->pytorch_tracing_library_ << std::endl;
 
-  instance_->pytorch_tracing_library_ =
-      new pytorch_tracing::PyTorchTracingLibrary("libpytorch_tracing.so");
-  instance_->pytorch_tracing_functions_.push_back("GC");
-  instance_->pytorch_tracing_functions_.push_back(
-      "torch.utils.data.dataloader@_BaseDataLoaderIter@__next__");
-  instance_->pytorch_tracing_functions_.push_back("torch@cuda@synchronize");
-  instance_->pytorch_tracing_functions_.push_back("torch.cuda@Event@synchronize");
-  instance_->pytorch_tracing_functions_.push_back("torch.cuda@Event@wait");
-  instance_->pytorch_tracing_functions_.push_back("torch.cuda@Stream@synchronize");
-  instance_->pytorch_tracing_functions_.push_back("torch.cuda@Stream@wait_event");
-  instance_->pytorch_tracing_functions_.push_back("torch.cuda@Stream@wait_stream");
-  instance_->pytorch_tracing_functions_.push_back("torch@autograd@backward");
-  instance_->pytorch_tracing_functions_.push_back("torch@autograd@grad");
-  instance_->pytorch_tracing_functions_.push_back(
-      "megatron.core.pipeline_parallel@schedules@forward_step");
-  instance_->pytorch_tracing_functions_.push_back(
-      "megatron.core.pipeline_parallel@schedules@backward_step");
-  std::string tracing_functions =
-      EnvVarRegistry::GetEnvVar<std::string>("SYSTRACE_HOST_TRACING_FUNC");
+  LOG(INFO) << "[PyTorchTrace] Registering default tracing functions" << std::endl;
+  instance_->pytorch_tracing_functions_ = {
+    "GC",
+    "torch.utils.data.dataloader@_BaseDataLoaderIter@__next__",
+    "torch@cuda@synchronize",
+    "torch.cuda@Event@synchronize",
+    "torch.cuda@Event@wait",
+    "torch.cuda@Stream@synchronize",
+    "torch.cuda@Stream@wait_event",
+    "torch.cuda@Stream@wait_stream",
+    "torch@autograd@backward",
+    "torch@autograd@grad",
+    "megatron.core.pipeline_parallel@schedules@forward_step",
+    "megatron.core.pipeline_parallel@schedules@backward_step"
+  };
+  
+  LOG(INFO) << "[PyTorchTrace] Checking for additional tracing functions from environment" << std::endl;
+  std::string tracing_functions = EnvVarRegistry::GetEnvVar<std::string>("SYSTRACE_HOST_TRACING_FUNC");
   if (tracing_functions != util::EnvVarRegistry::STRING_DEFAULT_VALUE) {
+    LOG(INFO) << "[PyTorchTrace] Found additional tracing functions in environment: " << tracing_functions << std::endl;
     std::vector<std::string> funcs = util::split(tracing_functions, ",");
-    for (const auto& func : funcs)
+    for (const auto& func : funcs) {
       instance_->pytorch_tracing_functions_.push_back(func);
+      LOG(INFO) << "[PyTorchTrace] Added custom tracing function: " << func << std::endl;
+    }
+  } else {
+    LOG(INFO) << "[PyTorchTrace] No additional tracing functions found in environment" << std::endl;
   }
-  std::vector<std::string> errors = instance_->pytorch_tracing_library_->Register(
-      instance_->pytorch_tracing_functions_);
+
+  LOG(INFO) << "[PyTorchTrace] Registering " << instance_->pytorch_tracing_functions_.size() << " tracing functions" << std::endl;
+  std::vector<std::string> errors = instance_->pytorch_tracing_library_->Register(instance_->pytorch_tracing_functions_);
+  
+  // Log registration results
   for (size_t i = 0; i < instance_->pytorch_tracing_functions_.size(); i++) {
-    STLOG(INFO) << "Resiter host function "
-               << instance_->pytorch_tracing_functions_[i] << ",status "
-               << errors[i];
+    STLOG(INFO) << "[PyTorchTrace] Registration result - Function: " 
+               << instance_->pytorch_tracing_functions_[i] 
+               << ", Status: " << errors[i] << std::endl;
   }
+
+  LOG(INFO) << "[PyTorchTrace] Resetting trace state" << std::endl;
   instance_->reset("init");
-  std::atexit([] { delete instance_; });
+
+  LOG(INFO) << "[PyTorchTrace] Registering atexit cleanup handler" << std::endl;
+  std::atexit([] { 
+    LOG(INFO) << "[PyTorchTrace] Cleaning up singleton instance" << std::endl;
+    delete instance_; 
+  });
+
+  LOG(INFO) << "[PyTorchTrace] Singleton initialization complete" << std::endl;
 }
 
 bool PyTorchTrace::triggerTrace() {
