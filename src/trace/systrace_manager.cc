@@ -79,8 +79,8 @@ void PyTorchTrace::initSingleton() {
                << ", Status: " << errors[i] << std::endl;
   }
 
-  LOG(INFO) << "[PyTorchTrace] Resetting trace state" << std::endl;
-  instance_->reset("init");
+  //LOG(INFO) << "[PyTorchTrace] Resetting trace state" << std::endl;
+  //instance_->reset("init");
 
   LOG(INFO) << "[PyTorchTrace] Registering atexit cleanup handler" << std::endl;
   std::atexit([] { 
@@ -98,9 +98,9 @@ bool PyTorchTrace::triggerTrace() {
     STLOG(INFO) << "[PyTorchTrace] Reset flag is true, preparing to reset tracing" << std::endl ;
     
     STLOG(INFO) << "[PyTorchTrace] Waiting for all ranks at reset barrier" << std::endl ;
-    util::InterProcessBarrier(config::GlobalConfig::local_world_size,
-                            config::GlobalConfig::local_rank,
-                            "reset_trace_barrier");
+    // util::InterProcessBarrier(config::GlobalConfig::local_world_size,
+    //                         config::GlobalConfig::local_rank,
+    //                         "reset_trace_barrier");
     
     STLOG(INFO) << "[PyTorchTrace] Clearing reset flag" << std::endl ;
     switch_->getObj()->reset_flag = false;
@@ -148,8 +148,8 @@ void PyTorchTrace::reset(const std::string& barrier_name) {
   pytorch_tracing_library_->SwitchTracing(0);
   
   STLOG(INFO) << "[PyTorchTrace] Waiting at barrier: " << barrier_name;
-  util::InterProcessBarrier(config::GlobalConfig::local_world_size,
-                          config::GlobalConfig::local_rank, barrier_name);
+  // util::InterProcessBarrier(config::GlobalConfig::local_world_size,
+  //                         config::GlobalConfig::local_rank, barrier_name);
   
   STLOG(INFO) << "[PyTorchTrace] Reset complete. Current start_dump value: " 
              << switch_->getObj()->start_dump;
@@ -397,8 +397,8 @@ void SysTrace::startWork() {
   
   // Wait for all ranks to start
   STLOG(INFO) << "[SysTrace] Waiting at start work barrier" << std::endl ;
-  util::InterProcessBarrier(config::GlobalConfig::local_world_size,
-                          local_rank, "start_work_barrier");
+  // util::InterProcessBarrier(config::GlobalConfig::local_world_size,
+  //                         local_rank, "start_work_barrier");
   
   STLOG(INFO) << "[SysTrace] Setting should_run flag to true" << std::endl ;
   should_run_.store(true);
