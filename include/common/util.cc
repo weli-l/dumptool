@@ -236,7 +236,7 @@ void setUpGlobalConfig() {
       if (std::filesystem::exists(dev)) {
         GlobalConfig::all_devices.push_back(device_index);
         if (GlobalConfig::local_rank == 0)
-          LOG(INFO) << "[ENV] Found device " << dev;
+          LOG(INFO) << "[ENV] Found device " << dev << std::endl;
       }
     }
     
@@ -250,20 +250,20 @@ void setUpGlobalConfig() {
     if (GlobalConfig::local_world_size != GlobalConfig::all_devices.size()) {
       LOG(WARNING) << "[ENV] local world size(" << GlobalConfig::local_world_size
                 << ") is not equal to found devices("
-                << GlobalConfig::all_devices.size() << ") disabling hook";
+                << GlobalConfig::all_devices.size() << ") disabling hook" << std::endl;
       GlobalConfig::enable = false;
     }
 
     if (!GlobalConfig::enable)
-      LOG(INFO) << "[ENV] Not all devices are used, disable hook";
+      LOG(INFO) << "[ENV] Not all devices are used, disable hook" << std::endl;
     if (GlobalConfig::debug_mode) {
       GlobalConfig::enable = true;
-      LOG(INFO) << "[ENV] Debug mode is on, ignore all checks";
+      LOG(INFO) << "[ENV] Debug mode is on, ignore all checks" << std::endl;
     }
     
     // initialized.store(true, std::memory_order_release);
   } catch (const std::exception& e) {
-    LOG(ERROR) << "Failed to initialize global config: " << e.what();
+    LOG(ERROR) << "Failed to initialize global config: " << e.what() << std::endl;
     throw;
   }
 }
@@ -282,7 +282,7 @@ std::string getUniqueFileNameByCluster(const std::string& suffix) {
     
     return oss.str();
   } catch (const std::exception& e) {
-    LOG(ERROR) << "Failed to generate unique filename: " << e.what();
+    LOG(ERROR) << "Failed to generate unique filename: " << e.what() << std::endl;
     return "error_" + std::to_string(std::time(nullptr)) + suffix;
   }
 }
