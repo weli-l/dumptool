@@ -34,7 +34,7 @@ enum LogLevel {
     else if (level == WARNING) std::cerr << "[WARNING] "; \
     else if (level == ERROR) std::cerr << "[ERROR] "; \
     else if (level == FATAL) std::cerr << "[FATAL] "; \
-    std::cerr
+    std::cerr << std::endl
 
 namespace bip = boost::interprocess;
 
@@ -124,7 +124,7 @@ class ShmType {
       obj_ = shm_area_->construct<T>(obj_name.c_str())();
       obj_->reset();
       LOG(INFO) << "ShmType rank " << local_rank
-                << " create shared memory object " << shm_name_;
+                << " create shared memory object " << shm_name_ << std::endl;
       InterProcessBarrier(local_world_size, local_rank, barrier_name.c_str());
     } else {
       LOG(INFO) << "ShmType rank " << local_rank
@@ -137,7 +137,7 @@ class ShmType {
         obj_ = find.first;
       else {
         // never here
-        LOG(INFO) << "rank " << local_rank << " do not found";
+        LOG(INFO) << "rank " << local_rank << " do not found" << std::endl;
         std::abort();
       }
     }
@@ -223,7 +223,7 @@ class EnvVarRegistry {
           return ss.str();
         },
         default_value);
-    LOG(INFO) << "[ENV] Register ENV " << name << " with default " << str_val;
+    LOG(INFO) << "[ENV] Register ENV " << name << " with default " << str_val << std::endl;
     registry[name] = default_value;
   }
 
@@ -240,7 +240,7 @@ class EnvVarRegistry {
       if (has_env) {
         if constexpr (Print)
           LOG(INFO) << "[ENV] Get " << name << "=" << result
-                    << " from environment";
+                    << " from environment" << std::endl;
         return result;
       }
 
@@ -248,26 +248,26 @@ class EnvVarRegistry {
       if (auto it = pt.find(name); it != pt.not_found()) {
         auto result = pt.get<T>(name);
         if constexpr (Print)
-          LOG(INFO) << "[ENV] Get " << name << "=" << result << " from config";
+          LOG(INFO) << "[ENV] Get " << name << "=" << result << " from config" << std::endl;
         return result;
       }
       if (const T* result_p = std::get_if<T>(&it->second)) {
         if constexpr (Print)
           LOG(INFO) << "[ENV] Get " << name << "=" << *result_p
-                    << " from register default";
+                    << " from register default" << std::endl;
         return *result_p;
       } else {
         // GetEnvVar is a internal api, so you should verify it, it not, we
         // abort
         if constexpr (Print)
-          LOG(FATAL) << "[ENV] Wrong data type in `GetEnvVar`";
+          LOG(FATAL) << "[ENV] Wrong data type in `GetEnvVar`" << std::endl;
       }
     } else {
       auto result = getEnvInner<T>(name, &has_env);
       if (has_env) {
         if constexpr (Print)
           LOG(INFO) << "[ENV] Get " << name << "=" << result
-                    << " from environment";
+                    << " from environment" << std::endl;
         return result;
       }
     }
@@ -275,7 +275,7 @@ class EnvVarRegistry {
     auto result = getDefault<T>();
     if constexpr (Print)
       LOG(WARNING) << "[ENV] Get not register env " << name << "=" << result
-                   << " from default";
+                   << " from default" << std::endl;
     return result;
   }
 
@@ -284,7 +284,7 @@ class EnvVarRegistry {
     auto lib_path = GetEnvVar<std::string>(env_name);
     if (lib_path != STRING_DEFAULT_VALUE) {
       LOG(INFO) << "[ENV] Get lib path for dlopen " << lib_name << "="
-                << lib_path << " from env " << env_name;
+                << lib_path << " from env " << env_name << std::endl;
       return lib_path;
     }
     lib_path = config::GlobalConfig::dlopen_path[lib_name];
@@ -294,7 +294,7 @@ class EnvVarRegistry {
       std::exit(1);
     }
     LOG(INFO) << "[ENV] Get lib path for dlopen " << lib_name << "=" << lib_path
-              << " by default value. You can change it via env " << env_name;
+              << " by default value. You can change it via env " << env_name << std::endl;
 
     return lib_path;
   }
@@ -354,7 +354,7 @@ class EnvVarRegistry {
           boost::property_tree::ini_parser::read_ini(config_path, pt);
         else
           LOG(WARNING) << "XPU_TIMER_CONFIG config " << config_path
-                       << " is not exists, ignore it";
+                       << " is not exists, ignore it" << std::endl;
       }
     }
     return pt;
