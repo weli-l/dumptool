@@ -69,7 +69,7 @@ class SysTrace {
   inline static SysTrace* instance_ = nullptr;
   inline static std::once_flag init_flag_;
   static void initSingleton();
-  std::atomic<bool> should_run_{false};
+  std::atomic<bool> should_run_{true};
   // working thread, exit when process id donw.
   std::thread event_poller_;
   uint64_t loop_count_{1};
