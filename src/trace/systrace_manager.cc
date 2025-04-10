@@ -166,7 +166,18 @@ void PyTorchTrace::dumpPyTorchTracing() {
   STLOG(INFO) << "[PyTorchTrace] Disabling Python tracing" << std::endl ;
   pytorch_tracing_library_->SwitchTracing(0);
 
-  const std::string& dump_path = switch_->getObj()->dump_path;
+  if (!switch_) {
+    STLOG(ERROR) << "[PyTorchTrace] switch_ is null. Cannot proceed with dump.";
+    return;
+  }
+  
+  auto obj = switch_->getObj();
+  if (!obj) {
+    STLOG(ERROR) << "[PyTorchTrace] switch_->getObj() returned null. Cannot proceed with dump.";
+    return;
+  }
+  
+  const std::string& dump_path = obj->dump_path;
   STLOG(INFO) << "[PyTorchTrace] Preparing to dump to path: " << dump_path;
 
   // Setup cleanup guard

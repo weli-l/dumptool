@@ -112,6 +112,7 @@ template <typename T>
 class ShmType {
  public:
   explicit ShmType(int local_world_size, int local_rank, bool main = true) {
+    LOG(INFO) << "enter ShmType rank " << std::endl;
     shm_name_ = std::string(T::ShmName);
     std::string obj_name(T::ObjName);
     size_t total_size = sizeof(T) * 4;
