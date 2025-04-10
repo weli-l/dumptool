@@ -91,58 +91,54 @@ void PyTorchTrace::initSingleton() {
   LOG(INFO) << "[PyTorchTrace] Singleton initialization complete" << std::endl;
 }
 
-// bool PyTorchTrace::triggerTrace() {
-//   STLOG(INFO) << "[PyTorchTrace] Entering triggerTrace()" << std::endl ;
-  
-//   if (switch_->getObj()->reset_flag) {
-//     STLOG(INFO) << "[PyTorchTrace] Reset flag is true, preparing to reset tracing" << std::endl ;
-    
-//     STLOG(INFO) << "[PyTorchTrace] Waiting for all ranks at reset barrier" << std::endl ;
-//     // util::InterProcessBarrier(config::GlobalConfig::local_world_size,
-//     //                         config::GlobalConfig::local_rank,
-//     //                         "reset_trace_barrier");
-    
-//     STLOG(INFO) << "[PyTorchTrace] Clearing reset flag" << std::endl ;
-//     switch_->getObj()->reset_flag = false;
-    
-//     STLOG(INFO) << "[PyTorchTrace] Resetting trace state" << std::endl ;
-//     reset("reset");
-    
-//     STLOG(INFO) << "[PyTorchTrace] Trace reset complete, returning false" << std::endl ;
-//     return false;
-//   }
-  
-//   if (has_trigger_trace_) {
-//     STLOG(INFO) << "[PyTorchTrace] Trace already triggered, returning true" << std::endl ;
-//     return true;
-//   }
-  
-//   if (switch_->getObj()->start_dump == 0) {
-//     STLOG(INFO) << "[PyTorchTrace] start_dump is 0, tracing not enabled, returning false" << std::endl ;
-//     return false;
-//   }
-  
-//   auto now = std::chrono::system_clock::now();
-//   time_t now_time_t = std::chrono::system_clock::to_time_t(now);
-//   int64_t now_timestamp = static_cast<std::int64_t>(now_time_t);
-  
-//   STLOG(INFO) << "[PyTorchTrace] Current timestamp: " << now_timestamp 
-//              << ", Trigger timestamp: " << switch_->getObj()->timestamp;
-  
-//   if (now_timestamp >= switch_->getObj()->timestamp) {
-//     has_trigger_trace_ = true;
-//     pytorch_tracing_library_->SwitchTracing(1);
-//     STLOG(INFO) << "[PyTorchTrace] Triggering trace after timestamp " 
-//                << switch_->getObj()->timestamp;
-//     return true;
-//   }
-  
-//   STLOG(INFO) << "[PyTorchTrace] Not yet time to trigger trace" << std::endl ;
-//   return false;
-// }
-
 bool PyTorchTrace::triggerTrace() {
-  return true;
+  STLOG(INFO) << "[PyTorchTrace] Entering triggerTrace()" << std::endl ;
+  
+  if (switch_->getObj()->reset_flag) {
+    STLOG(INFO) << "[PyTorchTrace] Reset flag is true, preparing to reset tracing" << std::endl ;
+    
+    STLOG(INFO) << "[PyTorchTrace] Waiting for all ranks at reset barrier" << std::endl ;
+    util::InterProcessBarrier(config::GlobalConfig::local_world_size,
+                            config::GlobalConfig::local_rank,
+                            "reset_trace_barrier");
+    
+    STLOG(INFO) << "[PyTorchTrace] Clearing reset flag" << std::endl ;
+    switch_->getObj()->reset_flag = false;
+    
+    STLOG(INFO) << "[PyTorchTrace] Resetting trace state" << std::endl ;
+    reset("reset");
+    
+    STLOG(INFO) << "[PyTorchTrace] Trace reset complete, returning false" << std::endl ;
+    return false;
+  }
+  
+  if (has_trigger_trace_) {
+    STLOG(INFO) << "[PyTorchTrace] Trace already triggered, returning true" << std::endl ;
+    return true;
+  }
+  
+  if (switch_->getObj()->start_dump == 0) {
+    STLOG(INFO) << "[PyTorchTrace] start_dump is 0, tracing not enabled, returning false" << std::endl ;
+    return false;
+  }
+  
+  auto now = std::chrono::system_clock::now();
+  time_t now_time_t = std::chrono::system_clock::to_time_t(now);
+  int64_t now_timestamp = static_cast<std::int64_t>(now_time_t);
+  
+  STLOG(INFO) << "[PyTorchTrace] Current timestamp: " << now_timestamp 
+             << ", Trigger timestamp: " << switch_->getObj()->timestamp;
+  
+  if (now_timestamp >= switch_->getObj()->timestamp) {
+    has_trigger_trace_ = true;
+    pytorch_tracing_library_->SwitchTracing(1);
+    STLOG(INFO) << "[PyTorchTrace] Triggering trace after timestamp " 
+               << switch_->getObj()->timestamp;
+    return true;
+  }
+  
+  STLOG(INFO) << "[PyTorchTrace] Not yet time to trigger trace" << std::endl ;
+  return false;
 }
 
 void PyTorchTrace::reset(const std::string& barrier_name) {
@@ -152,8 +148,8 @@ void PyTorchTrace::reset(const std::string& barrier_name) {
   pytorch_tracing_library_->SwitchTracing(0);
   
   STLOG(INFO) << "[PyTorchTrace] Waiting at barrier: " << barrier_name;
-  // util::InterProcessBarrier(config::GlobalConfig::local_world_size,
-  //                         config::GlobalConfig::local_rank, barrier_name);
+  util::InterProcessBarrier(config::GlobalConfig::local_world_size,
+                          config::GlobalConfig::local_rank, barrier_name);
   
   STLOG(INFO) << "[PyTorchTrace] Reset complete. Current start_dump value: " 
              << switch_->getObj()->start_dump;
@@ -412,8 +408,8 @@ void SysTrace::startWork() {
   
   // Wait for all ranks to start
   STLOG(INFO) << "[SysTrace] Waiting at start work barrier" << std::endl ;
-  // util::InterProcessBarrier(config::GlobalConfig::local_world_size,
-  //                         local_rank, "start_work_barrier");
+  util::InterProcessBarrier(config::GlobalConfig::local_world_size,
+                          local_rank, "start_work_barrier");
   
   STLOG(INFO) << "[SysTrace] Setting should_run flag to true" << std::endl ;
   should_run_.store(true);
