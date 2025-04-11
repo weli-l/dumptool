@@ -12,7 +12,6 @@
 #include <fstream>
 #include <mutex>
 #include <thread>
-#include <iomanip>
 
 #include "constant.h"
 
@@ -22,6 +21,7 @@ namespace util {
 namespace detail {
 
 void ShmSwitch::reset() {
+  // Call the parameterized reset() with default values
   this->reset(std::string(constant::TorchTraceConstant::DEFAULT_TRACE_DUMP_PATH),
               std::string(constant::TorchTraceConstant::DEFAULT_TRACE_DUMP_PATH),
               0);
@@ -44,186 +44,226 @@ void ShmSwitch::reset(const std::string& path, const std::string& oss_args,
 
   start_dump = 1;
   timestamp = stamp;
-  reset_flag = false;
+  reset_flag = false;  // Default reset_flag to false
 }
 
 void ShmSwitch::reset(const std::string& path, const std::string& oss_args,
                       int64_t stamp, bool reset_signal) {
+  // Reuse the 3-parameter version and just set the flag
   this->reset(path, oss_args, stamp);
   reset_flag = reset_signal;
 }
 
 InterProcessBarrierImpl::InterProcessBarrierImpl(std::string name,
-                                               int world_size, int rank)
+                                                 int world_size, int rank)
     : name_(name) {
   constexpr auto kTimeout = std::chrono::seconds(30);
   auto start = std::chrono::steady_clock::now();
-
-  // Ensure cleanup even if exception occurs
-  struct ShmGuard {
-    std::string name;
-    ~ShmGuard() { 
-      bip::shared_memory_object::remove(name.c_str()); 
-    }
-  } guard{name};
-
-  try {
-    bip::managed_shared_memory managed_shm(bip::open_or_create, name.c_str(), 4096);
-    LOG(INFO) << "Rank " << rank << " opened shm: " << name;
-
-    // Initialize current rank's barrier
-    std::string my_barrier_name = "InterProcessBarrierImpl" + std::to_string(rank);
-    auto* my_barrier = managed_shm.find_or_construct<Inner>(my_barrier_name.c_str())(false);
-    LOG(INFO) << "Rank " << rank << " initialized barrier: " << my_barrier_name;
-
-    // Wait for other ranks
-    for (int i = 0; i < world_size; ++i) {
-      std::string target_name = "InterProcessBarrierImpl" + std::to_string(i);
-      while (true) {
-        if (std::chrono::steady_clock::now() - start > kTimeout) {
-          throw std::runtime_error("Timeout waiting for rank " + std::to_string(i));
-        }
-
-        if (managed_shm.find<Inner>(target_name.c_str()).first) {
-          LOG(INFO) << "Rank " << rank << " found barrier: " << target_name;
-          break;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      }
-    }
-
-    // Synchronization logic
-    bool ready = false;
-    while (!ready) {
-      if (std::chrono::steady_clock::now() - start > kTimeout) {
-        throw std::runtime_error("Barrier synchronization timeout");
-      }
-
-      ready = true;
-      for (int i = 0; i < world_size; ++i) {
-        std::string target_name = "InterProcessBarrierImpl" + std::to_string(i);
-        auto bar = managed_shm.find<Inner>(target_name.c_str());
-        ready = ready && bar.first && bar.first->val;
-      }
-      
-      if (!ready) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        managed_shm.find<Inner>(my_barrier_name.c_str()).first->reset(true);
-      }
-    }
-
-    LOG(INFO) << "Rank " << rank << " passed barrier";
-    guard.name.clear(); // Prevent cleanup on success
-  } catch (const std::exception& e) {
-    LOG(ERROR) << "Barrier failed: " << e.what();
-    throw;
+  
+  bip::managed_shared_memory managed_shm(bip::open_or_create, name.c_str(),
+                                         4096);  // one page is enough
+  LOG(INFO) << "Barrier name in shm is " << name << std::endl;
+  LOG(INFO) << "World size " << world_size << std::endl;
+  
+  InterProcessBarrierImpl::Inner*
+      barriers[world_size];  // world size is small, allocate on stack is safe
+  std::string barrier_name("InterProcessBarrierImpl" + std::to_string(rank));
+  
+  auto this_bar =
+      managed_shm.find<InterProcessBarrierImpl::Inner>(barrier_name.c_str());
+  if (this_bar.first) {
+    barriers[rank] = this_bar.first;
+  } else {
+    barriers[rank] = managed_shm.construct<InterProcessBarrierImpl::Inner>(
+        barrier_name.c_str())(false);
   }
+  
+  int index = 0;
+  uint64_t try_count = 0;
+  while (index < world_size) {
+    if (std::chrono::steady_clock::now() - start > kTimeout) {
+      LOG(ERROR) << "Timeout waiting for rank " << index << " to initialize";
+      throw std::runtime_error("Barrier initialization timeout");
+    }
+    
+    std::string name = "InterProcessBarrierImpl" + std::to_string(index);
+    auto this_bar =
+        managed_shm.find<InterProcessBarrierImpl::Inner>(name.c_str());
+    if (this_bar.first) {
+      barriers[index] = this_bar.first;
+      LOG(INFO) << "rank " << rank << " found index is " << index << std::endl;
+      index++;
+    } else {
+      std::this_thread::sleep_for(std::chrono::microseconds(100));
+      try_count++;
+      if (try_count % 10000 == 0) {
+        LOG(INFO) << "Rank " << rank << " waiting for rank " << index
+                  << " to create barrier obj in " << name_;
+      }
+    }
+  }
+  
+  // reset all state
+  for (auto barrier : barriers) barrier->reset(false);
+  
+  try_count = 0;
+  bool ready = false;
+  while (!ready) {
+    if (std::chrono::steady_clock::now() - start > kTimeout) {
+      LOG(ERROR) << "Timeout waiting for barrier synchronization";
+      throw std::runtime_error("Barrier synchronization timeout");
+    }
+    
+    ready = true;
+    for (int i = 0; i < world_size; i++) {
+      ready = barriers[i]->val && ready;
+      if (try_count > 10000 && !barriers[i]->val) {
+        LOG(INFO) << "Waiting rank " << i << " sleep 1s";
+        try_count = 0;
+      }
+    }
+    std::this_thread::sleep_for(std::chrono::microseconds(100));
+    try_count++;
+    // only set state in barrier operation
+    barriers[rank]->reset(true);
+  }
+  LOG(INFO) << "Rank " << rank << " pass barrier " << name_;
 }
 
 InterProcessBarrierImpl::~InterProcessBarrierImpl() {
-  if (!name_.empty()) {
+  try {
     bip::shared_memory_object::remove(name_.c_str());
+  } catch (const std::exception& e) {
+    LOG(ERROR) << "Error removing shared memory: " << e.what();
   }
 }
 
 }  // namespace detail
 
 void InterProcessBarrier(int world_size, int rank, std::string name) {
-  // Cleanup any previous shared memory first
-  bip::shared_memory_object::remove(name.c_str());
-  
   try {
-    LOG(INFO) << "Initializing barrier: " << name 
-             << " (world_size=" << world_size << ", rank=" << rank << ")";
+    LOG(INFO) << "InterProcessBarrier name is " << name;
     detail::InterProcessBarrierImpl(name, world_size, rank);
   } catch (const std::exception& e) {
-    LOG(ERROR) << "Barrier failed: " << e.what();
+    LOG(ERROR) << "InterProcessBarrier failed: " << e.what();
     throw;
   }
 }
 
 int ensureDirExists(const std::string& path) {
-  std::error_code ec;
-  std::filesystem::create_directories(path, ec);
-  if (ec) {
-    LOG(ERROR) << "Failed to create directory " << path << ": " << ec.message();
+  std::filesystem::path dir_path(path);
+  try {
+    if (!std::filesystem::exists(dir_path)) {
+      std::filesystem::create_directories(dir_path);
+    }
+    // Verify directory is actually accessible
+    if (!std::filesystem::is_directory(dir_path)) {
+      LOG(ERROR) << "Path exists but is not a directory: " << path;
+      return 1;
+    }
+  } catch (const std::filesystem::filesystem_error& e) {
+    LOG(ERROR) << "Create dir " << path << " error: " << e.what();
     return 1;
   }
   return 0;
 }
 
 std::vector<std::string> split(const std::string& str,
-                             const std::string& delimiter) {
+                               const std::string& delimiter) {
+  if (delimiter.empty()) {
+    LOG(ERROR) << "Empty delimiter provided to split()";
+    return {str};
+  }
+
   std::vector<std::string> tokens;
-  size_t start = 0, end;
-  while ((end = str.find(delimiter, start)) != std::string::npos) {
+  size_t start = 0;
+  size_t end = str.find(delimiter);
+  while (end != std::string::npos) {
     tokens.push_back(str.substr(start, end - start));
     start = end + delimiter.length();
+    end = str.find(delimiter, start);
   }
-  tokens.push_back(str.substr(start));
+  tokens.push_back(str.substr(start, end));
   return tokens;
 }
 
 namespace config {
-
+/*
+ * ===================================
+ * GlobalConfig
+ * ===================================
+ */
 uint32_t GlobalConfig::rank{0};
 uint32_t GlobalConfig::local_rank{0};
 uint32_t GlobalConfig::world_size{0};
 uint32_t GlobalConfig::local_world_size{0};
-std::string GlobalConfig::job_name;
-std::string GlobalConfig::rank_str;
+std::string GlobalConfig::job_name("");
+std::string GlobalConfig::rank_str("");
 bool GlobalConfig::enable{true};
 std::vector<uint64_t> GlobalConfig::all_devices;
 bool GlobalConfig::debug_mode{false};
 std::unordered_map<std::string, std::string> GlobalConfig::dlopen_path;
+
+// std::atomic<bool> GlobalConfig::initialized{false};
+// std::mutex GlobalConfig::init_mutex;
+
 void setUpConfig() {
   setUpGlobalConfig();
 }
 
 void setUpGlobalConfig() {
+  // if (initialized.load(std::memory_order_acquire)) return;
+  
+  // std::lock_guard<std::mutex> lock(init_mutex);
+  // if (initialized.load(std::memory_order_relaxed)) return;
+
   try {
-    GlobalConfig::world_size = EnvVarRegistry::GetEnvVar<int>("WORLD_SIZE");
     GlobalConfig::rank = EnvVarRegistry::GetEnvVar<int>("RANK");
+    GlobalConfig::job_name =
+        EnvVarRegistry::GetEnvVar<std::string>("ENV_ARGO_WORKFLOW_NAME");
     GlobalConfig::local_rank = EnvVarRegistry::GetEnvVar<int>("LOCAL_RANK");
-    GlobalConfig::local_world_size = EnvVarRegistry::GetEnvVar<int>("LOCAL_WORLD_SIZE");
-    
-    // Validate ranks
-    if (GlobalConfig::rank >= GlobalConfig::world_size) {
-      throw std::runtime_error("Invalid RANK (must be < WORLD_SIZE)");
-    }
-
+    GlobalConfig::local_world_size =
+        EnvVarRegistry::GetEnvVar<int>("LOCAL_WORLD_SIZE");
+    GlobalConfig::world_size = EnvVarRegistry::GetEnvVar<int>("WORLD_SIZE");
     GlobalConfig::rank_str = "[RANK " + std::to_string(GlobalConfig::rank) + "] ";
-    GlobalConfig::debug_mode = EnvVarRegistry::GetEnvVar<bool>("SYSTRACE_DEBUG_MODE");
+    GlobalConfig::debug_mode =
+        EnvVarRegistry::GetEnvVar<bool>("SYSTRACE_DEBUG_MODE");
 
-    // Device detection
     std::string dev_path = "/dev/davinci";
-    for (uint64_t i = 0; i < 16; ++i) {
-      std::filesystem::path dev(dev_path + std::to_string(i));
-      std::error_code ec;
-      if (std::filesystem::exists(dev, ec)) {
-        GlobalConfig::all_devices.push_back(i);
-      } else if (ec) {
-        LOG(WARNING) << "Error checking device " << dev << ": " << ec.message();
+
+    for (uint64_t device_index = 0; device_index < 16; device_index++) {
+      std::filesystem::path dev(dev_path + std::to_string(device_index));
+      if (std::filesystem::exists(dev)) {
+        GlobalConfig::all_devices.push_back(device_index);
+        if (GlobalConfig::local_rank == 0)
+          LOG(INFO) << "[ENV] Found device " << dev << std::endl;
       }
     }
-
-    // Enable/disable logic
+    
     if (GlobalConfig::all_devices.empty()) {
       GlobalConfig::enable = false;
-      LOG(WARNING) << "No devices found, disabling tracing";
-    } else if (GlobalConfig::local_world_size != GlobalConfig::all_devices.size()) {
+      LOG(WARNING) << "[ENV] No devices found, disabling tracing";
+    }
+    
+    std::sort(GlobalConfig::all_devices.begin(), GlobalConfig::all_devices.end());
+
+    if (GlobalConfig::local_world_size != GlobalConfig::all_devices.size()) {
+      LOG(WARNING) << "[ENV] local world size(" << GlobalConfig::local_world_size
+                << ") is not equal to found devices("
+                << GlobalConfig::all_devices.size() << ") disabling hook" << std::endl;
       GlobalConfig::enable = false;
-      LOG(WARNING) << "Device count (" << GlobalConfig::all_devices.size() 
-                  << ") != LOCAL_WORLD_SIZE (" << GlobalConfig::local_world_size 
-                  << "), disabling tracing";
     }
 
+    if (!GlobalConfig::enable)
+      LOG(INFO) << "[ENV] Not all devices are used, disable hook" << std::endl;
     if (GlobalConfig::debug_mode) {
       GlobalConfig::enable = true;
-      LOG(WARNING) << "Debug mode enabled - overriding safety checks";
+      LOG(INFO) << "[ENV] Debug mode is on, ignore all checks" << std::endl;
     }
+    
+    // initialized.store(true, std::memory_order_release);
   } catch (const std::exception& e) {
-    LOG(ERROR) << "Config initialization failed: " << e.what();
+    LOG(ERROR) << "Failed to initialize global config: " << e.what() << std::endl;
     throw;
   }
 }
@@ -233,11 +273,16 @@ void setUpGlobalConfig() {
 std::string getUniqueFileNameByCluster(const std::string& suffix) {
   try {
     std::ostringstream oss;
-    oss << std::setw(5) << std::setfill('0') << config::GlobalConfig::rank
-        << "-" << std::setw(5) << std::setfill('0') << config::GlobalConfig::world_size
-        << suffix;
+    std::string rank_str = std::to_string(config::GlobalConfig::rank);
+    std::string world_size_str = std::to_string(config::GlobalConfig::world_size);
+    
+    // Ensure we have at least 5 digits with leading zeros
+    oss << std::setw(5) << std::setfill('0') << rank_str << "-"
+        << std::setw(5) << std::setfill('0') << world_size_str << suffix;
+    
     return oss.str();
-  } catch (...) {
+  } catch (const std::exception& e) {
+    LOG(ERROR) << "Failed to generate unique filename: " << e.what() << std::endl;
     return "error_" + std::to_string(std::time(nullptr)) + suffix;
   }
 }
@@ -255,18 +300,30 @@ void REGISTER_ENV() {
   };
 
   try {
-    // Required variables
+    validateVarName("ENV_ARGO_WORKFLOW_NAME");
+    REGISTER_ENV_VAR("ENV_ARGO_WORKFLOW_NAME",
+                    EnvVarRegistry::STRING_DEFAULT_VALUE);
+    
+    validateVarName("SYSTRACE_SYMS_FILE");
+    REGISTER_ENV_VAR("SYSTRACE_SYMS_FILE",
+                    util::EnvVarRegistry::STRING_DEFAULT_VALUE);
+    
+    validateVarName("SYSTRACE_LOGGING_DIR");
+    REGISTER_ENV_VAR("SYSTRACE_LOGGING_DIR",
+                    EnvVarRegistry::STRING_DEFAULT_VALUE);
+    
+    REGISTER_ENV_VAR("SYSTRACE_LOGGING_APPEND", false);
     REGISTER_ENV_VAR("RANK", 0);
-    REGISTER_ENV_VAR("WORLD_SIZE", 1);
     REGISTER_ENV_VAR("LOCAL_RANK", 0);
     REGISTER_ENV_VAR("LOCAL_WORLD_SIZE", 1);
-    
-    // Optional variables
+    REGISTER_ENV_VAR("WORLD_SIZE", 1);
     REGISTER_ENV_VAR("SYSTRACE_DEBUG_MODE", false);
-    REGISTER_ENV_VAR("ENV_ARGO_WORKFLOW_NAME", "");
-    REGISTER_ENV_VAR("SYSTRACE_HOST_TRACING_FUNC", "");
+    
+    validateVarName("SYSTRACE_HOST_TRACING_FUNC");
+    REGISTER_ENV_VAR("SYSTRACE_HOST_TRACING_FUNC",
+                    EnvVarRegistry::STRING_DEFAULT_VALUE);
   } catch (const std::exception& e) {
-    LOG(ERROR) << "Environment registration failed: " << e.what();
+    LOG(ERROR) << "Failed to register environment variables: " << e.what();
     throw;
   }
 }
