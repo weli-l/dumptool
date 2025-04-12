@@ -32,7 +32,7 @@ void ShmSwitch::reset(const std::string& path, const std::string& oss_args,
   if (path.length() >= sizeof(dump_path) || 
       oss_args.length() >= sizeof(oss_dump_args)) {
     LOG(ERROR) << "Path or args too long for buffer (max: " 
-               << sizeof(dump_path)-1 << " bytes)";
+               << sizeof(dump_path)-1 << " bytes)" << std::endl;
     return;
   }
   
@@ -82,7 +82,7 @@ InterProcessBarrierImpl::InterProcessBarrierImpl(std::string name,
   uint64_t try_count = 0;
   while (index < world_size) {
     if (std::chrono::steady_clock::now() - start > kTimeout) {
-      LOG(ERROR) << "Timeout waiting for rank " << index << " to initialize";
+      LOG(ERROR) << "Timeout waiting for rank " << index << " to initialize" << std::endl;
       throw std::runtime_error("Barrier initialization timeout");
     }
     
@@ -98,7 +98,7 @@ InterProcessBarrierImpl::InterProcessBarrierImpl(std::string name,
       try_count++;
       if (try_count % 10000 == 0) {
         LOG(INFO) << "Rank " << rank << " waiting for rank " << index
-                  << " to create barrier obj in " << name_;
+                  << " to create barrier obj in " << name_ << std::endl;
       }
     }
   }
@@ -110,7 +110,7 @@ InterProcessBarrierImpl::InterProcessBarrierImpl(std::string name,
   bool ready = false;
   while (!ready) {
     if (std::chrono::steady_clock::now() - start > kTimeout) {
-      LOG(ERROR) << "Timeout waiting for barrier synchronization";
+      LOG(ERROR) << "Timeout waiting for barrier synchronization" << std::endl;
       throw std::runtime_error("Barrier synchronization timeout");
     }
     
@@ -118,7 +118,7 @@ InterProcessBarrierImpl::InterProcessBarrierImpl(std::string name,
     for (int i = 0; i < world_size; i++) {
       ready = barriers[i]->val && ready;
       if (try_count > 10000 && !barriers[i]->val) {
-        LOG(INFO) << "Waiting rank " << i << " sleep 1s";
+        LOG(INFO) << "Waiting rank " << i << " sleep 1s" << std::endl;
         try_count = 0;
       }
     }
@@ -127,14 +127,14 @@ InterProcessBarrierImpl::InterProcessBarrierImpl(std::string name,
     // only set state in barrier operation
     barriers[rank]->reset(true);
   }
-  LOG(INFO) << "Rank " << rank << " pass barrier " << name_;
+  LOG(INFO) << "Rank " << rank << " pass barrier " << name_ << std::endl;
 }
 
 InterProcessBarrierImpl::~InterProcessBarrierImpl() {
   try {
     bip::shared_memory_object::remove(name_.c_str());
   } catch (const std::exception& e) {
-    LOG(ERROR) << "Error removing shared memory: " << e.what();
+    LOG(ERROR) << "Error removing shared memory: " << e.what() << std::endl;
   }
 }
 
@@ -142,10 +142,10 @@ InterProcessBarrierImpl::~InterProcessBarrierImpl() {
 
 void InterProcessBarrier(int world_size, int rank, std::string name) {
   try {
-    LOG(INFO) << "InterProcessBarrier name is " << name;
+    LOG(INFO) << "InterProcessBarrier name is " << name << std::endl;
     detail::InterProcessBarrierImpl(name, world_size, rank);
   } catch (const std::exception& e) {
-    LOG(ERROR) << "InterProcessBarrier failed: " << e.what();
+    LOG(ERROR) << "InterProcessBarrier failed: " << e.what() << std::endl;
     throw;
   }
 }
@@ -158,11 +158,11 @@ int ensureDirExists(const std::string& path) {
     }
     // Verify directory is actually accessible
     if (!std::filesystem::is_directory(dir_path)) {
-      LOG(ERROR) << "Path exists but is not a directory: " << path;
+      LOG(ERROR) << "Path exists but is not a directory: " << path << std::endl;
       return 1;
     }
   } catch (const std::filesystem::filesystem_error& e) {
-    LOG(ERROR) << "Create dir " << path << " error: " << e.what();
+    LOG(ERROR) << "Create dir " << path << " error: " << e.what() << std::endl;
     return 1;
   }
   return 0;
@@ -171,7 +171,7 @@ int ensureDirExists(const std::string& path) {
 std::vector<std::string> split(const std::string& str,
                                const std::string& delimiter) {
   if (delimiter.empty()) {
-    LOG(ERROR) << "Empty delimiter provided to split()";
+    LOG(ERROR) << "Empty delimiter provided to split()" << std::endl;
     return {str};
   }
 
@@ -242,7 +242,7 @@ void setUpGlobalConfig() {
     
     if (GlobalConfig::all_devices.empty()) {
       GlobalConfig::enable = false;
-      LOG(WARNING) << "[ENV] No devices found, disabling tracing";
+      LOG(WARNING) << "[ENV] No devices found, disabling tracing" << std::endl;
     }
     
     std::sort(GlobalConfig::all_devices.begin(), GlobalConfig::all_devices.end());
@@ -323,7 +323,7 @@ void REGISTER_ENV() {
     REGISTER_ENV_VAR("SYSTRACE_HOST_TRACING_FUNC",
                     EnvVarRegistry::STRING_DEFAULT_VALUE);
   } catch (const std::exception& e) {
-    LOG(ERROR) << "Failed to register environment variables: " << e.what();
+    LOG(ERROR) << "Failed to register environment variables: " << e.what() << std::endl;
     throw;
   }
 }

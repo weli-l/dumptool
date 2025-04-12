@@ -1,6 +1,5 @@
 #include <signal.h>
 #include <unistd.h>
-
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/process/extend.hpp>
 #include <filesystem>
@@ -17,23 +16,34 @@ namespace bip = boost::interprocess;
 namespace systrace {
 
 PyTorchTrace& PyTorchTrace::getInstance() {
-  STLOG(INFO) << "[PyTorchTrace] Entering getInstance()";
+  STLOG(INFO) << "[PyTorchTrace] Entering getInstance()" << std::endl;
   
   PyTorchTrace* instance = instance_.load(std::memory_order_acquire);
   if (!instance) {
     std::lock_guard<std::mutex> lock(instance_mutex_);
     instance = instance_.load(std::memory_order_relaxed);
     if (!instance) {
-      STLOG(INFO) << "[PyTorchTrace] Initializing singleton instance";
+      STLOG(INFO) << "[PyTorchTrace] Initializing singleton instance" << std::endl;
       instance = new PyTorchTrace();
       instance_.store(instance, std::memory_order_release);
       
       // Initialize rank and library
       instance->pytorch_trace_.set_rank(config::GlobalConfig::rank);
-      STLOG(INFO) << "[PyTorchTrace] Rank set to: " << config::GlobalConfig::rank;
+      STLOG(INFO) << "[PyTorchTrace] Rank set to: " << config::GlobalConfig::rank << std::endl;
+      
+      // Initialize the switch
+      try {
+        instance->switch_ = std::make_unique<util::ShmSwitch>(
+          config::GlobalConfig::local_world_size + 1,
+          config::GlobalConfig::local_rank, false);
+        STLOG(INFO) << "[PyTorchTrace] Switch initialized successfully" << std::endl;
+      } catch (const std::exception& e) {
+        STLOG(ERROR) << "[PyTorchTrace] Failed to initialize switch: " << e.what() << std::endl;
+        throw;
+      }
       
       instance->pytorch_tracing_library_ = new pytorch_tracing::PyTorchTracingLibrary("libsysTrace.so");
-      STLOG(INFO) << "[PyTorchTrace] Tracing library loaded";
+      STLOG(INFO) << "[PyTorchTrace] Tracing library loaded" << std::endl;
       
       // Register tracing functions
       instance->pytorch_tracing_functions_ = {
@@ -57,18 +67,18 @@ PyTorchTrace& PyTorchTrace::getInstance() {
         for (const auto& func : funcs) {
           instance->pytorch_tracing_functions_.push_back(func);
         }
-        STLOG(INFO) << "[PyTorchTrace] Added " << funcs.size() << " custom tracing functions";
+        STLOG(INFO) << "[PyTorchTrace] Added " << funcs.size() << " custom tracing functions" << std::endl;
       }
       
       std::vector<std::string> errors = instance->pytorch_tracing_library_->Register(instance->pytorch_tracing_functions_);
       for (size_t i = 0; i < instance->pytorch_tracing_functions_.size(); i++) {
         STLOG(INFO) << "[PyTorchTrace] Registration - " 
                    << instance->pytorch_tracing_functions_[i] 
-                   << ": " << errors[i];
+                   << ": " << errors[i] << std::endl;
       }
       
       std::atexit([] {
-        STLOG(INFO) << "[PyTorchTrace] Cleaning up singleton instance";
+        STLOG(INFO) << "[PyTorchTrace] Cleaning up singleton instance" << std::endl;
         delete instance_.load();
       });
     }
@@ -76,18 +86,17 @@ PyTorchTrace& PyTorchTrace::getInstance() {
   
   return *instance;
 }
-
 bool PyTorchTrace::triggerTrace() {
   std::lock_guard<std::mutex> lock(trace_mutex_);
-  STLOG(INFO) << "[PyTorchTrace] Entering triggerTrace()";
+  STLOG(INFO) << "[PyTorchTrace] Entering triggerTrace()" << std::endl;
   
   if (!switch_) {
-    STLOG(INFO) << "[PyTorchTrace] Switch not initialized, skipping trace";
+    STLOG(INFO) << "[PyTorchTrace] Switch not initialized, skipping trace" << std::endl;
     return false;
   }
 
   if (switch_->getObj()->reset_flag) {
-    STLOG(INFO) << "[PyTorchTrace] Reset flag detected, resetting trace state";
+    STLOG(INFO) << "[PyTorchTrace] Reset flag detected, resetting trace state" << std::endl;
     util::InterProcessBarrier(config::GlobalConfig::local_world_size,
                             config::GlobalConfig::local_rank,
                             "reset_trace_barrier");
@@ -97,12 +106,12 @@ bool PyTorchTrace::triggerTrace() {
   }
   
   if (has_trigger_trace_.load()) {
-    STLOG(INFO) << "[PyTorchTrace] Trace already triggered";
+    STLOG(INFO) << "[PyTorchTrace] Trace already triggered" << std::endl;
     return true;
   }
   
   if (switch_->getObj()->start_dump == 0) {
-    STLOG(INFO) << "[PyTorchTrace] Tracing not enabled";
+    STLOG(INFO) << "[PyTorchTrace] Tracing not enabled" << std::endl;
     return false;
   }
   
@@ -113,17 +122,17 @@ bool PyTorchTrace::triggerTrace() {
   if (now_timestamp >= switch_->getObj()->timestamp) {
     has_trigger_trace_.store(true);
     pytorch_tracing_library_->SwitchTracing(1);
-    STLOG(INFO) << "[PyTorchTrace] Trace triggered at timestamp " << now_timestamp;
+    STLOG(INFO) << "[PyTorchTrace] Trace triggered at timestamp " << now_timestamp << std::endl;
     return true;
   }
   
-  STLOG(INFO) << "[PyTorchTrace] Waiting for trace trigger time";
+  STLOG(INFO) << "[PyTorchTrace] Waiting for trace trigger time" << std::endl;
   return false;
 }
 
 void PyTorchTrace::reset(const std::string& barrier_name) {
   std::lock_guard<std::mutex> lock(trace_mutex_);
-  STLOG(INFO) << "[PyTorchTrace] Resetting trace state at barrier: " << barrier_name;
+  STLOG(INFO) << "[PyTorchTrace] Resetting trace state at barrier: " << barrier_name << std::endl;
   
   has_trigger_trace_.store(false);
   pytorch_tracing_library_->SwitchTracing(0);
@@ -132,31 +141,31 @@ void PyTorchTrace::reset(const std::string& barrier_name) {
                           config::GlobalConfig::local_rank, 
                           barrier_name);
   
-  STLOG(INFO) << "[PyTorchTrace] Reset complete";
+  STLOG(INFO) << "[PyTorchTrace] Reset complete" << std::endl;
 }
 
 void PyTorchTrace::dumpPyTorchTracing() {
   std::lock_guard<std::mutex> lock(trace_mutex_);
-  STLOG(INFO) << "[PyTorchTrace] Starting dumpPyTorchTracing";
+  STLOG(INFO) << "[PyTorchTrace] Starting dumpPyTorchTracing" << std::endl;
   
   pytorch_tracing_library_->SwitchTracing(0);
 
   if (!switch_ || !switch_->getObj()) {
-    STLOG(ERROR) << "[PyTorchTrace] Invalid switch state, cannot dump";
+    STLOG(ERROR) << "[PyTorchTrace] Invalid switch state, cannot dump" << std::endl;
     return;
   }
   
   const std::string& dump_path = switch_->getObj()->dump_path;
-  STLOG(INFO) << "[PyTorchTrace] Dump path: " << dump_path;
+  STLOG(INFO) << "[PyTorchTrace] Dump path: " << dump_path << std::endl;
 
   util::ScopeGuard guard([this]() {
     reset("after_dump");
     pytorch_trace_.mutable_pytorch_stages()->Clear();
-    STLOG(INFO) << "[PyTorchTrace] Post-dump cleanup complete";
+    STLOG(INFO) << "[PyTorchTrace] Post-dump cleanup complete" << std::endl;
   });
 
   if (util::ensureDirExists(dump_path)) {
-    STLOG(ERROR) << "[PyTorchTrace] Failed to create dump directory";
+    STLOG(ERROR) << "[PyTorchTrace] Failed to create dump directory" << std::endl;
     return;
   }
 
@@ -176,7 +185,7 @@ void PyTorchTrace::dumpPyTorchTracing() {
     }
     
     STLOG(INFO) << "[PyTorchTrace] Processing " << holders.size() 
-               << " data holders for " << name;
+               << " data holders for " << name << std::endl;
 
     for (auto each_tracing_data : holders) {
       for (uint32_t i = 0; i < each_tracing_data->cur; i++) {
@@ -211,41 +220,41 @@ void PyTorchTrace::dumpPyTorchTracing() {
   }
 
   std::string file_path = dump_path + "/" + util::getUniqueFileNameByCluster(".timeline");
-  STLOG(INFO) << "[PyTorchTrace] Writing timeline to: " << file_path;
+  STLOG(INFO) << "[PyTorchTrace] Writing timeline to: " << file_path << std::endl;
 
   std::ofstream file(file_path, std::ios::binary | std::ios::out);
   if (!file) {
-    STLOG(ERROR) << "[PyTorchTrace] Failed to open timeline file";
+    STLOG(ERROR) << "[PyTorchTrace] Failed to open timeline file" << std::endl;
     return;
   }
   
   std::string binary_message;
   if (!pytorch_trace_.SerializeToString(&binary_message)) {
-    STLOG(ERROR) << "[PyTorchTrace] Failed to serialize timeline";
+    STLOG(ERROR) << "[PyTorchTrace] Failed to serialize timeline" << std::endl;
     return;
   }
   
   file << binary_message;
-  STLOG(INFO) << "[PyTorchTrace] Timeline dump complete";
+  STLOG(INFO) << "[PyTorchTrace] Timeline dump complete" << std::endl;
 }
 
 SysTrace& SysTrace::getInstance() {
-  STLOG(INFO) << "[SysTrace] Getting instance";
+  STLOG(INFO) << "[SysTrace] Getting instance" << std::endl;
   
   SysTrace* instance = instance_.load(std::memory_order_acquire);
   if (!instance) {
     std::lock_guard<std::mutex> lock(instance_mutex_);
     instance = instance_.load(std::memory_order_relaxed);
     if (!instance) {
-      STLOG(INFO) << "[SysTrace] Initializing singleton instance";
+      STLOG(INFO) << "[SysTrace] Initializing singleton instance" << std::endl;
       instance = new SysTrace();
       instance_.store(instance, std::memory_order_release);
       
-      STLOG(INFO) << "[SysTrace] Starting work thread";
+      STLOG(INFO) << "[SysTrace] Starting work thread" << std::endl;
       instance->startWork();
       
       std::atexit([] {
-        STLOG(INFO) << "[SysTrace] Cleaning up instance";
+        STLOG(INFO) << "[SysTrace] Cleaning up instance" << std::endl;
         delete instance_.load();
       });
     }
@@ -255,32 +264,32 @@ SysTrace& SysTrace::getInstance() {
 }
 
 void SysTrace::stopWork() noexcept {
-  STLOG(INFO) << "[SysTrace] Stopping work";
+  STLOG(INFO) << "[SysTrace] Stopping work" << std::endl;
   
   if (!config::GlobalConfig::enable) {
-    STLOG(INFO) << "[SysTrace] Tracing not enabled";
+    STLOG(INFO) << "[SysTrace] Tracing not enabled" << std::endl;
     return;
   }
 
   should_run_.store(false);
   
   if (event_poller_.joinable()) {
-    STLOG(INFO) << "[SysTrace] Joining poller thread";
+    STLOG(INFO) << "[SysTrace] Joining poller thread" << std::endl;
     event_poller_.join();
-    STLOG(INFO) << "[SysTrace] Poller thread stopped";
+    STLOG(INFO) << "[SysTrace] Poller thread stopped" << std::endl;
   }
   
-  STLOG(INFO) << "[SysTrace] Work stopped";
+  STLOG(INFO) << "[SysTrace] Work stopped" << std::endl;
 }
 
 void SysTrace::doWork() {
-  STLOG(INFO) << "[SysTrace] Worker thread started";
+  STLOG(INFO) << "[SysTrace] Worker thread started" << std::endl;
   
   while (should_run_.load()) {
-    STLOG(INFO) << "[SysTrace] Worker loop iteration: " << loop_count_.load();
+    STLOG(INFO) << "[SysTrace] Worker loop iteration: " << loop_count_.load() << std::endl;
     
     if (PyTorchTrace::getInstance().triggerTrace()) {
-      STLOG(INFO) << "[SysTrace] Trace triggered, dumping data";
+      STLOG(INFO) << "[SysTrace] Trace triggered, dumping data" << std::endl;
       PyTorchTrace::getInstance().dumpPyTorchTracing();
     }
     
@@ -288,21 +297,21 @@ void SysTrace::doWork() {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
   
-  STLOG(INFO) << "[SysTrace] Worker thread exiting";
+  STLOG(INFO) << "[SysTrace] Worker thread exiting" << std::endl;
 }
 
 void SysTrace::startWork() {
-  STLOG(INFO) << "[SysTrace] Starting work";
+  STLOG(INFO) << "[SysTrace] Starting work" << std::endl;
   
   config::setUpConfig();
   
   if (!config::GlobalConfig::enable) {
-    STLOG(INFO) << "[SysTrace] Tracing not enabled";
+    STLOG(INFO) << "[SysTrace] Tracing not enabled" << std::endl;
     return;
   }
   
   int local_rank = config::GlobalConfig::local_rank;
-  STLOG(INFO) << "[SysTrace] Local rank: " << local_rank;
+  STLOG(INFO) << "[SysTrace] Local rank: " << local_rank << std::endl;
   setLoggingPath();
 
   // Initialize PyTorch trace
@@ -315,11 +324,11 @@ void SysTrace::startWork() {
   should_run_.store(true);
 
 #ifdef _GNU_SOURCE
-  STLOG(INFO) << "[SysTrace] Starting poller thread";
+  STLOG(INFO) << "[SysTrace] Starting poller thread" << std::endl;
   event_poller_ = std::thread(&SysTrace::doWork, this);
   pthread_setname_np(event_poller_.native_handle(), "systrace_poller");
 #endif
 
-  STLOG(INFO) << "[SysTrace] Work started";
+  STLOG(INFO) << "[SysTrace] Work started" << std::endl;
 }
 } // namespace systrace
