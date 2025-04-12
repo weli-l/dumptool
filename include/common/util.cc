@@ -57,18 +57,13 @@ void ShmSwitch::reset(const std::string& path, const std::string& oss_args,
 InterProcessBarrierImpl::InterProcessBarrierImpl(std::string name,
                                                  int world_size, int rank)
     : name_(name) {
-  constexpr auto kTimeout = std::chrono::seconds(30);
-  auto start = std::chrono::steady_clock::now();
-  
   bip::managed_shared_memory managed_shm(bip::open_or_create, name.c_str(),
                                          4096);  // one page is enough
   LOG(INFO) << "Barrier name in shm is " << name << std::endl;
-  LOG(INFO) << "World size " << world_size << std::endl;
-  
+  LOG(INFO) << "World size " << world_size << " rank " << rank << std::endl;
   InterProcessBarrierImpl::Inner*
       barriers[world_size];  // world size is small, allocate on stack is safe
   std::string barrier_name("InterProcessBarrierImpl" + std::to_string(rank));
-  
   auto this_bar =
       managed_shm.find<InterProcessBarrierImpl::Inner>(barrier_name.c_str());
   if (this_bar.first) {
@@ -77,15 +72,9 @@ InterProcessBarrierImpl::InterProcessBarrierImpl(std::string name,
     barriers[rank] = managed_shm.construct<InterProcessBarrierImpl::Inner>(
         barrier_name.c_str())(false);
   }
-  
   int index = 0;
   uint64_t try_count = 0;
   while (index < world_size) {
-    if (std::chrono::steady_clock::now() - start > kTimeout) {
-      LOG(ERROR) << "Timeout waiting for rank " << index << " to initialize" << std::endl;
-      throw std::runtime_error("Barrier initialization timeout");
-    }
-    
     std::string name = "InterProcessBarrierImpl" + std::to_string(index);
     auto this_bar =
         managed_shm.find<InterProcessBarrierImpl::Inner>(name.c_str());
@@ -96,24 +85,31 @@ InterProcessBarrierImpl::InterProcessBarrierImpl(std::string name,
     } else {
       std::this_thread::sleep_for(std::chrono::microseconds(100));
       try_count++;
-      if (try_count % 10000 == 0) {
-        LOG(INFO) << "Rank " << rank << " waiting for rank " << index
+      if (try_count > 10000 * 10) {
+        LOG(INFO) << "Rank " << rank << " waiting 10s for rank " << index
                   << " to create barrier obj in " << name_ << std::endl;
+        try_count = 0;
       }
     }
   }
-  
   // reset all state
   for (auto barrier : barriers) barrier->reset(false);
-  
   try_count = 0;
   bool ready = false;
+  // clang-format off
+	// https://www.boost.org/doc/libs/1_84_0/doc/html/interprocess/some_basic_explanations.html#interprocess.some_basic_explanations.persistence
+	// Note on Shared Memory Cleanup:
+	// In Boost 1.84.0, shared memory resources (kernel or filesystem level) may not be correctly cleaned up 
+	// if a process exits unexpectedly, despite utilizing RAII for resource management. This can lead to 
+	// scenarios where shared memory resources are not properly initialized upon subsequent process startups.
+	//
+	// Solution for Barrier Synchronization:
+	// To address potential initialization issues, we implement eventual consistency for barrier synchronization. 
+	// Initially, all participating processes (ranks) reset their respective barrier flags to false before entering 
+	// the barrier loop. Within this loop, each rank then independently marks itself as ready. This approach 
+	// ensures robust barrier synchronization even if shared memory initialization is inconsistent.
+  // clang-format on
   while (!ready) {
-    if (std::chrono::steady_clock::now() - start > kTimeout) {
-      LOG(ERROR) << "Timeout waiting for barrier synchronization" << std::endl;
-      throw std::runtime_error("Barrier synchronization timeout");
-    }
-    
     ready = true;
     for (int i = 0; i < world_size; i++) {
       ready = barriers[i]->val && ready;
@@ -129,15 +125,9 @@ InterProcessBarrierImpl::InterProcessBarrierImpl(std::string name,
   }
   LOG(INFO) << "Rank " << rank << " pass barrier " << name_ << std::endl;
 }
-
 InterProcessBarrierImpl::~InterProcessBarrierImpl() {
-  try {
-    bip::shared_memory_object::remove(name_.c_str());
-  } catch (const std::exception& e) {
-    LOG(ERROR) << "Error removing shared memory: " << e.what() << std::endl;
-  }
+  bip::shared_memory_object::remove(name_.c_str());
 }
-
 }  // namespace detail
 
 void InterProcessBarrier(int world_size, int rank, std::string name) {
