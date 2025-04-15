@@ -12,6 +12,7 @@ aclError aclrtLaunchKernel(aclrtFuncHandle funcHandle,
                          size_t argsSize,
                          aclrtStream stream) {
     try {
+        SETUP_DLSYM(aclrtLaunchKernel);
         if (!::systrace::util::config::GlobalConfig::enable)
             return orig_aclrtLaunchKernel(funcHandle, blockDim, argsData, argsSize, stream);
         ::systrace::SysTrace::getInstance();   
