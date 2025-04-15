@@ -4,6 +4,7 @@ project(sysTrace)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(ASCEND_TOOLKIT_PATH "/usr/local/Ascend/ascend-toolkit/latest")
 
 find_package(absl REQUIRED)
 find_package(Python3 REQUIRED COMPONENTS Development)
@@ -17,6 +18,7 @@ add_library(common STATIC
 target_include_directories(common PUBLIC
     ${PROJECT_SOURCE_DIR}/include
     ${Python3_INCLUDE_DIRS}
+    /usr/local/Ascend/ascend-toolkit/latest/include
 )
 
 target_link_libraries(common
@@ -34,6 +36,7 @@ add_library(sysTrace_hook SHARED
     ${PROJECT_SOURCE_DIR}/src/trace/python/py_syshook.c
     ${PROJECT_SOURCE_DIR}/src/trace/python/pytorch_tracing_manager.cc
     ${PROJECT_SOURCE_DIR}/src/trace/python/pytorch_tracing.c
+    ${PROJECT_SOURCE_DIR}/src/ascend/hook.cc
 )
 
 set_target_properties(sysTrace_hook PROPERTIES
@@ -48,18 +51,10 @@ target_link_libraries(sysTrace_hook
     -ldl
 )
 
-add_executable(sysTrace_main
-    ${PROJECT_SOURCE_DIR}/main.cpp
-)
-
-target_include_directories(sysTrace_main PUBLIC
-    ${PROJECT_SOURCE_DIR}/include
-)
-
-target_link_libraries(sysTrace_main
-    sysTrace_hook
+target_link_libraries(sysTrace_hook
     common
     ${Python3_LIBRARIES}
     protobuf::libprotobuf
+    /usr/local/Ascend/ascend-toolkit/latest/lib64/libascendcl.so
     -ldl
 )
