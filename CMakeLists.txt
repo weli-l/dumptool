@@ -50,11 +50,3 @@ target_link_libraries(sysTrace_hook
     protobuf::libprotobuf
     -ldl
 )
-
-target_link_libraries(sysTrace_hook
-    common
-    ${Python3_LIBRARIES}
-    protobuf::libprotobuf
-    /usr/local/Ascend/ascend-toolkit/latest/lib64/libascendcl.so
-    -ldl
-)
