@@ -5,6 +5,12 @@
 extern "C" {
 #endif
 
+__attribute__((constructor)) void init() {
+    std::cout << "[SYSTRACE] Initializing hook" << std::endl;
+    ::systrace::SysTrace::getInstance();
+    std::cout << "[SYSTRACE] SysTrace instance created" << std::endl;
+}
+
 EXPOSE_API 
 aclError aclrtMapMem(void* virPtr, size_t size, size_t offset, 
                     aclrtDrvMemHandle handle, uint64_t flags) {
