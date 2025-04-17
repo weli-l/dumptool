@@ -1,6 +1,5 @@
 #pragma once
 #include <dlfcn.h>
-#include <acl/acl.h>
 
 #include <functional>
 #include <string>
@@ -10,6 +9,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef int aclError;
+typedef void *aclrtStream;
+typedef void* aclrtFuncHandle;
+typedef void* aclrtDrvMemHandle;
 
 typedef aclError (*aclrtMapMemFn)(void*, size_t, size_t, aclrtDrvMemHandle, uint64_t);
 typedef aclError (*aclrtLaunchKernelFn)(aclrtFuncHandle, uint32_t, const void*, size_t, aclrtStream);
