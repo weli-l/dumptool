@@ -36,7 +36,7 @@ class PyTorchTrace {
   bool triggerTrace();
 
  private:
-  inline static std::atomic<PyTorchTrace*> instance_{nullptr};
+  inline static PyTorchTrace* instance_ = nullptr;;
   inline static std::mutex instance_mutex_;
   inline static std::once_flag init_flag_;
 

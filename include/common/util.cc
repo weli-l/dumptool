@@ -74,7 +74,7 @@ InterProcessBarrierImpl::InterProcessBarrierImpl(std::string name,
   }
   int index = 0;
   uint64_t try_count = 0;
-  while (index < world_size) {
+  while (index < world_size - 1) {
     std::string name = "InterProcessBarrierImpl" + std::to_string(index);
     auto this_bar =
         managed_shm.find<InterProcessBarrierImpl::Inner>(name.c_str());
@@ -111,7 +111,7 @@ InterProcessBarrierImpl::InterProcessBarrierImpl(std::string name,
   // clang-format on
   while (!ready) {
     ready = true;
-    for (int i = 0; i < world_size; i++) {
+    for (int i = 0; i < world_size - 1; i++) {
       ready = barriers[i]->val && ready;
       if (try_count > 10000 && !barriers[i]->val) {
         LOG(INFO) << "Waiting rank " << i << " sleep 1s" << std::endl;
