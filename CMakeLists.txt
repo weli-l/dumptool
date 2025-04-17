@@ -6,7 +6,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(ASCEND_TOOLKIT_PATH "/usr/local/Ascend/ascend-toolkit/latest")
 
-find_package(absl REQUIRED)
 find_package(Python3 REQUIRED COMPONENTS Development)
 find_package(Protobuf REQUIRED)
 
@@ -19,11 +18,6 @@ target_include_directories(common PUBLIC
     ${PROJECT_SOURCE_DIR}/include
     ${Python3_INCLUDE_DIRS}
     /usr/local/Ascend/ascend-toolkit/latest/include
-)
-
-target_link_libraries(common
-    absl::base
-    protobuf::libprotobuf
 )
 
 add_subdirectory(protos)
