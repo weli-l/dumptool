@@ -202,58 +202,92 @@ void setUpConfig() {
 }
 
 void setUpGlobalConfig() {
-  // if (initialized.load(std::memory_order_acquire)) return;
-  
-  // std::lock_guard<std::mutex> lock(init_mutex);
-  // if (initialized.load(std::memory_order_relaxed)) return;
+  LOG(INFO) << "Entering setUpGlobalConfig()";
 
   try {
+    LOG(INFO) << "Getting RANK environment variable";
     GlobalConfig::rank = EnvVarRegistry::GetEnvVar<int>("RANK");
-    GlobalConfig::job_name =
-        EnvVarRegistry::GetEnvVar<std::string>("ENV_ARGO_WORKFLOW_NAME");
+    LOG(INFO) << "RANK = " << GlobalConfig::rank;
+
+    LOG(INFO) << "Getting ENV_ARGO_WORKFLOW_NAME environment variable";
+    GlobalConfig::job_name = EnvVarRegistry::GetEnvVar<std::string>("ENV_ARGO_WORKFLOW_NAME");
+    LOG(INFO) << "ENV_ARGO_WORKFLOW_NAME = " << GlobalConfig::job_name;
+
+    LOG(INFO) << "Getting LOCAL_RANK environment variable";
     GlobalConfig::local_rank = EnvVarRegistry::GetEnvVar<int>("LOCAL_RANK");
-    GlobalConfig::local_world_size =
-        EnvVarRegistry::GetEnvVar<int>("LOCAL_WORLD_SIZE");
+    LOG(INFO) << "LOCAL_RANK = " << GlobalConfig::local_rank;
+
+    LOG(INFO) << "Getting LOCAL_WORLD_SIZE environment variable";
+    GlobalConfig::local_world_size = EnvVarRegistry::GetEnvVar<int>("LOCAL_WORLD_SIZE");
+    LOG(INFO) << "LOCAL_WORLD_SIZE = " << GlobalConfig::local_world_size;
+
+    LOG(INFO) << "Getting WORLD_SIZE environment variable";
     GlobalConfig::world_size = EnvVarRegistry::GetEnvVar<int>("WORLD_SIZE");
+    LOG(INFO) << "WORLD_SIZE = " << GlobalConfig::world_size;
+
     GlobalConfig::rank_str = "[RANK " + std::to_string(GlobalConfig::rank) + "] ";
-    GlobalConfig::debug_mode =
-        EnvVarRegistry::GetEnvVar<bool>("SYSTRACE_DEBUG_MODE");
+    LOG(INFO) << "rank_str = " << GlobalConfig::rank_str;
+
+    LOG(INFO) << "Getting SYSTRACE_DEBUG_MODE environment variable";
+    GlobalConfig::debug_mode = EnvVarRegistry::GetEnvVar<bool>("SYSTRACE_DEBUG_MODE");
+    LOG(INFO) << "SYSTRACE_DEBUG_MODE = " << GlobalConfig::debug_mode;
 
     std::string dev_path = "/dev/davinci";
+    LOG(INFO) << "Starting device search in " << dev_path << "0-15";
 
     for (uint64_t device_index = 0; device_index < 16; device_index++) {
       std::filesystem::path dev(dev_path + std::to_string(device_index));
+      LOG(INFO) << "Checking device: " << dev;
       if (std::filesystem::exists(dev)) {
         GlobalConfig::all_devices.push_back(device_index);
-        if (GlobalConfig::local_rank == 0)
-          LOG(INFO) << "[ENV] Found device " << dev << std::endl;
+        LOG(INFO) << "Found device: " << dev;
+        if (GlobalConfig::local_rank == 0) {
+          LOG(INFO) << "[ENV] Found device " << dev;
+        }
+      } else {
+        LOG(INFO) << "Device not found: " << dev;
       }
     }
     
+    LOG(INFO) << "Found " << GlobalConfig::all_devices.size() << " devices";
     if (GlobalConfig::all_devices.empty()) {
       GlobalConfig::enable = false;
-      LOG(WARNING) << "[ENV] No devices found, disabling tracing" << std::endl;
+      LOG(WARNING) << "[ENV] No devices found, disabling tracing";
+    } else {
+      LOG(INFO) << "Device list:";
+      for (auto dev : GlobalConfig::all_devices) {
+        LOG(INFO) << "  " << dev_path << dev;
+      }
     }
     
     std::sort(GlobalConfig::all_devices.begin(), GlobalConfig::all_devices.end());
+    LOG(INFO) << "Sorted device list:";
+    for (auto dev : GlobalConfig::all_devices) {
+      LOG(INFO) << "  " << dev_path << dev;
+    }
 
+    LOG(INFO) << "Comparing local_world_size (" << GlobalConfig::local_world_size 
+              << ") with found devices (" << GlobalConfig::all_devices.size() << ")";
     if (GlobalConfig::local_world_size != GlobalConfig::all_devices.size()) {
       LOG(WARNING) << "[ENV] local world size(" << GlobalConfig::local_world_size
                 << ") is not equal to found devices("
-                << GlobalConfig::all_devices.size() << ") disabling hook" << std::endl;
+                << GlobalConfig::all_devices.size() << ") disabling hook";
       GlobalConfig::enable = false;
     }
 
-    if (!GlobalConfig::enable)
-      LOG(INFO) << "[ENV] Not all devices are used, disable hook" << std::endl;
+    LOG(INFO) << "Current enable flag: " << GlobalConfig::enable;
+    if (!GlobalConfig::enable) {
+      LOG(INFO) << "[ENV] Not all devices are used, disable hook";
+    }
     if (GlobalConfig::debug_mode) {
       GlobalConfig::enable = true;
-      LOG(INFO) << "[ENV] Debug mode is on, ignore all checks" << std::endl;
+      LOG(INFO) << "[ENV] Debug mode is on, ignore all checks";
     }
     
-    // initialized.store(true, std::memory_order_release);
+    LOG(INFO) << "Final enable flag: " << GlobalConfig::enable;
+    LOG(INFO) << "Exiting setUpGlobalConfig() successfully";
   } catch (const std::exception& e) {
-    LOG(ERROR) << "Failed to initialize global config: " << e.what() << std::endl;
+    LOG(ERROR) << "Failed to initialize global config: " << e.what();
     throw;
   }
 }
