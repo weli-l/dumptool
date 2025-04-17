@@ -58,7 +58,7 @@ static void addTracingData(int name, const char* func_name);
 static int profiler(PyObject* obj, PyFrameObject* frame, int what,
                     PyObject* arg);
 
-void setSysHook();
+// void setSysHook();
 
 static void capture_stack(PyFrameObject* frame, PyTorchTracingData* trace_data) {
     PyFrameObject* current = frame;
@@ -409,7 +409,7 @@ void systrace_register_tracing(const char** names, int count, char** errors) {
   }
   PyGILState_STATE gstate = PyGILState_Ensure();
   // register syshook first
-  setSysHook();
+  // setSysHook();
   // allocate PyCodeObject for each function
   // +1 is for gc, other python call from 1
   tracing_data_count = count;

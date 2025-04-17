@@ -229,7 +229,8 @@ class EnvVarRegistry {
   }
 
   template <typename T, bool Print = true>
-  static T GetEnvVar(const std::string& name) {
+  static T GetEnvVar(const std::string& name) { 
+    std::cout << "[ENV] GetEnvVar " << name << std::endl;
     auto& registry = GetRegistry();
     bool has_env = true;
     // if has register env, we get env as below
@@ -245,13 +246,13 @@ class EnvVarRegistry {
         return result;
       }
 
-      auto& pt = GetPtree();
-      if (auto it = pt.find(name); it != pt.not_found()) {
-        auto result = pt.get<T>(name);
-        if constexpr (Print)
-          LOG(INFO) << "[ENV] Get " << name << "=" << result << " from config" << std::endl;
-        return result;
-      }
+      // auto& pt = GetPtree();
+      // if (auto it = pt.find(name); it != pt.not_found()) {
+      //   auto result = pt.get<T>(name);
+      //   if constexpr (Print)
+      //     LOG(INFO) << "[ENV] Get " << name << "=" << result << " from config" << std::endl;
+      //   return result;
+      // }
       if (const T* result_p = std::get_if<T>(&it->second)) {
         if constexpr (Print)
           LOG(INFO) << "[ENV] Get " << name << "=" << *result_p
@@ -343,23 +344,23 @@ class EnvVarRegistry {
     return registry;
   }
 
-  static boost::property_tree::ptree& GetPtree() {
-    static boost::property_tree::ptree pt;
-    static bool pt_init_flag = false;
+  // static boost::property_tree::ptree& GetPtree() {
+  //   static boost::property_tree::ptree pt;
+  //   static bool pt_init_flag = false;
 
-    if (!pt_init_flag) {
-      pt_init_flag = true;
-      const char* config_path = std::getenv("XPU_TIMER_CONFIG");
-      if (config_path && config_path != EnvVarRegistry::STRING_DEFAULT_VALUE) {
-        if (std::filesystem::exists(config_path))
-          boost::property_tree::ini_parser::read_ini(config_path, pt);
-        else
-          LOG(WARNING) << "XPU_TIMER_CONFIG config " << config_path
-                       << " is not exists, ignore it" << std::endl;
-      }
-    }
-    return pt;
-  }
+  //   if (!pt_init_flag) {
+  //     pt_init_flag = true;
+  //     const char* config_path = std::getenv("XPU_TIMER_CONFIG");
+  //     if (config_path && config_path != EnvVarRegistry::STRING_DEFAULT_VALUE) {
+  //       if (std::filesystem::exists(config_path))
+  //         boost::property_tree::ini_parser::read_ini(config_path, pt);
+  //       else
+  //         LOG(WARNING) << "XPU_TIMER_CONFIG config " << config_path
+  //                      << " is not exists, ignore it" << std::endl;
+  //     }
+  //   }
+  //   return pt;
+  // }
 };
 
 #define REGISTER_ENV_VAR(name, value)                \
