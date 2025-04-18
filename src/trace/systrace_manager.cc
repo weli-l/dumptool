@@ -100,15 +100,15 @@ void PyTorchTrace::initSingleton() {
   STLOG(INFO) << "[PyTorchTrace] Rank set to: " << config::GlobalConfig::rank << std::endl;
   
   // Initialize the switch
-  try {
-    instance_->switch_ = std::make_unique<util::ShmSwitch>(
-      config::GlobalConfig::local_world_size,
-      config::GlobalConfig::local_rank, false);
-    STLOG(INFO) << "[PyTorchTrace] Switch initialized successfully" << std::endl;
-  } catch (const std::exception& e) {
-    STLOG(ERROR) << "[PyTorchTrace] Failed to initialize switch: " << e.what() << std::endl;
-    throw;
-  }
+  // try {
+  //   instance_->switch_ = std::make_unique<util::ShmSwitch>(
+  //     config::GlobalConfig::local_world_size,
+  //     config::GlobalConfig::local_rank, false);
+  //   STLOG(INFO) << "[PyTorchTrace] Switch initialized successfully" << std::endl;
+  // } catch (const std::exception& e) {
+  //   STLOG(ERROR) << "[PyTorchTrace] Failed to initialize switch: " << e.what() << std::endl;
+  //   throw;
+  // }
   
   instance_->pytorch_tracing_library_ = new pytorch_tracing::PyTorchTracingLibrary("libsysTrace.so");
   STLOG(INFO) << "[PyTorchTrace] Tracing library loaded" << std::endl;
@@ -378,6 +378,8 @@ void SysTrace::startWork() {
 #ifdef _GNU_SOURCE
   STLOG(INFO) << "[SysTrace] Starting poller thread" << std::endl;
   event_poller_ = std::thread(&SysTrace::doWork, this);
+  event_poller_.detach();
+  STLOG(INFO) << "[SysTrace] Poller thread detached" << std::endl;
   pthread_setname_np(event_poller_.native_handle(), "systrace_poller");
 #endif
 
