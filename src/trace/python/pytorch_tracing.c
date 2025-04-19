@@ -44,7 +44,7 @@ static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 static TracingData* pytorch_tracing_data_array = NULL;
 
 static TracingFunction* pytorch_tracing_func_map = NULL;
-static int start_tracing = 0;
+static int start_tracing = 1;
 static int tracing_data_count = 0;
 
 static int runPyTorchCodeGetAddress(const char* input, char** error_message,
@@ -360,7 +360,6 @@ PyTorchTracingDataArray* systrace_get_partial_pytorch_tracing_data_array(
 
 void systrace_switch_pytorch_tracing(int set_start_tracing) {
   start_tracing = set_start_tracing;
-  printf("Set python tracing to %d\n", start_tracing);
 }
 
 int64_t systrace_get_pytorch_tracing_count(int name) {
