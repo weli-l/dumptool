@@ -192,9 +192,9 @@ void PyTorchTrace::reset(const std::string& barrier_name) {
   has_trigger_trace_.store(false);
   pytorch_tracing_library_->SwitchTracing(0);
   
-  util::InterProcessBarrier(config::GlobalConfig::local_world_size,
-                          config::GlobalConfig::local_rank, 
-                          barrier_name);
+  // util::InterProcessBarrier(config::GlobalConfig::local_world_size,
+  //                         config::GlobalConfig::local_rank, 
+  //                         barrier_name);
   
   STLOG(INFO) << "[PyTorchTrace] Reset complete" << std::endl;
 }
@@ -277,7 +277,7 @@ void PyTorchTrace::dumpPyTorchTracing() {
   std::string file_path = dump_path + "/" + util::getUniqueFileNameByCluster(".timeline");
   // STLOG(INFO) << "[PyTorchTrace] Writing timeline to: " << file_path << std::endl;
 
-  std::ofstream file(file_path, std::ios::binary | std::ios::out);
+  std::ofstream file(file_path, std::ios::binary | std::ios::out | std::ios::app);
   if (!file) {
     // STLOG(ERROR) << "[PyTorchTrace] Failed to open timeline file" << std::endl;
     return;
