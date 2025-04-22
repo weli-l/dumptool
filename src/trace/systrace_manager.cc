@@ -104,13 +104,16 @@ void PyTorchTrace::dumpPyTorchTracing() {
         trace->set_stage_id(each_tracing_data->data[i].count);
         trace->set_stage_type(name);
         
-        std::string combined_stack;
-        for (uint32_t j = 0; j < each_tracing_data->data[i].stack_depth; j++) {
-          if (!combined_stack.empty()) combined_stack += "|";
-          combined_stack += each_tracing_data->data[i].stack[j];
+        if (each_tracing_data->data[i].stack_depth > 0) {
+          trace->mutable_stack_frames()->Reserve(each_tracing_data->data[i].stack_depth);
+          
+          for (int j = 0; j < each_tracing_data->data[i].stack_depth; j++) {
+            if (each_tracing_data->data[i].stack_info[j][0] != '\0') {
+              trace->add_stack_frames(each_tracing_data->data[i].stack_info[j]);
+            }
+          }
         }
-        trace->add_stack_frames()->assign(combined_stack);
-        
+
         if (each_tracing_data->data[i].type == PAYLOAD_GC) {
           hook::GcDebugData* gc_debug = trace->mutable_gc_debug();
           gc_debug->set_collected(each_tracing_data->data[i].payload.gc_debug[0]);

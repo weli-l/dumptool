@@ -28,8 +28,8 @@ typedef struct {
   uint32_t count;
   Payload payload;
   PayloadType type;
-  char stack[MAX_STACK_DEPTH][MAX_STACK_FRAME_LENGTH]; // 二维数组存储堆栈
-  int stack_depth;                               // 实际堆栈深度
+  char stack_info[MAX_STACK_DEPTH][256];
+  int stack_depth;
 } PyTorchTracingData;
 
 typedef struct {

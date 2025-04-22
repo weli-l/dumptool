@@ -60,39 +60,50 @@ static int profiler(PyObject* obj, PyFrameObject* frame, int what,
 
 // void setSysHook();
 
-static void capture_stack(PyFrameObject* frame, PyTorchTracingData* trace_data) {
-    PyFrameObject* current = frame;
-    int depth = 0;
+// static void capture_stack(PyFrameObject* frame, PyTorchTracingData* trace_data) {
+//     PyFrameObject* current = frame;
+//     int depth = 0;
     
-    // 清空原有堆栈
-    trace_data->stack_depth = 0;
-    memset(trace_data->stack, 0, sizeof(trace_data->stack));
+//     // 清空原有堆栈
+//     trace_data->stack_depth = 0;
+//     memset(trace_data->stack, 0, sizeof(trace_data->stack));
 
-    while (current != NULL && depth < MAX_STACK_DEPTH) {
-        PyCodeObject* code = PyFrame_GetCode(current);
-        if (!code) break;
+//     while (current != NULL && depth < MAX_STACK_DEPTH) {
+//         PyCodeObject* code = PyFrame_GetCode(current);
+//         if (!code) break;
 
-        // 安全获取帧信息
-        const char* filename = PyUnicode_AsUTF8(code->co_filename);
-        const char* funcname = PyUnicode_AsUTF8(code->co_name);
-        int lineno = PyFrame_GetLineNumber(current);
+//         // 安全获取帧信息
+//         const char* filename = PyUnicode_AsUTF8(code->co_filename);
+//         const char* funcname = PyUnicode_AsUTF8(code->co_name);
+//         int lineno = PyFrame_GetLineNumber(current);
 
-        // 格式化帧信息
-        snprintf(trace_data->stack[depth], MAX_STACK_FRAME_LENGTH,
-                "%s:%d (%s)",
-                filename ? filename : "unknown",
-                lineno,
-                funcname ? funcname : "unknown");
+//         // 格式化帧信息
+//         snprintf(trace_data->stack[depth], MAX_STACK_FRAME_LENGTH,
+//                 "%s:%d (%s)",
+//                 filename ? filename : "unknown",
+//                 lineno,
+//                 funcname ? funcname : "unknown");
 
-        Py_DECREF(code);
-        //current = current->f_back;
-        PyFrameObject *back = PyFrame_GetBack(current);
-        Py_XDECREF(current);  
-        current = back;
-        depth++;
-    }
+//         Py_DECREF(code);
+//         //current = current->f_back;
+//         PyFrameObject *back = PyFrame_GetBack(current);
+//         Py_XDECREF(current);  
+//         current = back;
+//         depth++;
+//     }
     
-    trace_data->stack_depth = depth;
+//     trace_data->stack_depth = depth;
+// }
+static void capture_stack(PyFrameObject* frame, PyTorchTracingData* trace_entry) {
+  int depth = 0;
+  while (frame && depth < MAX_STACK_DEPTH) {
+      snprintf(trace_entry->stack_info[depth], 256, "%s@%s:%d",
+               PyUnicode_AsUTF8(frame->f_code->co_name),
+               PyUnicode_AsUTF8(frame->f_code->co_filename),
+               PyFrame_GetLineNumber(frame));
+      frame = frame->f_back;
+      depth++;
+  }
 }
 
 uint64_t getMicrosecondTimestamp() {
@@ -127,6 +138,7 @@ static int profiler(PyObject* obj, PyFrameObject* frame, int what,
       curr_data = tracing_data->curr_data;
     }
     curr_data->data[curr_data->cur].start = getMicrosecondTimestamp();
+    capture_stack(frame, &curr_data->data[curr_data->cur]);
     
     pthread_mutex_unlock(&mutex);
   } else if (what == PyTrace_RETURN) {
