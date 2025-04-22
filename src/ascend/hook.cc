@@ -50,7 +50,7 @@ EXPOSE_API aclError aclrtMapMem(void* virPtr, size_t size, size_t offset,
         std::cout << "[Hook] successfully hooked aclrtMapMem func" << std::endl;
     }
     
-    // Add any pre-processing or tracing here if needed
+    ::systrace::SysTrace::getInstance();
     return orig_aclrtMapMem(virPtr, size, offset, handle, flags);
 }
 
@@ -73,7 +73,7 @@ EXPOSE_API aclError aclrtLaunchKernel(aclrtFuncHandle func, int workDim, void** 
         std::cout << "[Hook] successfully hooked aclrtLaunchKernel func" << std::endl;
     }
     
-    // Add any pre-processing or tracing here if needed
+    ::systrace::SysTrace::getInstance();
     return orig_aclrtLaunchKernel(func, workDim, workGroup, localWorkSize, stream, event, config);
 }
 

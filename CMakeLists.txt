@@ -25,7 +25,6 @@ add_library(sysTrace_hook SHARED
     ${PROJECT_SOURCE_DIR}/src/trace/systrace_manager.cc
     ${PROJECT_SOURCE_DIR}/src/trace/library_loader.cc
     ${PROJECT_SOURCE_DIR}/src/trace/python/pytorch_tracing_loader.cc
-    ${PROJECT_SOURCE_DIR}/src/trace/python/py_syshook.c
     ${PROJECT_SOURCE_DIR}/src/trace/python/pytorch_tracing_manager.cc
     ${PROJECT_SOURCE_DIR}/src/trace/python/pytorch_tracing.c
     ${PROJECT_SOURCE_DIR}/src/ascend/hook.cc

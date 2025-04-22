@@ -10,7 +10,6 @@ namespace systrace {
     }
 
     void LibraryLoader::LoadLibrary() {
-        LOG(INFO) << "Loading library: " << library_path_;
         handle_ = dlopen(library_path_.c_str(), RTLD_LAZY);
         if (!handle_) {
             STLOG(WARNING) << "Failed to load library: " << dlerror();
