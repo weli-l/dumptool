@@ -11,6 +11,7 @@
 
 #include "systrace_manager.h"
 #include "../../include/common/logging.h"
+#include "../../include/common/constant.h"
 
 namespace bip = boost::interprocess;
 namespace systrace {
@@ -72,8 +73,6 @@ void PyTorchTrace::reset(const std::string& barrier_name) {
 }
 
 void PyTorchTrace::dumpPyTorchTracing() {
-  pytorch_tracing_library_->SwitchTracing(0);
-
   const std::string& dump_path = "/root";
 
   if (util::ensureDirExists(dump_path)) {
@@ -177,17 +176,17 @@ void SysTrace::stopWork() noexcept {
 }
 
 void SysTrace::doWork() {
-  
   while (should_run_.load()) {
-    
-    if (PyTorchTrace::getInstance().triggerTrace()) {
-      PyTorchTrace::getInstance().dumpPyTorchTracing();
+    if (loop_count_.fetch_add(1) % constant::TorchTraceConstant::DEFAULT_TRACE_COUNT== 0) {
+      if (PyTorchTrace::getInstance().triggerTrace()) {
+        PyTorchTrace::getInstance().dumpPyTorchTracing();
+      }
     }
-    
-    loop_count_.fetch_add(1);
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
   
+  if (PyTorchTrace::getInstance().triggerTrace()) {
+    PyTorchTrace::getInstance().dumpPyTorchTracing();
+  }
 }
 
 void SysTrace::startWork() {

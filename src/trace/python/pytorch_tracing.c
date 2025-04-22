@@ -127,7 +127,6 @@ static int profiler(PyObject* obj, PyFrameObject* frame, int what,
       curr_data = tracing_data->curr_data;
     }
     curr_data->data[curr_data->cur].start = getMicrosecondTimestamp();
-    capture_stack(frame, &curr_data->data[curr_data->cur]);
     
     pthread_mutex_unlock(&mutex);
   } else if (what == PyTrace_RETURN) {

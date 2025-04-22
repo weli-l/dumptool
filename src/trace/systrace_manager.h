@@ -26,23 +26,20 @@ class PyGcLibrary;
 
 class PyTorchTrace {
  public:
-  // default trace events, not configurable. 1000 events of matmul and nccl is
-  // enough.
   PyTorchTrace(const PyTorchTrace&) = delete;
   PyTorchTrace& operator=(const PyTorchTrace&) = delete;
   static PyTorchTrace& getInstance();
 
   void dumpPyTorchTracing();
+  void dumpPyTorchTracing(bool incremental, bool async);
   bool triggerTrace();
 
  private:
-  inline static PyTorchTrace* instance_ = nullptr;;
+  inline static PyTorchTrace* instance_ = nullptr;
   inline static std::mutex instance_mutex_;
   inline static std::once_flag init_flag_;
 
-  // all traces for timeline
   hook::Pytorch pytorch_trace_;
-  
   std::atomic<bool> has_trigger_trace_{false};
   std::unique_ptr<util::ShmSwitch> switch_;
   std::mutex trace_mutex_;
@@ -75,7 +72,7 @@ class SysTrace {
   static void initSingleton();
   
   std::atomic<bool> should_run_{true};
-  std::atomic<uint64_t> loop_count_{1};
+  std::atomic<uint64_t> loop_count_{0};
   std::thread event_poller_;
   
   void stopWork() noexcept;
