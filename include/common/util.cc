@@ -209,9 +209,9 @@ void setUpGlobalConfig() {
     GlobalConfig::rank = EnvVarRegistry::GetEnvVar<int>("RANK");
     LOG(INFO) << "RANK = " << GlobalConfig::rank << std::endl;
 
-    // LOG(INFO) << "Getting ENV_ARGO_WORKFLOW_NAME environment variable" << std::endl;
-    // GlobalConfig::job_name = EnvVarRegistry::GetEnvVar<std::string>("ENV_ARGO_WORKFLOW_NAME");
-    // LOG(INFO) << "ENV_ARGO_WORKFLOW_NAME = " << GlobalConfig::job_name << std::endl;
+    LOG(INFO) << "Getting ENV_ARGO_WORKFLOW_NAME environment variable" << std::endl;
+    GlobalConfig::job_name = EnvVarRegistry::GetEnvVar<std::string>("ENV_ARGO_WORKFLOW_NAME");
+    LOG(INFO) << "ENV_ARGO_WORKFLOW_NAME = " << GlobalConfig::job_name << std::endl;
 
     LOG(INFO) << "Getting LOCAL_RANK environment variable" << std::endl;
     GlobalConfig::local_rank = EnvVarRegistry::GetEnvVar<int>("LOCAL_RANK");
@@ -225,8 +225,8 @@ void setUpGlobalConfig() {
     GlobalConfig::world_size = EnvVarRegistry::GetEnvVar<int>("WORLD_SIZE");
     LOG(INFO) << "WORLD_SIZE = " << GlobalConfig::world_size << std::endl;
 
-    // GlobalConfig::rank_str = "[RANK " + std::to_string(GlobalConfig::rank) + "] ";
-    // LOG(INFO) << "rank_str = " << GlobalConfig::rank_str << std::endl;
+    GlobalConfig::rank_str = "[RANK " + std::to_string(GlobalConfig::rank) + "] ";
+    LOG(INFO) << "rank_str = " << GlobalConfig::rank_str << std::endl;
 
     LOG(INFO) << "Getting SYSTRACE_DEBUG_MODE environment variable" << std::endl;
     GlobalConfig::debug_mode = EnvVarRegistry::GetEnvVar<bool>("SYSTRACE_DEBUG_MODE");
