@@ -59,6 +59,7 @@ class SysTrace {
  public:
   SysTrace(const SysTrace&) = delete;
   SysTrace& operator=(const SysTrace&) = delete;
+  explicit SysTrace(MSPTITracker& tracker) : tracker_(tracker) {};
 
   static SysTrace& getInstance();
   

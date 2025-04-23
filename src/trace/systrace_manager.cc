@@ -160,11 +160,11 @@ SysTrace& SysTrace::getInstance() {
   
   SysTrace* instance = instance_.load(std::memory_order_acquire);
   if (!instance) {
-    static auto& tracker = MSPTITracker::getInstance();
+    static auto tracker = MSPTITracker::getInstance();
     std::lock_guard<std::mutex> lock(instance_mutex_);
     instance = instance_.load(std::memory_order_relaxed);
     if (!instance) {
-      instance = new SysTrace();
+      instance = new SysTrace(tracker);
       instance_.store(instance, std::memory_order_release);
       
       instance->startWork();
