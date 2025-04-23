@@ -86,6 +86,10 @@ void PyTorchTrace::dumpPyTorchTracing() {
     return;
   }
 
+  pytorch_trace_.set_rank(config::GlobalConfig::local_rank);
+  pytorch_trace_.set_step_id(1);
+  pytorch_trace_.set_comm("default_task");
+
   for (size_t name_index = 0; name_index < pytorch_tracing_functions_.size(); name_index++) {
     std::vector<PyTorchTracingDataArray*> holders;
     const std::string& name = pytorch_tracing_functions_[name_index];
