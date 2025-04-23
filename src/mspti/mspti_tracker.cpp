@@ -8,15 +8,14 @@
 #include "json_file_writer.h"
 #include "atomic"
 
-constexpr size_t KB = 1*1024;
-constexpr size_t MB = 1*1024*KB;
+constexpr size_t KB = 1 * 1024;
+constexpr size_t MB = 1 * 1024 * KB;
+
 std::mutex MSPTITracker::mtx;
 std::atomic<int> MSPTITracker::requestedCount(0);
 MSPTIHcclFileWriter MSPTITracker::hcclFileWriter("hccl_activity.json");
-
-static MSPTITracker *tracker = nullptr;
-
-static std::atomic<bool> tracker_initialized;
+std::atomic<bool> MSPTITracker::tracker_initialized(false);
+MSPTITracker* MSPTITracker::tracker = nullptr;
 
 void MSPTITracker::UserBufferRequest(uint8_t **buffer, size_t *size, size_t *maxNumRecords) {
     std::unique_lock<std::mutex> lock(mtx);
@@ -47,29 +46,4 @@ void MSPTITracker::UserBufferComplete(uint8_t *buffer, size_t size, size_t valid
         } while (1);
     }
     free(buffer);
-}
-
-__attribute__((constructor)) void preload_init() {
-    std::cout << "Logging initialized from preloaded library." << std::endl;
-    if (!tracker_initialized.load()) {
-        tracker = new MSPTITracker();
-        tracker_initialized.store(true);
-        msptiSubscribe(tracker->getSubscriber(), nullptr, nullptr);
-        msptiActivityRegisterCallbacks(MSPTITracker::UserBufferRequest, MSPTITracker::UserBufferComplete);
-        msptiActivityEnable(MSPTI_ACTIVITY_KIND_MARKER);
-    }else{
-        std::cout<< "no tracker!!!!!!" << std::endl;
-    }
-}
-
-__attribute__((destructor)) void preload_fini() {
-    if (tracker_initialized.load()) {
-        msptiActivityDisable(MSPTI_ACTIVITY_KIND_MARKER);
-        msptiActivityFlushAll(1);
-        tracker->finish();
-        msptiUnsubscribe(*tracker->getSubscriber());
-        delete tracker;
-        tracker = nullptr;
-        tracker_initialized.store(false);
-    }
 }
