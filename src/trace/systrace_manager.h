@@ -68,6 +68,8 @@ class SysTrace {
   inline static std::atomic<SysTrace*> instance_{nullptr};
   inline static std::mutex instance_mutex_;
   inline static std::once_flag init_flag_;
+  std::chrono::steady_clock::time_point sampling_start_;
+  bool sampling_active_ = false;
   
   static void initSingleton();
   

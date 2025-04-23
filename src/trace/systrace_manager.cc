@@ -74,6 +74,12 @@ void PyTorchTrace::reset(const std::string& barrier_name) {
 
 void PyTorchTrace::dumpPyTorchTracing() {
   const std::string& dump_path = "/root";
+  const char* dump_gc_env = std::getenv("ENABLE_PYTORCH_GC_DATA");
+  const char* dump_stack_env = std::getenv("ENABLE_PYTORCH_STACK_DATA");
+  
+  bool dump_gc = (dump_gc_env != nullptr && std::string(dump_gc_env) == "1");
+  bool dump_stack = (dump_stack_env != nullptr && std::string(dump_stack_env) == "1");
+
 
   if (util::ensureDirExists(dump_path)) {
     STLOG(ERROR) << "[PyTorchTrace] Failed to create dump directory" << std::endl;
@@ -104,7 +110,7 @@ void PyTorchTrace::dumpPyTorchTracing() {
         trace->set_stage_id(each_tracing_data->data[i].count);
         trace->set_stage_type(name);
         
-        if (each_tracing_data->data[i].stack_depth > 0) {
+        if (dump_stack && each_tracing_data->data[i].stack_depth > 0) {
           trace->mutable_stack_frames()->Reserve(each_tracing_data->data[i].stack_depth);
           
           for (int j = 0; j < each_tracing_data->data[i].stack_depth; j++) {
@@ -114,7 +120,7 @@ void PyTorchTrace::dumpPyTorchTracing() {
           }
         }
 
-        if (each_tracing_data->data[i].type == PAYLOAD_GC) {
+        if (dump_gc && each_tracing_data->data[i].type == PAYLOAD_GC) {
           hook::GcDebugData* gc_debug = trace->mutable_gc_debug();
           gc_debug->set_collected(each_tracing_data->data[i].payload.gc_debug[0]);
           gc_debug->set_uncollectable(each_tracing_data->data[i].payload.gc_debug[1]);
@@ -179,16 +185,30 @@ void SysTrace::stopWork() noexcept {
 }
 
 void SysTrace::doWork() {
-  while (should_run_.load()) {
-    if (loop_count_.fetch_add(1) % constant::TorchTraceConstant::DEFAULT_TRACE_COUNT== 0) {
-      if (PyTorchTrace::getInstance().triggerTrace()) {
-        PyTorchTrace::getInstance().dumpPyTorchTracing();
-      }
-    }
+  if (!sampling_active_) {
+      sampling_start_ = std::chrono::steady_clock::now();
+      sampling_active_ = true;
+      STLOG(INFO) << "[SysTrace] Started 3-minute sampling window";
   }
-  
-  if (PyTorchTrace::getInstance().triggerTrace()) {
-    PyTorchTrace::getInstance().dumpPyTorchTracing();
+
+  while (should_run_.load()) {
+      if (std::chrono::steady_clock::now() - sampling_start_ > std::chrono::minutes(3)) {
+          if (sampling_active_) {
+              STLOG(INFO) << "[SysTrace] 3-minute sampling window ended";
+              sampling_active_ = false;
+          }
+          continue;
+      }
+
+      if (loop_count_.fetch_add(1) % constant::TorchTraceConstant::DEFAULT_TRACE_COUNT == 0) {
+          if (PyTorchTrace::getInstance().triggerTrace()) {
+              PyTorchTrace::getInstance().dumpPyTorchTracing();
+          }
+      }
+  }
+
+  if (sampling_active_ && PyTorchTrace::getInstance().triggerTrace()) {
+      PyTorchTrace::getInstance().dumpPyTorchTracing();
   }
 }
 
