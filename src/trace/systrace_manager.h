@@ -59,12 +59,11 @@ class SysTrace {
  public:
   SysTrace(const SysTrace&) = delete;
   SysTrace& operator=(const SysTrace&) = delete;
-  explicit SysTrace(MSPTITracker& tracker) : tracker_(tracker) {};
 
   static SysTrace& getInstance();
   
  private:
-  SysTrace() = default;
+  SysTrace() : tracker_(MSPTITracker::getInstance()) {}
   ~SysTrace() { stopWork(); }
 
   inline static std::atomic<SysTrace*> instance_{nullptr};
@@ -79,7 +78,7 @@ class SysTrace {
   std::atomic<uint64_t> loop_count_{0};
   std::thread event_poller_;
 
-  MSPTITracker& tracker_; 
+  MSPTITracker tracker_; 
   
   void stopWork() noexcept;
   void doWork();

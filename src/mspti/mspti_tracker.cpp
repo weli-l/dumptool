@@ -14,7 +14,7 @@ inline uint8_t* align_buffer(uint8_t* buffer, size_t align) {
 }
 
 MSPTITracker::MSPTITracker() {
-    std::unique_lock<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
     std::cout << "Logging initialized from preloaded library." << std::endl;
     hcclFileWriter = std::make_unique<MSPTIHcclFileWriter>("hccl_activity.json");
     msptiSubscribe(&subscriber, nullptr, nullptr);
@@ -23,7 +23,8 @@ MSPTITracker::MSPTITracker() {
 }
 
 MSPTITracker::~MSPTITracker() {
-    std::unique_lock<std::mutex> lock(mtx);
+    std::cout << "MSPTITracker destroyed\n";
+    std::lock_guard<std::mutex> lock(mtx);
     msptiActivityDisable(MSPTI_ACTIVITY_KIND_MARKER);
     msptiActivityFlushAll(1);
     finish();
@@ -50,7 +51,7 @@ void MSPTITracker::readActivityMarker(msptiActivityMarker* activity) {
 
 void MSPTITracker::UserBufferRequest(uint8_t **buffer, size_t *size, size_t *maxNumRecords) {
     auto& instance = getInstance();
-    std::unique_lock<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
     constexpr uint32_t SIZE = (uint32_t)MB * 1;
     instance.requestedCount.fetch_add(1);
     uint8_t *pBuffer = (uint8_t *) malloc(SIZE + ALIGN_SIZE);
@@ -65,7 +66,7 @@ void MSPTITracker::UserBufferComplete(uint8_t *buffer, size_t size, size_t valid
         msptiActivity *pRecord = nullptr;
         msptiResult status = MSPTI_SUCCESS;
         do {
-            std::unique_lock<std::mutex> lock(mtx);
+            std::lock_guard<std::mutex> lock(mtx);
             status = msptiActivityGetNextRecord(buffer, validSize, &pRecord);
             if (status == MSPTI_SUCCESS && pRecord->kind == MSPTI_ACTIVITY_KIND_MARKER) {
                 instance.readActivityMarker(reinterpret_cast<msptiActivityMarker*>(pRecord));
