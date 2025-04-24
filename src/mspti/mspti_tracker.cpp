@@ -14,7 +14,6 @@ inline uint8_t* align_buffer(uint8_t* buffer, size_t align) {
 }
 
 MSPTITracker::MSPTITracker() {
-    std::lock_guard<std::mutex> lock(mtx);
     std::cout << "Logging initialized from preloaded library." << std::endl;
     hcclFileWriter = std::make_unique<MSPTIHcclFileWriter>("hccl_activity.json");
     msptiSubscribe(&subscriber, nullptr, nullptr);
@@ -23,7 +22,6 @@ MSPTITracker::MSPTITracker() {
 }
 
 MSPTITracker::~MSPTITracker() {
-    std::lock_guard<std::mutex> lock(mtx);
     msptiActivityFlushAll(1);
     msptiActivityDisable(MSPTI_ACTIVITY_KIND_MARKER);
     finish();

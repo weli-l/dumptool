@@ -72,7 +72,6 @@ public:
         if (this->file.is_open()) {
             {
                 std::unique_lock<std::mutex> lock(this->threadmtx);
-                // clean up the thread
                 this->stop.store(true);
             }
             this->cv.notify_all();
@@ -80,8 +79,6 @@ public:
             if (this->writerThread.joinable()){
                 this->writerThread.join();
             }
-            // write the remaining buffer
-            std::cout << "Closing file" << std::endl;
             this->file.close();
             this->opened.store(false);
         }
