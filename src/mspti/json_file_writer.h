@@ -8,6 +8,7 @@
 #include <condition_variable>
 // #include <glog/logging.h>
 #include <string.h>
+#include <iostream>
 
 class MSPTIHcclFileWriter {
 private:
