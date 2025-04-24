@@ -4,7 +4,7 @@
 #include <memory>
 #include <mutex>
 #include "mspti.h"
-#include "mspti_track.h"
+#include "mspti_tracker.hpp"
 #include "json_file_writer.h"
 #include "atomic"
 
@@ -15,7 +15,6 @@ std::mutex MSPTITracker::mtx;
 std::atomic<int> MSPTITracker::requestedCount(0);
 MSPTIHcclFileWriter MSPTITracker::hcclFileWriter("hccl_activity.json");
 std::atomic<bool> MSPTITracker::tracker_initialized(false);
-MSPTITracker* MSPTITracker::tracker = nullptr;
 
 void MSPTITracker::UserBufferRequest(uint8_t **buffer, size_t *size, size_t *maxNumRecords) {
     std::unique_lock<std::mutex> lock(mtx);

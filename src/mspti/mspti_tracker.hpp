@@ -21,7 +21,6 @@ private:
     static MSPTIHcclFileWriter hcclFileWriter;
     static std::atomic<int> requestedCount;
     static std::atomic<bool> tracker_initialized;
-    static MSPTITracker* tracker;
 
 public:
     MSPTITracker() {
@@ -46,18 +45,9 @@ public:
         }
     }
 
-    static MSPTITracker* getInstance() {
-        if (!tracker_initialized.load()) {
-            tracker = new MSPTITracker();
-        }
+    static MSPTITracker& getInstance() {
+        static MSPTITracker tracker;
         return tracker;
-    }
-
-    static void destroyInstance() {
-        if (tracker_initialized.load()) {
-            delete tracker;
-            tracker = nullptr;
-        }
     }
 
     msptiSubscriberHandle* getSubscriber() {

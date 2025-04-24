@@ -54,6 +54,5 @@ target_link_libraries(sysTrace_hook
     protobuf::libprotobuf
     ${CMAKE_THREAD_LIBS}
     ${ASCEND_MSPTI}
-    jsoncpp
     -ldl
 )
