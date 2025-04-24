@@ -69,40 +69,21 @@ public:
     }
 
     void stopWriter() {
-        if (!file.is_open()) return;
-    
-        // 1. 先停止线程（确保不再产生新数据）
-        {
-            std::unique_lock<std::mutex> lock(threadmtx);
-            stop.store(true);
-        }
-        cv.notify_all();
-    
-        // 暴力但安全的线程停止
-        if (writerThread.joinable()) {
-            if (writerThread.get_id() != std::this_thread::get_id()) {
-                // 设置超时避免永久阻塞
-                auto timeout = std::chrono::steady_clock::now() + std::chrono::seconds(2);
-                while (writerThread.joinable() && 
-                       std::chrono::steady_clock::now() < timeout) {
-                    writerThread.join();
-                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                }
-                if (writerThread.joinable()) {
-                    writerThread.detach(); // 最后手段
-                    std::cerr << "WARNING: Writer thread forced detach!" << std::endl;
-                }
-            } else {
-                writerThread.detach(); // 防止自我死锁
+        if (this->file.is_open()) {
+            {
+                std::unique_lock<std::mutex> lock(this->threadmtx);
+                // clean up the thread
+                this->stop.store(true);
             }
-        }
-    
-        // 2. 最后处理剩余数据（此时确保没有并发访问）
-        {
-            std::lock_guard<std::mutex> lock(buffermtx);
-            hcclActivityFormatToCSV();
-            file.close();
-            opened.store(false);
+            this->cv.notify_all();
+            this->hcclActivityFormatToCSV();
+            if (this->writerThread.joinable()){
+                this->writerThread.join();
+            }
+            // write the remaining buffer
+            std::cout << "Closing file" << std::endl;
+            this->file.close();
+            this->opened.store(false);
         }
     }
 

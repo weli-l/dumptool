@@ -23,10 +23,9 @@ MSPTITracker::MSPTITracker() {
 }
 
 MSPTITracker::~MSPTITracker() {
-    std::cout << "MSPTITracker destroyed\n";
     std::lock_guard<std::mutex> lock(mtx);
-    msptiActivityDisable(MSPTI_ACTIVITY_KIND_MARKER);
     msptiActivityFlushAll(1);
+    msptiActivityDisable(MSPTI_ACTIVITY_KIND_MARKER);
     finish();
     msptiUnsubscribe(subscriber);
 }
