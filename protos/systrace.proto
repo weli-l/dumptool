@@ -8,20 +8,21 @@ message StackFrame {
 }
 
 message MemAllocEntry {
-    uint64 alloc_ptr = 1;
-    uint32 stage_id = 2;
-    uint64 mem_size = 3;
-    repeated StackFrame stack_frames = 4;
+  uint64 alloc_ptr = 1;
+  uint32 stage_id = 2;
+  StageType stage_type = 3;
+  uint64 mem_size = 4;
+  repeated StackFrame stack_frames = 5;
 }
 
 message MemFreeEntry {
-    uint64 alloc_ptr = 1;
+  uint64 alloc_ptr = 1;
 }
 
 message ProcMem {
-    uint32 pid = 1;
-    repeated MemAllocEntry mem_alloc_stacks = 2;
-    repeated MemFreeEntry mem_free_stacks = 3;
+  uint32 pid = 1;
+  repeated MemAllocEntry mem_alloc_stacks = 2;
+  repeated MemFreeEntry mem_free_stacks = 3;
 }
 
 enum StageType {

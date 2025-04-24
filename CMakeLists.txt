@@ -43,6 +43,7 @@ add_library(sysTrace_hook SHARED
     ${PROJECT_SOURCE_DIR}/src/trace/python/pytorch_tracing.c
     ${PROJECT_SOURCE_DIR}/src/ascend/hook.cc
     ${PROJECT_SOURCE_DIR}/src/mspti/mspti_tracker.cpp
+    ${PROJECT_SOURCE_DIR}/src/cann/cann_hook.c
 )
 
 set_target_properties(sysTrace_hook PROPERTIES OUTPUT_NAME "sysTrace")
@@ -54,5 +55,7 @@ target_link_libraries(sysTrace_hook
     protobuf::libprotobuf
     ${CMAKE_THREAD_LIBS}
     ${ASCEND_MSPTI}
+    unwind
+    pthread
     -ldl
 )
