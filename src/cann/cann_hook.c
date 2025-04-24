@@ -41,16 +41,16 @@ static pthread_once_t key_once = PTHREAD_ONCE_INIT;
 static pthread_mutex_t file_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 typedef struct {
-    ProcMem *proc_mem;
+    Systrace__Hook__ProcMem *proc_mem;
     time_t last_log_time;
 } ThreadData;
 
-static void free_proc_mem(ProcMem *proc_mem) {
+static void free_proc_mem(Systrace__Hook__ProcMem *proc_mem) {
     if (!proc_mem) return;
     
     // 释放分配记录
     for (size_t i = 0; i < proc_mem->n_mem_alloc_stacks; i++) {
-        MemAllocEntry *entry = proc_mem->mem_alloc_stacks[i];
+        Systrace__Hook__MemAllocEntry *entry = proc_mem->mem_alloc_stacks[i];
         for (size_t j = 0; j < entry->n_stack_frames; j++) {
             free((void*)entry->stack_frames[j]->so_name);
             free(entry->stack_frames[j]);
@@ -99,7 +99,7 @@ static ThreadData *get_thread_data() {
     
     if (!td) {
         td = calloc(1, sizeof(ThreadData));
-        td->proc_mem = calloc(1, sizeof(ProcMem));
+        td->proc_mem = calloc(1, sizeof(Systrace__Hook__ProcMem));
         proc_mem__init(td->proc_mem);
         td->proc_mem->pid = get_current_pid();
         td->last_log_time = time(NULL);
@@ -128,7 +128,7 @@ static void get_log_filename(time_t current, uint32_t pid, char *buf, size_t buf
 }
 
 static char is_ready_to_write(ThreadData *td, time_t *current) {
-    ProcMem *proc_mem = td->proc_mem;
+    Systrace__Hook__ProcMem *proc_mem = td->proc_mem;
     if (!proc_mem || (proc_mem->n_mem_alloc_stacks + proc_mem->n_mem_free_stacks == 0)) {
         return 0;
     }
@@ -215,7 +215,7 @@ int init_mem_trace() {
     return 0;
 }
 
-static void collect_stack_frames(MemAllocEntry *entry) {
+static void collect_stack_frames(Systrace__Hook__MemAllocEntry *entry) {
     unw_cursor_t cursor;
     unw_context_t context;
     unw_word_t ip;
@@ -225,14 +225,14 @@ static void collect_stack_frames(MemAllocEntry *entry) {
     unw_getcontext(&context);
     unw_init_local(&cursor, &context);
 
-    entry->stack_frames = calloc(max_frames, sizeof(StackFrame *));
+    entry->stack_frames = calloc(max_frames, sizeof(Systrace__Hook__StackFrame *));
     while (unw_step(&cursor) > 0 && frame_count < max_frames) {
         if (frame_count >= 1) {
             fprintf(stderr, "frame_count  %d\n", frame_count);
         }
         unw_get_reg(&cursor, UNW_REG_IP, &ip);
         
-        StackFrame *frame = malloc(sizeof(StackFrame));
+        Systrace__Hook__StackFrame *frame = malloc(sizeof(Systrace__Hook__StackFrame));
         stack_frame__init(frame);
         frame->address = ip;
         frame->so_name = strdup(get_so_name(ip));
@@ -247,7 +247,7 @@ static void collect_stack_frames(MemAllocEntry *entry) {
 static void add_mem_alloc_entry(void *pp, size_t size) {
     ThreadData *td = get_thread_data();
     
-    MemAllocEntry *entry = malloc(sizeof(MemAllocEntry));
+    Systrace__Hook__MemAllocEntry *entry = malloc(sizeof(Systrace__Hook__MemAllocEntry));
     mem_alloc_entry__init(entry);
     entry->alloc_ptr = (uint64_t)pp;
     entry->mem_size = size;
@@ -260,20 +260,20 @@ static void add_mem_alloc_entry(void *pp, size_t size) {
     
     td->proc_mem->n_mem_alloc_stacks++;
     td->proc_mem->mem_alloc_stacks = realloc(td->proc_mem->mem_alloc_stacks, 
-                                            td->proc_mem->n_mem_alloc_stacks * sizeof(MemAllocEntry*));
+                                            td->proc_mem->n_mem_alloc_stacks * sizeof(Systrace__Hook__MemAllocEntry*));
     td->proc_mem->mem_alloc_stacks[td->proc_mem->n_mem_alloc_stacks - 1] = entry;
 }
 
 static void add_mem_free_entry(void *pp) {
     ThreadData *td = get_thread_data();
     
-    MemFreeEntry *entry = malloc(sizeof(MemFreeEntry));
+    Systrace__Hook__MemFreeEntry *entry = malloc(sizeof(Systrace__Hook__MemFreeEntry));
     mem_free_entry__init(entry);
     entry->alloc_ptr = (uint64_t)pp;
     
     td->proc_mem->n_mem_free_stacks++;
     td->proc_mem->mem_free_stacks = realloc(td->proc_mem->mem_free_stacks, 
-                                            td->proc_mem->n_mem_free_stacks * sizeof(MemFreeEntry*));
+                                            td->proc_mem->n_mem_free_stacks * sizeof(Systrace__Hook__MemFreeEntry*));
     td->proc_mem->mem_free_stacks[td->proc_mem->n_mem_free_stacks - 1] = entry;
 }
 
