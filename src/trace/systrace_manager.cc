@@ -162,6 +162,8 @@ SysTrace& SysTrace::getInstance() {
   if (!instance) {
     std::lock_guard<std::mutex> lock(instance_mutex_);
     instance = instance_.load(std::memory_order_relaxed);
+    static auto& tracker = MSPTITracker::getInstance();
+    tracker_ = &tracker;
     if (!instance) {
       instance = new SysTrace();
       instance_.store(instance, std::memory_order_release);
