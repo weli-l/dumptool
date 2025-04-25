@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include "../../../include/common/macro.h"
 #include "../library_loader.h"
 #include "pytorch_tracing_data.h"
 
