@@ -48,6 +48,15 @@ add_library(sysTrace_hook SHARED
 
 set_target_properties(sysTrace_hook PROPERTIES OUTPUT_NAME "sysTrace")
 
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|ARM64")
+    set(UNWIND_LIB "unwind-aarch64")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
+    set(UNWIND_LIB "unwind")
+else()
+    message(WARNING "Unknown architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+    set(UNWIND_LIB "unwind")
+endif()
+
 target_link_libraries(sysTrace_hook
     common
     general_pb2
@@ -56,6 +65,7 @@ target_link_libraries(sysTrace_hook
     ${CMAKE_THREAD_LIBS}
     ${ASCEND_MSPTI}
     unwind
+    ${UNWIND_LIB}
     pthread
     -ldl
 )
