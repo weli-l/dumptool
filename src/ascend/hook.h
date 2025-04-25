@@ -1,5 +1,4 @@
 #pragma once
-#include "../../include/common/macro.h"
 #include <dlfcn.h>
 #include <functional>
 #include <string>
@@ -8,6 +7,7 @@
 extern "C"
 {
 #endif
+#define EXPOSE_API __attribute__((visibility("default")))
 
     typedef int aclError;
     typedef void *aclrtStream;

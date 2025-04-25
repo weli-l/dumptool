@@ -1,5 +1,4 @@
 #include "hook.h"
-#include "../../include/common/macro.h"
 #include "../src/trace/systrace_manager.h"
 #include <cstdlib>
 #include <dlfcn.h>

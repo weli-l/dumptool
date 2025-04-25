@@ -5,7 +5,6 @@
 #include <cstring>
 
 #include "../../../include/common/logging.h"
-#include "../../../include/common/macro.h"
 
 namespace systrace
 {
