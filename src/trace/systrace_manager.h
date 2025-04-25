@@ -40,7 +40,7 @@ class PyTorchTrace {
   inline static std::mutex instance_mutex_;
   inline static std::once_flag init_flag_;
 
-  hook::Pytorch pytorch_trace_;
+  Pytorch pytorch_trace_;
   std::atomic<bool> has_trigger_trace_{false};
   std::unique_ptr<util::ShmSwitch> switch_;
   std::mutex trace_mutex_;

@@ -125,7 +125,7 @@ void PyTorchTrace::dumpPyTorchTracing() {
         }
 
         if (dump_gc && each_tracing_data->data[i].type == PAYLOAD_GC) {
-          hook::GcDebugData* gc_debug = trace->mutable_gc_debug();
+          GcDebugData* gc_debug = trace->mutable_gc_debug();
           gc_debug->set_collected(each_tracing_data->data[i].payload.gc_debug[0]);
           gc_debug->set_uncollectable(each_tracing_data->data[i].payload.gc_debug[1]);
         }

@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-package systrace.hook;
-
 message StackFrame {
     uint64 address = 1;
     string so_name = 2;
