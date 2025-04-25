@@ -15,95 +15,95 @@ PROTOBUF_C__BEGIN_DECLS
 #endif
 
 
-typedef struct Systrace__Hook__StackFrame Systrace__Hook__StackFrame;
-typedef struct Systrace__Hook__MemAllocEntry Systrace__Hook__MemAllocEntry;
-typedef struct Systrace__Hook__MemFreeEntry Systrace__Hook__MemFreeEntry;
-typedef struct Systrace__Hook__ProcMem Systrace__Hook__ProcMem;
-typedef struct Systrace__Hook__GcDebugData Systrace__Hook__GcDebugData;
-typedef struct Systrace__Hook__PytorchStage Systrace__Hook__PytorchStage;
-typedef struct Systrace__Hook__Pytorch Systrace__Hook__Pytorch;
-typedef struct Systrace__Hook__Mem Systrace__Hook__Mem;
+typedef struct StackFrame StackFrame;
+typedef struct MemAllocEntry MemAllocEntry;
+typedef struct MemFreeEntry MemFreeEntry;
+typedef struct ProcMem ProcMem;
+typedef struct GcDebugData GcDebugData;
+typedef struct PytorchStage PytorchStage;
+typedef struct Pytorch Pytorch;
+typedef struct Mem Mem;
 
 
 /* --- enums --- */
 
-typedef enum _Systrace__Hook__StageType {
-  SYSTRACE__HOOK__STAGE_TYPE__STAGE_DATALOADER = 0,
-  SYSTRACE__HOOK__STAGE_TYPE__STAGE_FORWARD = 1,
-  SYSTRACE__HOOK__STAGE_TYPE__STAGE_BACKWARD = 2
-    PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(SYSTRACE__HOOK__STAGE_TYPE)
-} Systrace__Hook__StageType;
+typedef enum _StageType {
+  STAGE_TYPE__STAGE_DATALOADER = 0,
+  STAGE_TYPE__STAGE_FORWARD = 1,
+  STAGE_TYPE__STAGE_BACKWARD = 2
+    PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(STAGE_TYPE)
+} StageType;
 
 /* --- messages --- */
 
-struct  Systrace__Hook__StackFrame
+struct  StackFrame
 {
   ProtobufCMessage base;
   uint64_t address;
   char *so_name;
 };
-#define SYSTRACE__HOOK__STACK_FRAME__INIT \
- { PROTOBUF_C_MESSAGE_INIT (&systrace__hook__stack_frame__descriptor) \
+#define STACK_FRAME__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&stack_frame__descriptor) \
     , 0, (char *)protobuf_c_empty_string }
 
 
-struct  Systrace__Hook__MemAllocEntry
+struct  MemAllocEntry
 {
   ProtobufCMessage base;
   uint64_t alloc_ptr;
   uint32_t stage_id;
-  Systrace__Hook__StageType stage_type;
+  StageType stage_type;
   uint64_t mem_size;
   size_t n_stack_frames;
-  Systrace__Hook__StackFrame **stack_frames;
+  StackFrame **stack_frames;
 };
-#define SYSTRACE__HOOK__MEM_ALLOC_ENTRY__INIT \
- { PROTOBUF_C_MESSAGE_INIT (&systrace__hook__mem_alloc_entry__descriptor) \
-    , 0, 0, SYSTRACE__HOOK__STAGE_TYPE__STAGE_DATALOADER, 0, 0,NULL }
+#define MEM_ALLOC_ENTRY__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&mem_alloc_entry__descriptor) \
+    , 0, 0, STAGE_TYPE__STAGE_DATALOADER, 0, 0,NULL }
 
 
-struct  Systrace__Hook__MemFreeEntry
+struct  MemFreeEntry
 {
   ProtobufCMessage base;
   uint64_t alloc_ptr;
 };
-#define SYSTRACE__HOOK__MEM_FREE_ENTRY__INIT \
- { PROTOBUF_C_MESSAGE_INIT (&systrace__hook__mem_free_entry__descriptor) \
+#define MEM_FREE_ENTRY__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&mem_free_entry__descriptor) \
     , 0 }
 
 
-struct  Systrace__Hook__ProcMem
+struct  ProcMem
 {
   ProtobufCMessage base;
   uint32_t pid;
   size_t n_mem_alloc_stacks;
-  Systrace__Hook__MemAllocEntry **mem_alloc_stacks;
+  MemAllocEntry **mem_alloc_stacks;
   size_t n_mem_free_stacks;
-  Systrace__Hook__MemFreeEntry **mem_free_stacks;
+  MemFreeEntry **mem_free_stacks;
 };
-#define SYSTRACE__HOOK__PROC_MEM__INIT \
- { PROTOBUF_C_MESSAGE_INIT (&systrace__hook__proc_mem__descriptor) \
+#define PROC_MEM__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&proc_mem__descriptor) \
     , 0, 0,NULL, 0,NULL }
 
 
-struct  Systrace__Hook__GcDebugData
+struct  GcDebugData
 {
   ProtobufCMessage base;
   uint32_t collected;
   uint32_t uncollectable;
 };
-#define SYSTRACE__HOOK__GC_DEBUG_DATA__INIT \
- { PROTOBUF_C_MESSAGE_INIT (&systrace__hook__gc_debug_data__descriptor) \
+#define GC_DEBUG_DATA__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&gc_debug_data__descriptor) \
     , 0, 0 }
 
 
 typedef enum {
-  SYSTRACE__HOOK__PYTORCH_STAGE__DEBUG_DATA__NOT_SET = 0,
-  SYSTRACE__HOOK__PYTORCH_STAGE__DEBUG_DATA_GC_DEBUG = 6
-    PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(SYSTRACE__HOOK__PYTORCH_STAGE__DEBUG_DATA__CASE)
-} Systrace__Hook__PytorchStage__DebugDataCase;
+  PYTORCH_STAGE__DEBUG_DATA__NOT_SET = 0,
+  PYTORCH_STAGE__DEBUG_DATA_GC_DEBUG = 6
+    PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(PYTORCH_STAGE__DEBUG_DATA__CASE)
+} PytorchStage__DebugDataCase;
 
-struct  Systrace__Hook__PytorchStage
+struct  PytorchStage
 {
   ProtobufCMessage base;
   uint32_t stage_id;
@@ -112,21 +112,21 @@ struct  Systrace__Hook__PytorchStage
   uint64_t end_us;
   size_t n_stack_frames;
   char **stack_frames;
-  Systrace__Hook__PytorchStage__DebugDataCase debug_data_case;
+  PytorchStage__DebugDataCase debug_data_case;
   union {
-    Systrace__Hook__GcDebugData *gc_debug;
+    GcDebugData *gc_debug;
   };
 };
-#define SYSTRACE__HOOK__PYTORCH_STAGE__INIT \
- { PROTOBUF_C_MESSAGE_INIT (&systrace__hook__pytorch_stage__descriptor) \
-    , 0, (char *)protobuf_c_empty_string, 0, 0, 0,NULL, SYSTRACE__HOOK__PYTORCH_STAGE__DEBUG_DATA__NOT_SET, {0} }
+#define PYTORCH_STAGE__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&pytorch_stage__descriptor) \
+    , 0, (char *)protobuf_c_empty_string, 0, 0, 0,NULL, PYTORCH_STAGE__DEBUG_DATA__NOT_SET, {0} }
 
 
-struct  Systrace__Hook__Pytorch
+struct  Pytorch
 {
   ProtobufCMessage base;
   size_t n_pytorch_stages;
-  Systrace__Hook__PytorchStage **pytorch_stages;
+  PytorchStage **pytorch_stages;
   uint32_t rank;
   uint32_t step_id;
   /*
@@ -134,199 +134,199 @@ struct  Systrace__Hook__Pytorch
    */
   char *comm;
 };
-#define SYSTRACE__HOOK__PYTORCH__INIT \
- { PROTOBUF_C_MESSAGE_INIT (&systrace__hook__pytorch__descriptor) \
+#define PYTORCH__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&pytorch__descriptor) \
     , 0,NULL, 0, 0, (char *)protobuf_c_empty_string }
 
 
-struct  Systrace__Hook__Mem
+struct  Mem
 {
   ProtobufCMessage base;
   size_t n_proc_mem;
-  Systrace__Hook__ProcMem **proc_mem;
+  ProcMem **proc_mem;
 };
-#define SYSTRACE__HOOK__MEM__INIT \
- { PROTOBUF_C_MESSAGE_INIT (&systrace__hook__mem__descriptor) \
+#define MEM__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&mem__descriptor) \
     , 0,NULL }
 
 
-/* Systrace__Hook__StackFrame methods */
-void   systrace__hook__stack_frame__init
-                     (Systrace__Hook__StackFrame         *message);
-size_t systrace__hook__stack_frame__get_packed_size
-                     (const Systrace__Hook__StackFrame   *message);
-size_t systrace__hook__stack_frame__pack
-                     (const Systrace__Hook__StackFrame   *message,
+/* StackFrame methods */
+void   stack_frame__init
+                     (StackFrame         *message);
+size_t stack_frame__get_packed_size
+                     (const StackFrame   *message);
+size_t stack_frame__pack
+                     (const StackFrame   *message,
                       uint8_t             *out);
-size_t systrace__hook__stack_frame__pack_to_buffer
-                     (const Systrace__Hook__StackFrame   *message,
+size_t stack_frame__pack_to_buffer
+                     (const StackFrame   *message,
                       ProtobufCBuffer     *buffer);
-Systrace__Hook__StackFrame *
-       systrace__hook__stack_frame__unpack
+StackFrame *
+       stack_frame__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data);
-void   systrace__hook__stack_frame__free_unpacked
-                     (Systrace__Hook__StackFrame *message,
+void   stack_frame__free_unpacked
+                     (StackFrame *message,
                       ProtobufCAllocator *allocator);
-/* Systrace__Hook__MemAllocEntry methods */
-void   systrace__hook__mem_alloc_entry__init
-                     (Systrace__Hook__MemAllocEntry         *message);
-size_t systrace__hook__mem_alloc_entry__get_packed_size
-                     (const Systrace__Hook__MemAllocEntry   *message);
-size_t systrace__hook__mem_alloc_entry__pack
-                     (const Systrace__Hook__MemAllocEntry   *message,
+/* MemAllocEntry methods */
+void   mem_alloc_entry__init
+                     (MemAllocEntry         *message);
+size_t mem_alloc_entry__get_packed_size
+                     (const MemAllocEntry   *message);
+size_t mem_alloc_entry__pack
+                     (const MemAllocEntry   *message,
                       uint8_t             *out);
-size_t systrace__hook__mem_alloc_entry__pack_to_buffer
-                     (const Systrace__Hook__MemAllocEntry   *message,
+size_t mem_alloc_entry__pack_to_buffer
+                     (const MemAllocEntry   *message,
                       ProtobufCBuffer     *buffer);
-Systrace__Hook__MemAllocEntry *
-       systrace__hook__mem_alloc_entry__unpack
+MemAllocEntry *
+       mem_alloc_entry__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data);
-void   systrace__hook__mem_alloc_entry__free_unpacked
-                     (Systrace__Hook__MemAllocEntry *message,
+void   mem_alloc_entry__free_unpacked
+                     (MemAllocEntry *message,
                       ProtobufCAllocator *allocator);
-/* Systrace__Hook__MemFreeEntry methods */
-void   systrace__hook__mem_free_entry__init
-                     (Systrace__Hook__MemFreeEntry         *message);
-size_t systrace__hook__mem_free_entry__get_packed_size
-                     (const Systrace__Hook__MemFreeEntry   *message);
-size_t systrace__hook__mem_free_entry__pack
-                     (const Systrace__Hook__MemFreeEntry   *message,
+/* MemFreeEntry methods */
+void   mem_free_entry__init
+                     (MemFreeEntry         *message);
+size_t mem_free_entry__get_packed_size
+                     (const MemFreeEntry   *message);
+size_t mem_free_entry__pack
+                     (const MemFreeEntry   *message,
                       uint8_t             *out);
-size_t systrace__hook__mem_free_entry__pack_to_buffer
-                     (const Systrace__Hook__MemFreeEntry   *message,
+size_t mem_free_entry__pack_to_buffer
+                     (const MemFreeEntry   *message,
                       ProtobufCBuffer     *buffer);
-Systrace__Hook__MemFreeEntry *
-       systrace__hook__mem_free_entry__unpack
+MemFreeEntry *
+       mem_free_entry__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data);
-void   systrace__hook__mem_free_entry__free_unpacked
-                     (Systrace__Hook__MemFreeEntry *message,
+void   mem_free_entry__free_unpacked
+                     (MemFreeEntry *message,
                       ProtobufCAllocator *allocator);
-/* Systrace__Hook__ProcMem methods */
-void   systrace__hook__proc_mem__init
-                     (Systrace__Hook__ProcMem         *message);
-size_t systrace__hook__proc_mem__get_packed_size
-                     (const Systrace__Hook__ProcMem   *message);
-size_t systrace__hook__proc_mem__pack
-                     (const Systrace__Hook__ProcMem   *message,
+/* ProcMem methods */
+void   proc_mem__init
+                     (ProcMem         *message);
+size_t proc_mem__get_packed_size
+                     (const ProcMem   *message);
+size_t proc_mem__pack
+                     (const ProcMem   *message,
                       uint8_t             *out);
-size_t systrace__hook__proc_mem__pack_to_buffer
-                     (const Systrace__Hook__ProcMem   *message,
+size_t proc_mem__pack_to_buffer
+                     (const ProcMem   *message,
                       ProtobufCBuffer     *buffer);
-Systrace__Hook__ProcMem *
-       systrace__hook__proc_mem__unpack
+ProcMem *
+       proc_mem__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data);
-void   systrace__hook__proc_mem__free_unpacked
-                     (Systrace__Hook__ProcMem *message,
+void   proc_mem__free_unpacked
+                     (ProcMem *message,
                       ProtobufCAllocator *allocator);
-/* Systrace__Hook__GcDebugData methods */
-void   systrace__hook__gc_debug_data__init
-                     (Systrace__Hook__GcDebugData         *message);
-size_t systrace__hook__gc_debug_data__get_packed_size
-                     (const Systrace__Hook__GcDebugData   *message);
-size_t systrace__hook__gc_debug_data__pack
-                     (const Systrace__Hook__GcDebugData   *message,
+/* GcDebugData methods */
+void   gc_debug_data__init
+                     (GcDebugData         *message);
+size_t gc_debug_data__get_packed_size
+                     (const GcDebugData   *message);
+size_t gc_debug_data__pack
+                     (const GcDebugData   *message,
                       uint8_t             *out);
-size_t systrace__hook__gc_debug_data__pack_to_buffer
-                     (const Systrace__Hook__GcDebugData   *message,
+size_t gc_debug_data__pack_to_buffer
+                     (const GcDebugData   *message,
                       ProtobufCBuffer     *buffer);
-Systrace__Hook__GcDebugData *
-       systrace__hook__gc_debug_data__unpack
+GcDebugData *
+       gc_debug_data__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data);
-void   systrace__hook__gc_debug_data__free_unpacked
-                     (Systrace__Hook__GcDebugData *message,
+void   gc_debug_data__free_unpacked
+                     (GcDebugData *message,
                       ProtobufCAllocator *allocator);
-/* Systrace__Hook__PytorchStage methods */
-void   systrace__hook__pytorch_stage__init
-                     (Systrace__Hook__PytorchStage         *message);
-size_t systrace__hook__pytorch_stage__get_packed_size
-                     (const Systrace__Hook__PytorchStage   *message);
-size_t systrace__hook__pytorch_stage__pack
-                     (const Systrace__Hook__PytorchStage   *message,
+/* PytorchStage methods */
+void   pytorch_stage__init
+                     (PytorchStage         *message);
+size_t pytorch_stage__get_packed_size
+                     (const PytorchStage   *message);
+size_t pytorch_stage__pack
+                     (const PytorchStage   *message,
                       uint8_t             *out);
-size_t systrace__hook__pytorch_stage__pack_to_buffer
-                     (const Systrace__Hook__PytorchStage   *message,
+size_t pytorch_stage__pack_to_buffer
+                     (const PytorchStage   *message,
                       ProtobufCBuffer     *buffer);
-Systrace__Hook__PytorchStage *
-       systrace__hook__pytorch_stage__unpack
+PytorchStage *
+       pytorch_stage__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data);
-void   systrace__hook__pytorch_stage__free_unpacked
-                     (Systrace__Hook__PytorchStage *message,
+void   pytorch_stage__free_unpacked
+                     (PytorchStage *message,
                       ProtobufCAllocator *allocator);
-/* Systrace__Hook__Pytorch methods */
-void   systrace__hook__pytorch__init
-                     (Systrace__Hook__Pytorch         *message);
-size_t systrace__hook__pytorch__get_packed_size
-                     (const Systrace__Hook__Pytorch   *message);
-size_t systrace__hook__pytorch__pack
-                     (const Systrace__Hook__Pytorch   *message,
+/* Pytorch methods */
+void   pytorch__init
+                     (Pytorch         *message);
+size_t pytorch__get_packed_size
+                     (const Pytorch   *message);
+size_t pytorch__pack
+                     (const Pytorch   *message,
                       uint8_t             *out);
-size_t systrace__hook__pytorch__pack_to_buffer
-                     (const Systrace__Hook__Pytorch   *message,
+size_t pytorch__pack_to_buffer
+                     (const Pytorch   *message,
                       ProtobufCBuffer     *buffer);
-Systrace__Hook__Pytorch *
-       systrace__hook__pytorch__unpack
+Pytorch *
+       pytorch__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data);
-void   systrace__hook__pytorch__free_unpacked
-                     (Systrace__Hook__Pytorch *message,
+void   pytorch__free_unpacked
+                     (Pytorch *message,
                       ProtobufCAllocator *allocator);
-/* Systrace__Hook__Mem methods */
-void   systrace__hook__mem__init
-                     (Systrace__Hook__Mem         *message);
-size_t systrace__hook__mem__get_packed_size
-                     (const Systrace__Hook__Mem   *message);
-size_t systrace__hook__mem__pack
-                     (const Systrace__Hook__Mem   *message,
+/* Mem methods */
+void   mem__init
+                     (Mem         *message);
+size_t mem__get_packed_size
+                     (const Mem   *message);
+size_t mem__pack
+                     (const Mem   *message,
                       uint8_t             *out);
-size_t systrace__hook__mem__pack_to_buffer
-                     (const Systrace__Hook__Mem   *message,
+size_t mem__pack_to_buffer
+                     (const Mem   *message,
                       ProtobufCBuffer     *buffer);
-Systrace__Hook__Mem *
-       systrace__hook__mem__unpack
+Mem *
+       mem__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data);
-void   systrace__hook__mem__free_unpacked
-                     (Systrace__Hook__Mem *message,
+void   mem__free_unpacked
+                     (Mem *message,
                       ProtobufCAllocator *allocator);
 /* --- per-message closures --- */
 
-typedef void (*Systrace__Hook__StackFrame_Closure)
-                 (const Systrace__Hook__StackFrame *message,
+typedef void (*StackFrame_Closure)
+                 (const StackFrame *message,
                   void *closure_data);
-typedef void (*Systrace__Hook__MemAllocEntry_Closure)
-                 (const Systrace__Hook__MemAllocEntry *message,
+typedef void (*MemAllocEntry_Closure)
+                 (const MemAllocEntry *message,
                   void *closure_data);
-typedef void (*Systrace__Hook__MemFreeEntry_Closure)
-                 (const Systrace__Hook__MemFreeEntry *message,
+typedef void (*MemFreeEntry_Closure)
+                 (const MemFreeEntry *message,
                   void *closure_data);
-typedef void (*Systrace__Hook__ProcMem_Closure)
-                 (const Systrace__Hook__ProcMem *message,
+typedef void (*ProcMem_Closure)
+                 (const ProcMem *message,
                   void *closure_data);
-typedef void (*Systrace__Hook__GcDebugData_Closure)
-                 (const Systrace__Hook__GcDebugData *message,
+typedef void (*GcDebugData_Closure)
+                 (const GcDebugData *message,
                   void *closure_data);
-typedef void (*Systrace__Hook__PytorchStage_Closure)
-                 (const Systrace__Hook__PytorchStage *message,
+typedef void (*PytorchStage_Closure)
+                 (const PytorchStage *message,
                   void *closure_data);
-typedef void (*Systrace__Hook__Pytorch_Closure)
-                 (const Systrace__Hook__Pytorch *message,
+typedef void (*Pytorch_Closure)
+                 (const Pytorch *message,
                   void *closure_data);
-typedef void (*Systrace__Hook__Mem_Closure)
-                 (const Systrace__Hook__Mem *message,
+typedef void (*Mem_Closure)
+                 (const Mem *message,
                   void *closure_data);
 
 /* --- services --- */
@@ -334,15 +334,15 @@ typedef void (*Systrace__Hook__Mem_Closure)
 
 /* --- descriptors --- */
 
-extern const ProtobufCEnumDescriptor    systrace__hook__stage_type__descriptor;
-extern const ProtobufCMessageDescriptor systrace__hook__stack_frame__descriptor;
-extern const ProtobufCMessageDescriptor systrace__hook__mem_alloc_entry__descriptor;
-extern const ProtobufCMessageDescriptor systrace__hook__mem_free_entry__descriptor;
-extern const ProtobufCMessageDescriptor systrace__hook__proc_mem__descriptor;
-extern const ProtobufCMessageDescriptor systrace__hook__gc_debug_data__descriptor;
-extern const ProtobufCMessageDescriptor systrace__hook__pytorch_stage__descriptor;
-extern const ProtobufCMessageDescriptor systrace__hook__pytorch__descriptor;
-extern const ProtobufCMessageDescriptor systrace__hook__mem__descriptor;
+extern const ProtobufCEnumDescriptor    stage_type__descriptor;
+extern const ProtobufCMessageDescriptor stack_frame__descriptor;
+extern const ProtobufCMessageDescriptor mem_alloc_entry__descriptor;
+extern const ProtobufCMessageDescriptor mem_free_entry__descriptor;
+extern const ProtobufCMessageDescriptor proc_mem__descriptor;
+extern const ProtobufCMessageDescriptor gc_debug_data__descriptor;
+extern const ProtobufCMessageDescriptor pytorch_stage__descriptor;
+extern const ProtobufCMessageDescriptor pytorch__descriptor;
+extern const ProtobufCMessageDescriptor mem__descriptor;
 
 PROTOBUF_C__END_DECLS
 

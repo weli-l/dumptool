@@ -20,7 +20,6 @@
 namespace bp = ::boost::process;
 namespace systrace {
 using namespace util;
-using namespace hook;
 namespace gc_manager {
 class PyGcLibrary;
 }

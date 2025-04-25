@@ -7,367 +7,367 @@
 #endif
 
 #include "systrace.pb-c.h"
-void   systrace__hook__stack_frame__init
-                     (Systrace__Hook__StackFrame         *message)
+void   stack_frame__init
+                     (StackFrame         *message)
 {
-  static const Systrace__Hook__StackFrame init_value = SYSTRACE__HOOK__STACK_FRAME__INIT;
+  static const StackFrame init_value = STACK_FRAME__INIT;
   *message = init_value;
 }
-size_t systrace__hook__stack_frame__get_packed_size
-                     (const Systrace__Hook__StackFrame *message)
+size_t stack_frame__get_packed_size
+                     (const StackFrame *message)
 {
-  assert(message->base.descriptor == &systrace__hook__stack_frame__descriptor);
+  assert(message->base.descriptor == &stack_frame__descriptor);
   return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
 }
-size_t systrace__hook__stack_frame__pack
-                     (const Systrace__Hook__StackFrame *message,
+size_t stack_frame__pack
+                     (const StackFrame *message,
                       uint8_t       *out)
 {
-  assert(message->base.descriptor == &systrace__hook__stack_frame__descriptor);
+  assert(message->base.descriptor == &stack_frame__descriptor);
   return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
 }
-size_t systrace__hook__stack_frame__pack_to_buffer
-                     (const Systrace__Hook__StackFrame *message,
+size_t stack_frame__pack_to_buffer
+                     (const StackFrame *message,
                       ProtobufCBuffer *buffer)
 {
-  assert(message->base.descriptor == &systrace__hook__stack_frame__descriptor);
+  assert(message->base.descriptor == &stack_frame__descriptor);
   return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
 }
-Systrace__Hook__StackFrame *
-       systrace__hook__stack_frame__unpack
+StackFrame *
+       stack_frame__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data)
 {
-  return (Systrace__Hook__StackFrame *)
-     protobuf_c_message_unpack (&systrace__hook__stack_frame__descriptor,
+  return (StackFrame *)
+     protobuf_c_message_unpack (&stack_frame__descriptor,
                                 allocator, len, data);
 }
-void   systrace__hook__stack_frame__free_unpacked
-                     (Systrace__Hook__StackFrame *message,
+void   stack_frame__free_unpacked
+                     (StackFrame *message,
                       ProtobufCAllocator *allocator)
 {
   if(!message)
     return;
-  assert(message->base.descriptor == &systrace__hook__stack_frame__descriptor);
+  assert(message->base.descriptor == &stack_frame__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-void   systrace__hook__mem_alloc_entry__init
-                     (Systrace__Hook__MemAllocEntry         *message)
+void   mem_alloc_entry__init
+                     (MemAllocEntry         *message)
 {
-  static const Systrace__Hook__MemAllocEntry init_value = SYSTRACE__HOOK__MEM_ALLOC_ENTRY__INIT;
+  static const MemAllocEntry init_value = MEM_ALLOC_ENTRY__INIT;
   *message = init_value;
 }
-size_t systrace__hook__mem_alloc_entry__get_packed_size
-                     (const Systrace__Hook__MemAllocEntry *message)
+size_t mem_alloc_entry__get_packed_size
+                     (const MemAllocEntry *message)
 {
-  assert(message->base.descriptor == &systrace__hook__mem_alloc_entry__descriptor);
+  assert(message->base.descriptor == &mem_alloc_entry__descriptor);
   return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
 }
-size_t systrace__hook__mem_alloc_entry__pack
-                     (const Systrace__Hook__MemAllocEntry *message,
+size_t mem_alloc_entry__pack
+                     (const MemAllocEntry *message,
                       uint8_t       *out)
 {
-  assert(message->base.descriptor == &systrace__hook__mem_alloc_entry__descriptor);
+  assert(message->base.descriptor == &mem_alloc_entry__descriptor);
   return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
 }
-size_t systrace__hook__mem_alloc_entry__pack_to_buffer
-                     (const Systrace__Hook__MemAllocEntry *message,
+size_t mem_alloc_entry__pack_to_buffer
+                     (const MemAllocEntry *message,
                       ProtobufCBuffer *buffer)
 {
-  assert(message->base.descriptor == &systrace__hook__mem_alloc_entry__descriptor);
+  assert(message->base.descriptor == &mem_alloc_entry__descriptor);
   return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
 }
-Systrace__Hook__MemAllocEntry *
-       systrace__hook__mem_alloc_entry__unpack
+MemAllocEntry *
+       mem_alloc_entry__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data)
 {
-  return (Systrace__Hook__MemAllocEntry *)
-     protobuf_c_message_unpack (&systrace__hook__mem_alloc_entry__descriptor,
+  return (MemAllocEntry *)
+     protobuf_c_message_unpack (&mem_alloc_entry__descriptor,
                                 allocator, len, data);
 }
-void   systrace__hook__mem_alloc_entry__free_unpacked
-                     (Systrace__Hook__MemAllocEntry *message,
+void   mem_alloc_entry__free_unpacked
+                     (MemAllocEntry *message,
                       ProtobufCAllocator *allocator)
 {
   if(!message)
     return;
-  assert(message->base.descriptor == &systrace__hook__mem_alloc_entry__descriptor);
+  assert(message->base.descriptor == &mem_alloc_entry__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-void   systrace__hook__mem_free_entry__init
-                     (Systrace__Hook__MemFreeEntry         *message)
+void   mem_free_entry__init
+                     (MemFreeEntry         *message)
 {
-  static const Systrace__Hook__MemFreeEntry init_value = SYSTRACE__HOOK__MEM_FREE_ENTRY__INIT;
+  static const MemFreeEntry init_value = MEM_FREE_ENTRY__INIT;
   *message = init_value;
 }
-size_t systrace__hook__mem_free_entry__get_packed_size
-                     (const Systrace__Hook__MemFreeEntry *message)
+size_t mem_free_entry__get_packed_size
+                     (const MemFreeEntry *message)
 {
-  assert(message->base.descriptor == &systrace__hook__mem_free_entry__descriptor);
+  assert(message->base.descriptor == &mem_free_entry__descriptor);
   return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
 }
-size_t systrace__hook__mem_free_entry__pack
-                     (const Systrace__Hook__MemFreeEntry *message,
+size_t mem_free_entry__pack
+                     (const MemFreeEntry *message,
                       uint8_t       *out)
 {
-  assert(message->base.descriptor == &systrace__hook__mem_free_entry__descriptor);
+  assert(message->base.descriptor == &mem_free_entry__descriptor);
   return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
 }
-size_t systrace__hook__mem_free_entry__pack_to_buffer
-                     (const Systrace__Hook__MemFreeEntry *message,
+size_t mem_free_entry__pack_to_buffer
+                     (const MemFreeEntry *message,
                       ProtobufCBuffer *buffer)
 {
-  assert(message->base.descriptor == &systrace__hook__mem_free_entry__descriptor);
+  assert(message->base.descriptor == &mem_free_entry__descriptor);
   return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
 }
-Systrace__Hook__MemFreeEntry *
-       systrace__hook__mem_free_entry__unpack
+MemFreeEntry *
+       mem_free_entry__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data)
 {
-  return (Systrace__Hook__MemFreeEntry *)
-     protobuf_c_message_unpack (&systrace__hook__mem_free_entry__descriptor,
+  return (MemFreeEntry *)
+     protobuf_c_message_unpack (&mem_free_entry__descriptor,
                                 allocator, len, data);
 }
-void   systrace__hook__mem_free_entry__free_unpacked
-                     (Systrace__Hook__MemFreeEntry *message,
+void   mem_free_entry__free_unpacked
+                     (MemFreeEntry *message,
                       ProtobufCAllocator *allocator)
 {
   if(!message)
     return;
-  assert(message->base.descriptor == &systrace__hook__mem_free_entry__descriptor);
+  assert(message->base.descriptor == &mem_free_entry__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-void   systrace__hook__proc_mem__init
-                     (Systrace__Hook__ProcMem         *message)
+void   proc_mem__init
+                     (ProcMem         *message)
 {
-  static const Systrace__Hook__ProcMem init_value = SYSTRACE__HOOK__PROC_MEM__INIT;
+  static const ProcMem init_value = PROC_MEM__INIT;
   *message = init_value;
 }
-size_t systrace__hook__proc_mem__get_packed_size
-                     (const Systrace__Hook__ProcMem *message)
+size_t proc_mem__get_packed_size
+                     (const ProcMem *message)
 {
-  assert(message->base.descriptor == &systrace__hook__proc_mem__descriptor);
+  assert(message->base.descriptor == &proc_mem__descriptor);
   return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
 }
-size_t systrace__hook__proc_mem__pack
-                     (const Systrace__Hook__ProcMem *message,
+size_t proc_mem__pack
+                     (const ProcMem *message,
                       uint8_t       *out)
 {
-  assert(message->base.descriptor == &systrace__hook__proc_mem__descriptor);
+  assert(message->base.descriptor == &proc_mem__descriptor);
   return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
 }
-size_t systrace__hook__proc_mem__pack_to_buffer
-                     (const Systrace__Hook__ProcMem *message,
+size_t proc_mem__pack_to_buffer
+                     (const ProcMem *message,
                       ProtobufCBuffer *buffer)
 {
-  assert(message->base.descriptor == &systrace__hook__proc_mem__descriptor);
+  assert(message->base.descriptor == &proc_mem__descriptor);
   return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
 }
-Systrace__Hook__ProcMem *
-       systrace__hook__proc_mem__unpack
+ProcMem *
+       proc_mem__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data)
 {
-  return (Systrace__Hook__ProcMem *)
-     protobuf_c_message_unpack (&systrace__hook__proc_mem__descriptor,
+  return (ProcMem *)
+     protobuf_c_message_unpack (&proc_mem__descriptor,
                                 allocator, len, data);
 }
-void   systrace__hook__proc_mem__free_unpacked
-                     (Systrace__Hook__ProcMem *message,
+void   proc_mem__free_unpacked
+                     (ProcMem *message,
                       ProtobufCAllocator *allocator)
 {
   if(!message)
     return;
-  assert(message->base.descriptor == &systrace__hook__proc_mem__descriptor);
+  assert(message->base.descriptor == &proc_mem__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-void   systrace__hook__gc_debug_data__init
-                     (Systrace__Hook__GcDebugData         *message)
+void   gc_debug_data__init
+                     (GcDebugData         *message)
 {
-  static const Systrace__Hook__GcDebugData init_value = SYSTRACE__HOOK__GC_DEBUG_DATA__INIT;
+  static const GcDebugData init_value = GC_DEBUG_DATA__INIT;
   *message = init_value;
 }
-size_t systrace__hook__gc_debug_data__get_packed_size
-                     (const Systrace__Hook__GcDebugData *message)
+size_t gc_debug_data__get_packed_size
+                     (const GcDebugData *message)
 {
-  assert(message->base.descriptor == &systrace__hook__gc_debug_data__descriptor);
+  assert(message->base.descriptor == &gc_debug_data__descriptor);
   return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
 }
-size_t systrace__hook__gc_debug_data__pack
-                     (const Systrace__Hook__GcDebugData *message,
+size_t gc_debug_data__pack
+                     (const GcDebugData *message,
                       uint8_t       *out)
 {
-  assert(message->base.descriptor == &systrace__hook__gc_debug_data__descriptor);
+  assert(message->base.descriptor == &gc_debug_data__descriptor);
   return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
 }
-size_t systrace__hook__gc_debug_data__pack_to_buffer
-                     (const Systrace__Hook__GcDebugData *message,
+size_t gc_debug_data__pack_to_buffer
+                     (const GcDebugData *message,
                       ProtobufCBuffer *buffer)
 {
-  assert(message->base.descriptor == &systrace__hook__gc_debug_data__descriptor);
+  assert(message->base.descriptor == &gc_debug_data__descriptor);
   return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
 }
-Systrace__Hook__GcDebugData *
-       systrace__hook__gc_debug_data__unpack
+GcDebugData *
+       gc_debug_data__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data)
 {
-  return (Systrace__Hook__GcDebugData *)
-     protobuf_c_message_unpack (&systrace__hook__gc_debug_data__descriptor,
+  return (GcDebugData *)
+     protobuf_c_message_unpack (&gc_debug_data__descriptor,
                                 allocator, len, data);
 }
-void   systrace__hook__gc_debug_data__free_unpacked
-                     (Systrace__Hook__GcDebugData *message,
+void   gc_debug_data__free_unpacked
+                     (GcDebugData *message,
                       ProtobufCAllocator *allocator)
 {
   if(!message)
     return;
-  assert(message->base.descriptor == &systrace__hook__gc_debug_data__descriptor);
+  assert(message->base.descriptor == &gc_debug_data__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-void   systrace__hook__pytorch_stage__init
-                     (Systrace__Hook__PytorchStage         *message)
+void   pytorch_stage__init
+                     (PytorchStage         *message)
 {
-  static const Systrace__Hook__PytorchStage init_value = SYSTRACE__HOOK__PYTORCH_STAGE__INIT;
+  static const PytorchStage init_value = PYTORCH_STAGE__INIT;
   *message = init_value;
 }
-size_t systrace__hook__pytorch_stage__get_packed_size
-                     (const Systrace__Hook__PytorchStage *message)
+size_t pytorch_stage__get_packed_size
+                     (const PytorchStage *message)
 {
-  assert(message->base.descriptor == &systrace__hook__pytorch_stage__descriptor);
+  assert(message->base.descriptor == &pytorch_stage__descriptor);
   return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
 }
-size_t systrace__hook__pytorch_stage__pack
-                     (const Systrace__Hook__PytorchStage *message,
+size_t pytorch_stage__pack
+                     (const PytorchStage *message,
                       uint8_t       *out)
 {
-  assert(message->base.descriptor == &systrace__hook__pytorch_stage__descriptor);
+  assert(message->base.descriptor == &pytorch_stage__descriptor);
   return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
 }
-size_t systrace__hook__pytorch_stage__pack_to_buffer
-                     (const Systrace__Hook__PytorchStage *message,
+size_t pytorch_stage__pack_to_buffer
+                     (const PytorchStage *message,
                       ProtobufCBuffer *buffer)
 {
-  assert(message->base.descriptor == &systrace__hook__pytorch_stage__descriptor);
+  assert(message->base.descriptor == &pytorch_stage__descriptor);
   return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
 }
-Systrace__Hook__PytorchStage *
-       systrace__hook__pytorch_stage__unpack
+PytorchStage *
+       pytorch_stage__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data)
 {
-  return (Systrace__Hook__PytorchStage *)
-     protobuf_c_message_unpack (&systrace__hook__pytorch_stage__descriptor,
+  return (PytorchStage *)
+     protobuf_c_message_unpack (&pytorch_stage__descriptor,
                                 allocator, len, data);
 }
-void   systrace__hook__pytorch_stage__free_unpacked
-                     (Systrace__Hook__PytorchStage *message,
+void   pytorch_stage__free_unpacked
+                     (PytorchStage *message,
                       ProtobufCAllocator *allocator)
 {
   if(!message)
     return;
-  assert(message->base.descriptor == &systrace__hook__pytorch_stage__descriptor);
+  assert(message->base.descriptor == &pytorch_stage__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-void   systrace__hook__pytorch__init
-                     (Systrace__Hook__Pytorch         *message)
+void   pytorch__init
+                     (Pytorch         *message)
 {
-  static const Systrace__Hook__Pytorch init_value = SYSTRACE__HOOK__PYTORCH__INIT;
+  static const Pytorch init_value = PYTORCH__INIT;
   *message = init_value;
 }
-size_t systrace__hook__pytorch__get_packed_size
-                     (const Systrace__Hook__Pytorch *message)
+size_t pytorch__get_packed_size
+                     (const Pytorch *message)
 {
-  assert(message->base.descriptor == &systrace__hook__pytorch__descriptor);
+  assert(message->base.descriptor == &pytorch__descriptor);
   return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
 }
-size_t systrace__hook__pytorch__pack
-                     (const Systrace__Hook__Pytorch *message,
+size_t pytorch__pack
+                     (const Pytorch *message,
                       uint8_t       *out)
 {
-  assert(message->base.descriptor == &systrace__hook__pytorch__descriptor);
+  assert(message->base.descriptor == &pytorch__descriptor);
   return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
 }
-size_t systrace__hook__pytorch__pack_to_buffer
-                     (const Systrace__Hook__Pytorch *message,
+size_t pytorch__pack_to_buffer
+                     (const Pytorch *message,
                       ProtobufCBuffer *buffer)
 {
-  assert(message->base.descriptor == &systrace__hook__pytorch__descriptor);
+  assert(message->base.descriptor == &pytorch__descriptor);
   return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
 }
-Systrace__Hook__Pytorch *
-       systrace__hook__pytorch__unpack
+Pytorch *
+       pytorch__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data)
 {
-  return (Systrace__Hook__Pytorch *)
-     protobuf_c_message_unpack (&systrace__hook__pytorch__descriptor,
+  return (Pytorch *)
+     protobuf_c_message_unpack (&pytorch__descriptor,
                                 allocator, len, data);
 }
-void   systrace__hook__pytorch__free_unpacked
-                     (Systrace__Hook__Pytorch *message,
+void   pytorch__free_unpacked
+                     (Pytorch *message,
                       ProtobufCAllocator *allocator)
 {
   if(!message)
     return;
-  assert(message->base.descriptor == &systrace__hook__pytorch__descriptor);
+  assert(message->base.descriptor == &pytorch__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-void   systrace__hook__mem__init
-                     (Systrace__Hook__Mem         *message)
+void   mem__init
+                     (Mem         *message)
 {
-  static const Systrace__Hook__Mem init_value = SYSTRACE__HOOK__MEM__INIT;
+  static const Mem init_value = MEM__INIT;
   *message = init_value;
 }
-size_t systrace__hook__mem__get_packed_size
-                     (const Systrace__Hook__Mem *message)
+size_t mem__get_packed_size
+                     (const Mem *message)
 {
-  assert(message->base.descriptor == &systrace__hook__mem__descriptor);
+  assert(message->base.descriptor == &mem__descriptor);
   return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
 }
-size_t systrace__hook__mem__pack
-                     (const Systrace__Hook__Mem *message,
+size_t mem__pack
+                     (const Mem *message,
                       uint8_t       *out)
 {
-  assert(message->base.descriptor == &systrace__hook__mem__descriptor);
+  assert(message->base.descriptor == &mem__descriptor);
   return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
 }
-size_t systrace__hook__mem__pack_to_buffer
-                     (const Systrace__Hook__Mem *message,
+size_t mem__pack_to_buffer
+                     (const Mem *message,
                       ProtobufCBuffer *buffer)
 {
-  assert(message->base.descriptor == &systrace__hook__mem__descriptor);
+  assert(message->base.descriptor == &mem__descriptor);
   return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
 }
-Systrace__Hook__Mem *
-       systrace__hook__mem__unpack
+Mem *
+       mem__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data)
 {
-  return (Systrace__Hook__Mem *)
-     protobuf_c_message_unpack (&systrace__hook__mem__descriptor,
+  return (Mem *)
+     protobuf_c_message_unpack (&mem__descriptor,
                                 allocator, len, data);
 }
-void   systrace__hook__mem__free_unpacked
-                     (Systrace__Hook__Mem *message,
+void   mem__free_unpacked
+                     (Mem *message,
                       ProtobufCAllocator *allocator)
 {
   if(!message)
     return;
-  assert(message->base.descriptor == &systrace__hook__mem__descriptor);
+  assert(message->base.descriptor == &mem__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-static const ProtobufCFieldDescriptor systrace__hook__stack_frame__field_descriptors[2] =
+static const ProtobufCFieldDescriptor stack_frame__field_descriptors[2] =
 {
   {
     "address",
@@ -375,7 +375,7 @@ static const ProtobufCFieldDescriptor systrace__hook__stack_frame__field_descrip
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_UINT64,
     0,   /* quantifier_offset */
-    offsetof(Systrace__Hook__StackFrame, address),
+    offsetof(StackFrame, address),
     NULL,
     NULL,
     0,             /* flags */
@@ -387,38 +387,38 @@ static const ProtobufCFieldDescriptor systrace__hook__stack_frame__field_descrip
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    offsetof(Systrace__Hook__StackFrame, so_name),
+    offsetof(StackFrame, so_name),
     NULL,
     &protobuf_c_empty_string,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
 };
-static const unsigned systrace__hook__stack_frame__field_indices_by_name[] = {
+static const unsigned stack_frame__field_indices_by_name[] = {
   0,   /* field[0] = address */
   1,   /* field[1] = so_name */
 };
-static const ProtobufCIntRange systrace__hook__stack_frame__number_ranges[1 + 1] =
+static const ProtobufCIntRange stack_frame__number_ranges[1 + 1] =
 {
   { 1, 0 },
   { 0, 2 }
 };
-const ProtobufCMessageDescriptor systrace__hook__stack_frame__descriptor =
+const ProtobufCMessageDescriptor stack_frame__descriptor =
 {
   PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "systrace.hook.StackFrame",
   "StackFrame",
-  "Systrace__Hook__StackFrame",
-  "systrace.hook",
-  sizeof(Systrace__Hook__StackFrame),
+  "StackFrame",
+  "StackFrame",
+  "",
+  sizeof(StackFrame),
   2,
-  systrace__hook__stack_frame__field_descriptors,
-  systrace__hook__stack_frame__field_indices_by_name,
-  1,  systrace__hook__stack_frame__number_ranges,
-  (ProtobufCMessageInit) systrace__hook__stack_frame__init,
+  stack_frame__field_descriptors,
+  stack_frame__field_indices_by_name,
+  1,  stack_frame__number_ranges,
+  (ProtobufCMessageInit) stack_frame__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor systrace__hook__mem_alloc_entry__field_descriptors[5] =
+static const ProtobufCFieldDescriptor mem_alloc_entry__field_descriptors[5] =
 {
   {
     "alloc_ptr",
@@ -426,7 +426,7 @@ static const ProtobufCFieldDescriptor systrace__hook__mem_alloc_entry__field_des
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_UINT64,
     0,   /* quantifier_offset */
-    offsetof(Systrace__Hook__MemAllocEntry, alloc_ptr),
+    offsetof(MemAllocEntry, alloc_ptr),
     NULL,
     NULL,
     0,             /* flags */
@@ -438,7 +438,7 @@ static const ProtobufCFieldDescriptor systrace__hook__mem_alloc_entry__field_des
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_UINT32,
     0,   /* quantifier_offset */
-    offsetof(Systrace__Hook__MemAllocEntry, stage_id),
+    offsetof(MemAllocEntry, stage_id),
     NULL,
     NULL,
     0,             /* flags */
@@ -450,8 +450,8 @@ static const ProtobufCFieldDescriptor systrace__hook__mem_alloc_entry__field_des
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_ENUM,
     0,   /* quantifier_offset */
-    offsetof(Systrace__Hook__MemAllocEntry, stage_type),
-    &systrace__hook__stage_type__descriptor,
+    offsetof(MemAllocEntry, stage_type),
+    &stage_type__descriptor,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
@@ -462,7 +462,7 @@ static const ProtobufCFieldDescriptor systrace__hook__mem_alloc_entry__field_des
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_UINT64,
     0,   /* quantifier_offset */
-    offsetof(Systrace__Hook__MemAllocEntry, mem_size),
+    offsetof(MemAllocEntry, mem_size),
     NULL,
     NULL,
     0,             /* flags */
@@ -473,42 +473,42 @@ static const ProtobufCFieldDescriptor systrace__hook__mem_alloc_entry__field_des
     5,
     PROTOBUF_C_LABEL_REPEATED,
     PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(Systrace__Hook__MemAllocEntry, n_stack_frames),
-    offsetof(Systrace__Hook__MemAllocEntry, stack_frames),
-    &systrace__hook__stack_frame__descriptor,
+    offsetof(MemAllocEntry, n_stack_frames),
+    offsetof(MemAllocEntry, stack_frames),
+    &stack_frame__descriptor,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
 };
-static const unsigned systrace__hook__mem_alloc_entry__field_indices_by_name[] = {
+static const unsigned mem_alloc_entry__field_indices_by_name[] = {
   0,   /* field[0] = alloc_ptr */
   3,   /* field[3] = mem_size */
   4,   /* field[4] = stack_frames */
   1,   /* field[1] = stage_id */
   2,   /* field[2] = stage_type */
 };
-static const ProtobufCIntRange systrace__hook__mem_alloc_entry__number_ranges[1 + 1] =
+static const ProtobufCIntRange mem_alloc_entry__number_ranges[1 + 1] =
 {
   { 1, 0 },
   { 0, 5 }
 };
-const ProtobufCMessageDescriptor systrace__hook__mem_alloc_entry__descriptor =
+const ProtobufCMessageDescriptor mem_alloc_entry__descriptor =
 {
   PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "systrace.hook.MemAllocEntry",
   "MemAllocEntry",
-  "Systrace__Hook__MemAllocEntry",
-  "systrace.hook",
-  sizeof(Systrace__Hook__MemAllocEntry),
+  "MemAllocEntry",
+  "MemAllocEntry",
+  "",
+  sizeof(MemAllocEntry),
   5,
-  systrace__hook__mem_alloc_entry__field_descriptors,
-  systrace__hook__mem_alloc_entry__field_indices_by_name,
-  1,  systrace__hook__mem_alloc_entry__number_ranges,
-  (ProtobufCMessageInit) systrace__hook__mem_alloc_entry__init,
+  mem_alloc_entry__field_descriptors,
+  mem_alloc_entry__field_indices_by_name,
+  1,  mem_alloc_entry__number_ranges,
+  (ProtobufCMessageInit) mem_alloc_entry__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor systrace__hook__mem_free_entry__field_descriptors[1] =
+static const ProtobufCFieldDescriptor mem_free_entry__field_descriptors[1] =
 {
   {
     "alloc_ptr",
@@ -516,37 +516,37 @@ static const ProtobufCFieldDescriptor systrace__hook__mem_free_entry__field_desc
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_UINT64,
     0,   /* quantifier_offset */
-    offsetof(Systrace__Hook__MemFreeEntry, alloc_ptr),
+    offsetof(MemFreeEntry, alloc_ptr),
     NULL,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
 };
-static const unsigned systrace__hook__mem_free_entry__field_indices_by_name[] = {
+static const unsigned mem_free_entry__field_indices_by_name[] = {
   0,   /* field[0] = alloc_ptr */
 };
-static const ProtobufCIntRange systrace__hook__mem_free_entry__number_ranges[1 + 1] =
+static const ProtobufCIntRange mem_free_entry__number_ranges[1 + 1] =
 {
   { 1, 0 },
   { 0, 1 }
 };
-const ProtobufCMessageDescriptor systrace__hook__mem_free_entry__descriptor =
+const ProtobufCMessageDescriptor mem_free_entry__descriptor =
 {
   PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "systrace.hook.MemFreeEntry",
   "MemFreeEntry",
-  "Systrace__Hook__MemFreeEntry",
-  "systrace.hook",
-  sizeof(Systrace__Hook__MemFreeEntry),
+  "MemFreeEntry",
+  "MemFreeEntry",
+  "",
+  sizeof(MemFreeEntry),
   1,
-  systrace__hook__mem_free_entry__field_descriptors,
-  systrace__hook__mem_free_entry__field_indices_by_name,
-  1,  systrace__hook__mem_free_entry__number_ranges,
-  (ProtobufCMessageInit) systrace__hook__mem_free_entry__init,
+  mem_free_entry__field_descriptors,
+  mem_free_entry__field_indices_by_name,
+  1,  mem_free_entry__number_ranges,
+  (ProtobufCMessageInit) mem_free_entry__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor systrace__hook__proc_mem__field_descriptors[3] =
+static const ProtobufCFieldDescriptor proc_mem__field_descriptors[3] =
 {
   {
     "pid",
@@ -554,7 +554,7 @@ static const ProtobufCFieldDescriptor systrace__hook__proc_mem__field_descriptor
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_UINT32,
     0,   /* quantifier_offset */
-    offsetof(Systrace__Hook__ProcMem, pid),
+    offsetof(ProcMem, pid),
     NULL,
     NULL,
     0,             /* flags */
@@ -565,9 +565,9 @@ static const ProtobufCFieldDescriptor systrace__hook__proc_mem__field_descriptor
     2,
     PROTOBUF_C_LABEL_REPEATED,
     PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(Systrace__Hook__ProcMem, n_mem_alloc_stacks),
-    offsetof(Systrace__Hook__ProcMem, mem_alloc_stacks),
-    &systrace__hook__mem_alloc_entry__descriptor,
+    offsetof(ProcMem, n_mem_alloc_stacks),
+    offsetof(ProcMem, mem_alloc_stacks),
+    &mem_alloc_entry__descriptor,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
@@ -577,40 +577,40 @@ static const ProtobufCFieldDescriptor systrace__hook__proc_mem__field_descriptor
     3,
     PROTOBUF_C_LABEL_REPEATED,
     PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(Systrace__Hook__ProcMem, n_mem_free_stacks),
-    offsetof(Systrace__Hook__ProcMem, mem_free_stacks),
-    &systrace__hook__mem_free_entry__descriptor,
+    offsetof(ProcMem, n_mem_free_stacks),
+    offsetof(ProcMem, mem_free_stacks),
+    &mem_free_entry__descriptor,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
 };
-static const unsigned systrace__hook__proc_mem__field_indices_by_name[] = {
+static const unsigned proc_mem__field_indices_by_name[] = {
   1,   /* field[1] = mem_alloc_stacks */
   2,   /* field[2] = mem_free_stacks */
   0,   /* field[0] = pid */
 };
-static const ProtobufCIntRange systrace__hook__proc_mem__number_ranges[1 + 1] =
+static const ProtobufCIntRange proc_mem__number_ranges[1 + 1] =
 {
   { 1, 0 },
   { 0, 3 }
 };
-const ProtobufCMessageDescriptor systrace__hook__proc_mem__descriptor =
+const ProtobufCMessageDescriptor proc_mem__descriptor =
 {
   PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "systrace.hook.ProcMem",
   "ProcMem",
-  "Systrace__Hook__ProcMem",
-  "systrace.hook",
-  sizeof(Systrace__Hook__ProcMem),
+  "ProcMem",
+  "ProcMem",
+  "",
+  sizeof(ProcMem),
   3,
-  systrace__hook__proc_mem__field_descriptors,
-  systrace__hook__proc_mem__field_indices_by_name,
-  1,  systrace__hook__proc_mem__number_ranges,
-  (ProtobufCMessageInit) systrace__hook__proc_mem__init,
+  proc_mem__field_descriptors,
+  proc_mem__field_indices_by_name,
+  1,  proc_mem__number_ranges,
+  (ProtobufCMessageInit) proc_mem__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor systrace__hook__gc_debug_data__field_descriptors[2] =
+static const ProtobufCFieldDescriptor gc_debug_data__field_descriptors[2] =
 {
   {
     "collected",
@@ -618,7 +618,7 @@ static const ProtobufCFieldDescriptor systrace__hook__gc_debug_data__field_descr
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_UINT32,
     0,   /* quantifier_offset */
-    offsetof(Systrace__Hook__GcDebugData, collected),
+    offsetof(GcDebugData, collected),
     NULL,
     NULL,
     0,             /* flags */
@@ -630,38 +630,38 @@ static const ProtobufCFieldDescriptor systrace__hook__gc_debug_data__field_descr
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_UINT32,
     0,   /* quantifier_offset */
-    offsetof(Systrace__Hook__GcDebugData, uncollectable),
+    offsetof(GcDebugData, uncollectable),
     NULL,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
 };
-static const unsigned systrace__hook__gc_debug_data__field_indices_by_name[] = {
+static const unsigned gc_debug_data__field_indices_by_name[] = {
   0,   /* field[0] = collected */
   1,   /* field[1] = uncollectable */
 };
-static const ProtobufCIntRange systrace__hook__gc_debug_data__number_ranges[1 + 1] =
+static const ProtobufCIntRange gc_debug_data__number_ranges[1 + 1] =
 {
   { 1, 0 },
   { 0, 2 }
 };
-const ProtobufCMessageDescriptor systrace__hook__gc_debug_data__descriptor =
+const ProtobufCMessageDescriptor gc_debug_data__descriptor =
 {
   PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "systrace.hook.GcDebugData",
   "GcDebugData",
-  "Systrace__Hook__GcDebugData",
-  "systrace.hook",
-  sizeof(Systrace__Hook__GcDebugData),
+  "GcDebugData",
+  "GcDebugData",
+  "",
+  sizeof(GcDebugData),
   2,
-  systrace__hook__gc_debug_data__field_descriptors,
-  systrace__hook__gc_debug_data__field_indices_by_name,
-  1,  systrace__hook__gc_debug_data__number_ranges,
-  (ProtobufCMessageInit) systrace__hook__gc_debug_data__init,
+  gc_debug_data__field_descriptors,
+  gc_debug_data__field_indices_by_name,
+  1,  gc_debug_data__number_ranges,
+  (ProtobufCMessageInit) gc_debug_data__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor systrace__hook__pytorch_stage__field_descriptors[6] =
+static const ProtobufCFieldDescriptor pytorch_stage__field_descriptors[6] =
 {
   {
     "stage_id",
@@ -669,7 +669,7 @@ static const ProtobufCFieldDescriptor systrace__hook__pytorch_stage__field_descr
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_UINT32,
     0,   /* quantifier_offset */
-    offsetof(Systrace__Hook__PytorchStage, stage_id),
+    offsetof(PytorchStage, stage_id),
     NULL,
     NULL,
     0,             /* flags */
@@ -681,7 +681,7 @@ static const ProtobufCFieldDescriptor systrace__hook__pytorch_stage__field_descr
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    offsetof(Systrace__Hook__PytorchStage, stage_type),
+    offsetof(PytorchStage, stage_type),
     NULL,
     &protobuf_c_empty_string,
     0,             /* flags */
@@ -693,7 +693,7 @@ static const ProtobufCFieldDescriptor systrace__hook__pytorch_stage__field_descr
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_UINT64,
     0,   /* quantifier_offset */
-    offsetof(Systrace__Hook__PytorchStage, start_us),
+    offsetof(PytorchStage, start_us),
     NULL,
     NULL,
     0,             /* flags */
@@ -705,7 +705,7 @@ static const ProtobufCFieldDescriptor systrace__hook__pytorch_stage__field_descr
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_UINT64,
     0,   /* quantifier_offset */
-    offsetof(Systrace__Hook__PytorchStage, end_us),
+    offsetof(PytorchStage, end_us),
     NULL,
     NULL,
     0,             /* flags */
@@ -716,8 +716,8 @@ static const ProtobufCFieldDescriptor systrace__hook__pytorch_stage__field_descr
     5,
     PROTOBUF_C_LABEL_REPEATED,
     PROTOBUF_C_TYPE_STRING,
-    offsetof(Systrace__Hook__PytorchStage, n_stack_frames),
-    offsetof(Systrace__Hook__PytorchStage, stack_frames),
+    offsetof(PytorchStage, n_stack_frames),
+    offsetof(PytorchStage, stack_frames),
     NULL,
     &protobuf_c_empty_string,
     0,             /* flags */
@@ -728,15 +728,15 @@ static const ProtobufCFieldDescriptor systrace__hook__pytorch_stage__field_descr
     6,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(Systrace__Hook__PytorchStage, debug_data_case),
-    offsetof(Systrace__Hook__PytorchStage, gc_debug),
-    &systrace__hook__gc_debug_data__descriptor,
+    offsetof(PytorchStage, debug_data_case),
+    offsetof(PytorchStage, gc_debug),
+    &gc_debug_data__descriptor,
     NULL,
     0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
 };
-static const unsigned systrace__hook__pytorch_stage__field_indices_by_name[] = {
+static const unsigned pytorch_stage__field_indices_by_name[] = {
   3,   /* field[3] = end_us */
   5,   /* field[5] = gc_debug */
   4,   /* field[4] = stack_frames */
@@ -744,36 +744,36 @@ static const unsigned systrace__hook__pytorch_stage__field_indices_by_name[] = {
   1,   /* field[1] = stage_type */
   2,   /* field[2] = start_us */
 };
-static const ProtobufCIntRange systrace__hook__pytorch_stage__number_ranges[1 + 1] =
+static const ProtobufCIntRange pytorch_stage__number_ranges[1 + 1] =
 {
   { 1, 0 },
   { 0, 6 }
 };
-const ProtobufCMessageDescriptor systrace__hook__pytorch_stage__descriptor =
+const ProtobufCMessageDescriptor pytorch_stage__descriptor =
 {
   PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "systrace.hook.PytorchStage",
   "PytorchStage",
-  "Systrace__Hook__PytorchStage",
-  "systrace.hook",
-  sizeof(Systrace__Hook__PytorchStage),
+  "PytorchStage",
+  "PytorchStage",
+  "",
+  sizeof(PytorchStage),
   6,
-  systrace__hook__pytorch_stage__field_descriptors,
-  systrace__hook__pytorch_stage__field_indices_by_name,
-  1,  systrace__hook__pytorch_stage__number_ranges,
-  (ProtobufCMessageInit) systrace__hook__pytorch_stage__init,
+  pytorch_stage__field_descriptors,
+  pytorch_stage__field_indices_by_name,
+  1,  pytorch_stage__number_ranges,
+  (ProtobufCMessageInit) pytorch_stage__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor systrace__hook__pytorch__field_descriptors[4] =
+static const ProtobufCFieldDescriptor pytorch__field_descriptors[4] =
 {
   {
     "pytorch_stages",
     1,
     PROTOBUF_C_LABEL_REPEATED,
     PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(Systrace__Hook__Pytorch, n_pytorch_stages),
-    offsetof(Systrace__Hook__Pytorch, pytorch_stages),
-    &systrace__hook__pytorch_stage__descriptor,
+    offsetof(Pytorch, n_pytorch_stages),
+    offsetof(Pytorch, pytorch_stages),
+    &pytorch_stage__descriptor,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
@@ -784,7 +784,7 @@ static const ProtobufCFieldDescriptor systrace__hook__pytorch__field_descriptors
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_UINT32,
     0,   /* quantifier_offset */
-    offsetof(Systrace__Hook__Pytorch, rank),
+    offsetof(Pytorch, rank),
     NULL,
     NULL,
     0,             /* flags */
@@ -796,7 +796,7 @@ static const ProtobufCFieldDescriptor systrace__hook__pytorch__field_descriptors
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_UINT32,
     0,   /* quantifier_offset */
-    offsetof(Systrace__Hook__Pytorch, step_id),
+    offsetof(Pytorch, step_id),
     NULL,
     NULL,
     0,             /* flags */
@@ -808,104 +808,104 @@ static const ProtobufCFieldDescriptor systrace__hook__pytorch__field_descriptors
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    offsetof(Systrace__Hook__Pytorch, comm),
+    offsetof(Pytorch, comm),
     NULL,
     &protobuf_c_empty_string,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
 };
-static const unsigned systrace__hook__pytorch__field_indices_by_name[] = {
+static const unsigned pytorch__field_indices_by_name[] = {
   3,   /* field[3] = comm */
   0,   /* field[0] = pytorch_stages */
   1,   /* field[1] = rank */
   2,   /* field[2] = step_id */
 };
-static const ProtobufCIntRange systrace__hook__pytorch__number_ranges[1 + 1] =
+static const ProtobufCIntRange pytorch__number_ranges[1 + 1] =
 {
   { 1, 0 },
   { 0, 4 }
 };
-const ProtobufCMessageDescriptor systrace__hook__pytorch__descriptor =
+const ProtobufCMessageDescriptor pytorch__descriptor =
 {
   PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "systrace.hook.Pytorch",
   "Pytorch",
-  "Systrace__Hook__Pytorch",
-  "systrace.hook",
-  sizeof(Systrace__Hook__Pytorch),
+  "Pytorch",
+  "Pytorch",
+  "",
+  sizeof(Pytorch),
   4,
-  systrace__hook__pytorch__field_descriptors,
-  systrace__hook__pytorch__field_indices_by_name,
-  1,  systrace__hook__pytorch__number_ranges,
-  (ProtobufCMessageInit) systrace__hook__pytorch__init,
+  pytorch__field_descriptors,
+  pytorch__field_indices_by_name,
+  1,  pytorch__number_ranges,
+  (ProtobufCMessageInit) pytorch__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor systrace__hook__mem__field_descriptors[1] =
+static const ProtobufCFieldDescriptor mem__field_descriptors[1] =
 {
   {
     "proc_mem",
     1,
     PROTOBUF_C_LABEL_REPEATED,
     PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(Systrace__Hook__Mem, n_proc_mem),
-    offsetof(Systrace__Hook__Mem, proc_mem),
-    &systrace__hook__proc_mem__descriptor,
+    offsetof(Mem, n_proc_mem),
+    offsetof(Mem, proc_mem),
+    &proc_mem__descriptor,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
 };
-static const unsigned systrace__hook__mem__field_indices_by_name[] = {
+static const unsigned mem__field_indices_by_name[] = {
   0,   /* field[0] = proc_mem */
 };
-static const ProtobufCIntRange systrace__hook__mem__number_ranges[1 + 1] =
+static const ProtobufCIntRange mem__number_ranges[1 + 1] =
 {
   { 1, 0 },
   { 0, 1 }
 };
-const ProtobufCMessageDescriptor systrace__hook__mem__descriptor =
+const ProtobufCMessageDescriptor mem__descriptor =
 {
   PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "systrace.hook.Mem",
   "Mem",
-  "Systrace__Hook__Mem",
-  "systrace.hook",
-  sizeof(Systrace__Hook__Mem),
+  "Mem",
+  "Mem",
+  "",
+  sizeof(Mem),
   1,
-  systrace__hook__mem__field_descriptors,
-  systrace__hook__mem__field_indices_by_name,
-  1,  systrace__hook__mem__number_ranges,
-  (ProtobufCMessageInit) systrace__hook__mem__init,
+  mem__field_descriptors,
+  mem__field_indices_by_name,
+  1,  mem__number_ranges,
+  (ProtobufCMessageInit) mem__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCEnumValue systrace__hook__stage_type__enum_values_by_number[3] =
+static const ProtobufCEnumValue stage_type__enum_values_by_number[3] =
 {
-  { "STAGE_DATALOADER", "SYSTRACE__HOOK__STAGE_TYPE__STAGE_DATALOADER", 0 },
-  { "STAGE_FORWARD", "SYSTRACE__HOOK__STAGE_TYPE__STAGE_FORWARD", 1 },
-  { "STAGE_BACKWARD", "SYSTRACE__HOOK__STAGE_TYPE__STAGE_BACKWARD", 2 },
+  { "STAGE_DATALOADER", "STAGE_TYPE__STAGE_DATALOADER", 0 },
+  { "STAGE_FORWARD", "STAGE_TYPE__STAGE_FORWARD", 1 },
+  { "STAGE_BACKWARD", "STAGE_TYPE__STAGE_BACKWARD", 2 },
 };
-static const ProtobufCIntRange systrace__hook__stage_type__value_ranges[] = {
+static const ProtobufCIntRange stage_type__value_ranges[] = {
 {0, 0},{0, 3}
 };
-static const ProtobufCEnumValueIndex systrace__hook__stage_type__enum_values_by_name[3] =
+static const ProtobufCEnumValueIndex stage_type__enum_values_by_name[3] =
 {
   { "STAGE_BACKWARD", 2 },
   { "STAGE_DATALOADER", 0 },
   { "STAGE_FORWARD", 1 },
 };
-const ProtobufCEnumDescriptor systrace__hook__stage_type__descriptor =
+const ProtobufCEnumDescriptor stage_type__descriptor =
 {
   PROTOBUF_C__ENUM_DESCRIPTOR_MAGIC,
-  "systrace.hook.StageType",
   "StageType",
-  "Systrace__Hook__StageType",
-  "systrace.hook",
+  "StageType",
+  "StageType",
+  "",
   3,
-  systrace__hook__stage_type__enum_values_by_number,
+  stage_type__enum_values_by_number,
   3,
-  systrace__hook__stage_type__enum_values_by_name,
+  stage_type__enum_values_by_name,
   1,
-  systrace__hook__stage_type__value_ranges,
+  stage_type__value_ranges,
   NULL,NULL,NULL,NULL   /* reserved[1234] */
 };
