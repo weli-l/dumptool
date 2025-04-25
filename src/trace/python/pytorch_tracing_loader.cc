@@ -18,7 +18,7 @@ PyTorchTracingLibrary::PyTorchTracingLibrary(const std::string &library_path)
       return_tracing_data_(nullptr), switch_tracing_(nullptr)
 {
     const std::string err =
-        "libpytorch_tracing.so, skip recording python gc in timeline ";
+        "libsysTrace.so, skip recording python gc in timeline ";
     SETUP_SYMBOL_FOR_LOAD_LIBRARY(handle_, "systrace_register_tracing",
                                   register_tracing_,
                                   SysTraceRegisterTracingFunc, err);

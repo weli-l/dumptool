@@ -1,4 +1,3 @@
-#define PY_SSIZE_T_CLEAN
 #include "pytorch_tracing.h"
 
 #include <Python.h>
@@ -57,48 +56,9 @@ static uint64_t getMicrosecondTimestamp();
 static TracingFunction *isTracedPyTorchFunction(PyFrameObject *frame);
 static TracingData *getTracingData(int name);
 static void addTracingData(int name, const char *func_name);
-// python profiler interface
-// this function is not compatiable with other profiler
 static int profiler(PyObject *obj, PyFrameObject *frame, int what,
                     PyObject *arg);
 
-// void setSysHook();
-
-// static void capture_stack(PyFrameObject* frame, PyTorchTracingData*
-// trace_data) {
-//     PyFrameObject* current = frame;
-//     int depth = 0;
-
-//     // 清空原有堆栈
-//     trace_data->stack_depth = 0;
-//     memset(trace_data->stack, 0, sizeof(trace_data->stack));
-
-//     while (current != NULL && depth < MAX_STACK_DEPTH) {
-//         PyCodeObject* code = PyFrame_GetCode(current);
-//         if (!code) break;
-
-//         // 安全获取帧信息
-//         const char* filename = PyUnicode_AsUTF8(code->co_filename);
-//         const char* funcname = PyUnicode_AsUTF8(code->co_name);
-//         int lineno = PyFrame_GetLineNumber(current);
-
-//         // 格式化帧信息
-//         snprintf(trace_data->stack[depth], MAX_STACK_FRAME_LENGTH,
-//                 "%s:%d (%s)",
-//                 filename ? filename : "unknown",
-//                 lineno,
-//                 funcname ? funcname : "unknown");
-
-//         Py_DECREF(code);
-//         //current = current->f_back;
-//         PyFrameObject *back = PyFrame_GetBack(current);
-//         Py_XDECREF(current);
-//         current = back;
-//         depth++;
-//     }
-
-//     trace_data->stack_depth = depth;
-// }
 static void capture_stack(PyFrameObject *frame, PyTorchTracingData *trace_entry)
 {
     int depth = 0;
@@ -129,7 +89,6 @@ TracingFunction *isTracedPyTorchFunction(PyFrameObject *frame)
     return traced_function;
 }
 
-// profiler entry for PyEval_SetProfile
 static int profiler(PyObject *obj, PyFrameObject *frame, int what,
                     PyObject *arg)
 {
@@ -310,7 +269,6 @@ static void getGcInfo(PyTorchTracingData *data, PyObject *info)
 
 static void gcCallback(PyObject *phase, PyObject *info)
 {
-    // this is in gil, so other thread MUST NOT to lock and get gil
     pthread_mutex_lock(&mutex);
     if (PyUnicode_CompareWithASCIIString(phase, "start") == 0 && start_tracing)
     {
@@ -478,16 +436,11 @@ void systrace_register_tracing(const char **names, int count, char **errors)
         Py_Initialize();
     }
     PyGILState_STATE gstate = PyGILState_Ensure();
-    // register syshook first
-    // setSysHook();
-    // allocate PyCodeObject for each function
-    // +1 is for gc, other python call from 1
     tracing_data_count = count;
     pytorch_tracing_data_array =
         (TracingData *)malloc(sizeof(TracingData) * tracing_data_count);
     memset(pytorch_tracing_data_array, 0,
            sizeof(TracingData) * tracing_data_count);
-    // register gc, code is 0
     systrace_register_gc(errors);
     int64_t code_address;
     int is_native;
@@ -533,24 +486,5 @@ void systrace_register_tracing(const char **names, int count, char **errors)
     }
     PyThreadState_Swap(thread_array[0]);
 
-    PyGILState_Release(gstate);
-}
-
-void systrace_tracing_debug()
-{
-    PyGILState_STATE gstate = PyGILState_Ensure();
-    for (int i = 0; i < tracing_data_count; i++)
-    {
-        TracingData *tracing_data = getTracingData(i);
-        if (!tracing_data)
-            continue;
-        PyTorchTracingDataArray *curr_data = tracing_data->curr_data;
-        for (int j = 0; j < curr_data->cur; j++)
-            printf("%s start %ld, end %ld\n", tracing_data->function_name,
-                   curr_data->data[j].start, curr_data->data[j].end);
-        printf("%s count %ld\n", tracing_data->function_name,
-               tracing_data->count);
-    }
-    PyEval_SetProfile(NULL, NULL);
     PyGILState_Release(gstate);
 }

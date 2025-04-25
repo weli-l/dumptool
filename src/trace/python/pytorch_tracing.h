@@ -22,8 +22,6 @@ extern "C"
     systrace_switch_pytorch_tracing(int s);
     __attribute__((visibility("default"))) int64_t
     systrace_get_pytorch_tracing_count(int);
-
-    __attribute__((visibility("default"))) void systrace_tracing_debug();
 #ifdef __cplusplus
 }
 #endif
