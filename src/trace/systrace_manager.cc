@@ -10,10 +10,10 @@
 #include <vector>
 
 #include "../../include/common/constant.h"
-#include "../../include/common/logging.h"
 #include "systrace_manager.h"
 
 namespace bip = boost::interprocess;
+std::thread systrace::PyTorchTrace::file_watcher_;
 namespace systrace
 {
 
@@ -26,6 +26,7 @@ PyTorchTrace &PyTorchTrace::getInstance()
 void PyTorchTrace::initSingleton()
 {
     instance_ = new PyTorchTrace;
+    file_watcher_ = std::thread(&PyTorchTrace::watchControlFile);
 
     // Initialize rank and library
     instance_->pytorch_trace_.set_rank(config::GlobalConfig::rank);
@@ -81,12 +82,29 @@ void PyTorchTrace::reset(const std::string &barrier_name)
 void PyTorchTrace::dumpPyTorchTracing()
 {
     const std::string &dump_path = "/root";
-    const char *dump_gc_env = std::getenv("ENABLE_PYTORCH_GC_DATA");
-    const char *dump_stack_env = std::getenv("ENABLE_PYTORCH_STACK_DATA");
+    bool dump_gc = false;
+    bool dump_stack = false;
 
-    bool dump_gc = (dump_gc_env != nullptr && std::string(dump_gc_env) == "1");
-    bool dump_stack =
-        (dump_stack_env != nullptr && std::string(dump_stack_env) == "1");
+    try
+    {
+        std::ifstream file(control_file_);
+        if (file)
+        {
+            std::string line;
+            while (std::getline(file, line))
+            {
+                if (line == "ENABLE_GC")
+                    dump_gc = true;
+                if (line == "ENABLE_STACK")
+                    dump_stack = true;
+            }
+        }
+    }
+    catch (...)
+    {
+        dump_gc = false;
+        dump_stack = false;
+    }
 
     if (util::ensureDirExists(dump_path))
     {
