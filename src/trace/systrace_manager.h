@@ -55,6 +55,13 @@ class PyTorchTrace
         dump_stack_.store(enable, std::memory_order_release);
     }
 
+    bool shouldDump() const { return dump_.load(std::memory_order_acquire); }
+
+    void setDump(bool enable)
+    {
+        dump_.store(enable, std::memory_order_release);
+    }
+
     void updateControlFlags()
     {
         std::ifstream file(control_file_);
@@ -67,7 +74,10 @@ class PyTorchTrace
                 {
                     dump_stack_.store(true);
                     dump_gc_.store(true);
-                    break;
+                }
+                else if (line == "ENABLE_DUMP")
+                {
+                    dump_.store(true);
                 }
             }
         }
@@ -75,6 +85,7 @@ class PyTorchTrace
         {
             dump_stack_.store(false);
             dump_gc_.store(false);
+            dump_.store(false);
         }
     }
 
@@ -102,10 +113,12 @@ class PyTorchTrace
             catch (...)
             {
                 if (PyTorchTrace::getInstance().shouldDumpStack() ||
-                    PyTorchTrace::getInstance().shouldDumpGc())
+                    PyTorchTrace::getInstance().shouldDumpGc() ||
+                    PyTorchTrace::getInstance().shouldDump())
                 {
                     PyTorchTrace::getInstance().setDumpStack(false);
                     PyTorchTrace::getInstance().setDumpGc(false);
+                    PyTorchTrace::getInstance().setDump(false);
                     STLOG(WARNING)
                         << "Control file removed, disabling all dumping";
                 }
@@ -135,6 +148,7 @@ class PyTorchTrace
 
     std::atomic<bool> dump_gc_{false};
     std::atomic<bool> dump_stack_{false};
+    std::atomic<bool> dump_{false};
     static std::thread file_watcher_;
 };
 

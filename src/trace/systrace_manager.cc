@@ -81,130 +81,113 @@ void PyTorchTrace::reset(const std::string &barrier_name)
 
 void PyTorchTrace::dumpPyTorchTracing()
 {
-    const std::string &dump_path = "/root";
-    bool dump_gc = false;
-    bool dump_stack = false;
-
-    try
+    if (dump_)
     {
-        std::ifstream file(control_file_);
-        if (file)
+        const std::string &dump_path = "/root";
+
+        if (util::ensureDirExists(dump_path))
         {
-            std::string line;
-            while (std::getline(file, line))
-            {
-                if (line == "ENABLE_GC")
-                    dump_gc = true;
-                if (line == "ENABLE_STACK")
-                    dump_stack = true;
-            }
+            STLOG(ERROR) << "[PyTorchTrace] Failed to create dump directory"
+                         << std::endl;
+            return;
         }
-    }
-    catch (...)
-    {
-        dump_gc = false;
-        dump_stack = false;
-    }
 
-    if (util::ensureDirExists(dump_path))
-    {
-        STLOG(ERROR) << "[PyTorchTrace] Failed to create dump directory"
-                     << std::endl;
-        return;
-    }
+        pytorch_trace_.set_rank(config::GlobalConfig::local_rank);
+        pytorch_trace_.set_step_id(1);
+        pytorch_trace_.set_comm("default_task");
 
-    pytorch_trace_.set_rank(config::GlobalConfig::local_rank);
-    pytorch_trace_.set_step_id(1);
-    pytorch_trace_.set_comm("default_task");
-
-    for (size_t name_index = 0; name_index < pytorch_tracing_functions_.size();
-         name_index++)
-    {
-        std::vector<PyTorchTracingDataArray *> holders;
-        const std::string &name = pytorch_tracing_functions_[name_index];
-
-        PyTorchTracingDataArray *tracing_data =
-            pytorch_tracing_library_->GetPartialTracingData(name_index);
-        if (tracing_data)
-            holders.push_back(tracing_data);
-
-        int full_data_count = 0;
-        while (true)
+        for (size_t name_index = 0;
+             name_index < pytorch_tracing_functions_.size(); name_index++)
         {
+            std::vector<PyTorchTracingDataArray *> holders;
+            const std::string &name = pytorch_tracing_functions_[name_index];
+
             PyTorchTracingDataArray *tracing_data =
-                pytorch_tracing_library_->GetFullTracingData(name_index);
-            if (!tracing_data)
-                break;
-            full_data_count++;
-            holders.push_back(tracing_data);
-        }
-        for (auto each_tracing_data : holders)
-        {
-            for (uint32_t i = 0; i < each_tracing_data->cur; i++)
+                pytorch_tracing_library_->GetPartialTracingData(name_index);
+            if (tracing_data)
+                holders.push_back(tracing_data);
+
+            int full_data_count = 0;
+            while (true)
             {
-                if (each_tracing_data->data[i].start == 0)
-                    continue;
-
-                auto trace = pytorch_trace_.add_pytorch_stages();
-                trace->set_start_us(each_tracing_data->data[i].start);
-                trace->set_end_us(each_tracing_data->data[i].end);
-                trace->set_stage_id(each_tracing_data->data[i].count);
-                trace->set_stage_type(name);
-
-                if (dump_stack && each_tracing_data->data[i].stack_depth > 0)
+                PyTorchTracingDataArray *tracing_data =
+                    pytorch_tracing_library_->GetFullTracingData(name_index);
+                if (!tracing_data)
+                    break;
+                full_data_count++;
+                holders.push_back(tracing_data);
+            }
+            for (auto each_tracing_data : holders)
+            {
+                for (uint32_t i = 0; i < each_tracing_data->cur; i++)
                 {
-                    trace->mutable_stack_frames()->Reserve(
-                        each_tracing_data->data[i].stack_depth);
+                    if (each_tracing_data->data[i].start == 0)
+                        continue;
 
-                    for (int j = 0; j < each_tracing_data->data[i].stack_depth;
-                         j++)
+                    auto trace = pytorch_trace_.add_pytorch_stages();
+                    trace->set_start_us(each_tracing_data->data[i].start);
+                    trace->set_end_us(each_tracing_data->data[i].end);
+                    trace->set_stage_id(each_tracing_data->data[i].count);
+                    trace->set_stage_type(name);
+
+                    if (dump_stack_ &&
+                        each_tracing_data->data[i].stack_depth > 0)
                     {
-                        if (each_tracing_data->data[i].stack_info[j][0] != '\0')
+                        trace->mutable_stack_frames()->Reserve(
+                            each_tracing_data->data[i].stack_depth);
+
+                        for (int j = 0;
+                             j < each_tracing_data->data[i].stack_depth; j++)
                         {
-                            trace->add_stack_frames(
-                                each_tracing_data->data[i].stack_info[j]);
+                            if (each_tracing_data->data[i].stack_info[j][0] !=
+                                '\0')
+                            {
+                                trace->add_stack_frames(
+                                    each_tracing_data->data[i].stack_info[j]);
+                            }
                         }
                     }
-                }
 
-                if (dump_gc && each_tracing_data->data[i].type == PAYLOAD_GC)
-                {
-                    GcDebugData *gc_debug = trace->mutable_gc_debug();
-                    gc_debug->set_collected(
-                        each_tracing_data->data[i].payload.gc_debug[0]);
-                    gc_debug->set_uncollectable(
-                        each_tracing_data->data[i].payload.gc_debug[1]);
+                    if (dump_gc_ &&
+                        each_tracing_data->data[i].type == PAYLOAD_GC)
+                    {
+                        GcDebugData *gc_debug = trace->mutable_gc_debug();
+                        gc_debug->set_collected(
+                            each_tracing_data->data[i].payload.gc_debug[0]);
+                        gc_debug->set_uncollectable(
+                            each_tracing_data->data[i].payload.gc_debug[1]);
+                    }
                 }
+            }
+
+            for (auto each_tracing_data : holders)
+            {
+                pytorch_tracing_library_->ReturnTracingData(
+                    each_tracing_data, PY_TRACING_EMPTY_POOL, name_index);
             }
         }
 
-        for (auto each_tracing_data : holders)
+        std::string file_path =
+            dump_path + "/" + util::getUniqueFileNameByCluster(".timeline");
+        std::ofstream file(file_path,
+                           std::ios::binary | std::ios::out | std::ios::app);
+        if (!file)
         {
-            pytorch_tracing_library_->ReturnTracingData(
-                each_tracing_data, PY_TRACING_EMPTY_POOL, name_index);
+            STLOG(ERROR) << "[PyTorchTrace] Failed to open timeline file"
+                         << std::endl;
+            return;
         }
-    }
 
-    std::string file_path =
-        dump_path + "/" + util::getUniqueFileNameByCluster(".timeline");
-    std::ofstream file(file_path,
-                       std::ios::binary | std::ios::out | std::ios::app);
-    if (!file)
-    {
-        STLOG(ERROR) << "[PyTorchTrace] Failed to open timeline file"
-                     << std::endl;
-        return;
-    }
+        std::string binary_message;
+        if (!pytorch_trace_.SerializeToString(&binary_message))
+        {
+            STLOG(ERROR) << "[PyTorchTrace] Failed to serialize timeline"
+                         << std::endl;
+            return;
+        }
 
-    std::string binary_message;
-    if (!pytorch_trace_.SerializeToString(&binary_message))
-    {
-        STLOG(ERROR) << "[PyTorchTrace] Failed to serialize timeline"
-                     << std::endl;
-        return;
+        file << binary_message;
     }
-
-    file << binary_message;
 }
 
 SysTrace &SysTrace::getInstance()
