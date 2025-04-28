@@ -1,69 +1,69 @@
 import json
-import trace_pb2
+import systrace_pb2
+import argparse
 
 def proto_to_json(input_path, output_path):
-    # Read Protobuf data
     with open(input_path, "rb") as f:
-        pytorch_data = trace_pb2.Pytorch()
+        pytorch_data = systrace_pb2.Pytorch()
         pytorch_data.ParseFromString(f.read())
     
-    # Build JSON structure for Chrome Tracing format
-    result = {
+    trace_data = {
         "traceEvents": [],
         "displayTimeUnit": "ns",
-        "otherData": {
-            "version": "PyTorch Memory Profiler",
+        "metadata": {
+            "format": "Pytorch Profiler",
             "rank": pytorch_data.rank,
-            "step_id": pytorch_data.step_id,
-            "comm": pytorch_data.comm
+            "step": pytorch_data.step_id
         }
     }
     
-    # Convert Pytorch stages to trace events
+    trace_data["traceEvents"].append({
+        "name": "process_name",
+        "ph": "M",
+        "pid": pytorch_data.rank,
+        "tid": 0,
+        "args": {
+            "name": f"Rank {pytorch_data.rank}"
+        }
+    })
+    
     for stage in pytorch_data.pytorch_stages:
-        # Main stage event
-        stage_event = {
-            "name": f"{stage.stage_type} (stage_id={stage.stage_id})",
+        start_us = stage.start_us
+        duration_us = stage.end_us - stage.start_us
+        
+        trace_data["traceEvents"].append({
+            "name": stage.stage_type,
             "cat": "pytorch",
-            "ph": "X",  # Complete event
+            "ph": "X",
+            "pid": pytorch_data.rank,
+            "tid": pytorch_data.rank,
+            "ts": start_us,
+            "dur": duration_us,
+            "args": {
+                "stage_id": stage.stage_id,
+                "stack_frames": list(stage.stack_frames),
+                "gc_collected": stage.gc_debug.collected if stage.HasField("gc_debug") else 0,
+                "gc_uncollectable": stage.gc_debug.uncollectable if stage.HasField("gc_debug") else 0
+            }
+        })
+        
+        trace_data["traceEvents"].append({
+            "name": "thread_name",
+            "ph": "M",
             "pid": pytorch_data.rank,
             "tid": stage.stage_id,
-            "ts": stage.start_us * 1000,  # Convert microseconds to nanoseconds
-            "dur": (stage.end_us - stage.start_us) * 1000,
             "args": {
-                "stage_type": stage.stage_type,
-                "stack_frames": stage.stack_frames
+                "name": f"Stage {stage.stage_id}"
             }
-        }
-        
-        # Add GC debug data if present
-        if stage.HasField("gc_debug"):
-            stage_event["args"].update({
-                "gc_collected": stage.gc_debug.collected,
-                "gc_uncollectable": stage.gc_debug.uncollectable
-            })
-        
-        result["traceEvents"].append(stage_event)
-        
-        # Add stack frame markers as instant events
-        for i, frame in enumerate(stage.stack_frames):
-            frame_event = {
-                "name": frame,
-                "cat": "stack_frame",
-                "ph": "i",  # Instant event
-                "pid": pytorch_data.rank,
-                "tid": stage.stage_id,
-                "ts": stage.start_us * 1000,
-                "args": {
-                    "frame_index": i,
-                    "stage_id": stage.stage_id
-                }
-            }
-            result["traceEvents"].append(frame_event)
+        })
     
-    # Write to JSON file
     with open(output_path, "w") as f:
-        json.dump(result, f, indent=2)
+        json.dump(trace_data, f, indent=None, separators=(',', ':'))
 
 if __name__ == "__main__":
-    proto_to_json("trace.pb", "trace.json")
+    parser = argparse.ArgumentParser(description='Convert PyTorch protobuf trace to JSON format')
+    parser.add_argument('input', help='Input protobuf file path')
+    parser.add_argument('output', help='Output JSON file path')
+    args = parser.parse_args()
+    
+    proto_to_json(args.input, args.output)
