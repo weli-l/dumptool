@@ -6,9 +6,9 @@
 #include <mutex>
 #include <thread>
 #include <vector>
-// #include <glog/logging.h>
 #include <iostream>
 #include <string.h>
+#include <json/json.h> 
 
 class MSPTIHcclFileWriter
 {
@@ -22,6 +22,7 @@ class MSPTIHcclFileWriter
     std::thread writerThread;
     std::condition_variable cv;
     std::atomic<bool> stop;
+    Json::Value root = Json::Value(Json::ValueType::arrayValue);
 
   public:
     MSPTIHcclFileWriter(const std::string &filename)
@@ -52,35 +53,15 @@ class MSPTIHcclFileWriter
         std::string localRank =
             localRankCStr; // Now safe to construct std::string
         auto rank = std::stoi(localRank);
-        if (saveFilename.length() >= 4 &&
-            saveFilename.substr(saveFilename.length() - 4) == ".csv")
-        {
-            std::string baseName =
-                saveFilename.substr(0, saveFilename.length() - 4);
-            filenameWithRank = baseName + "." + std::to_string(rank) + ".csv";
-        }
-        else
-        {
+        if (saveFilename.length() >= 5 && saveFilename.substr(saveFilename.length() - 5) == ".json") {
+            std::string baseName = saveFilename.substr(0, saveFilename.length() - 5);
+            filenameWithRank = baseName + "." + std::to_string(rank) + ".json";
+        } else {
             filenameWithRank = saveFilename + "." + std::to_string(rank);
         }
         std::cout << "Filename: " << filenameWithRank << std::endl;
-
-        // if file does not exists
-        // create it and write header
-        if (this->fileExists(filenameWithRank))
-        {
-            this->file.open(filenameWithRank, std::ios::out | std::ios::app);
-            this->opened.store(true);
-        }
-        else
-        {
-            this->file.open(filenameWithRank, std::ios::out | std::ios::app);
-            this->opened.store(true);
-            this->file
-                << "kind,mode,timestamp,id,process_id&device_id,thread_id,name"
-                << std::endl;
-        }
-
+        this->file.open(filenameWithRank, std::ios::out | std::ios::app);
+        this->opened.store(true);
         this->stop.store(false);
         this->run();
     }
@@ -94,7 +75,7 @@ class MSPTIHcclFileWriter
                 this->stop.store(true);
             }
             this->cv.notify_all();
-            this->hcclActivityFormatToCSV();
+            this->hcclActivityFormatToJson();
             if (this->writerThread.joinable())
             {
                 this->writerThread.join();
@@ -132,7 +113,7 @@ class MSPTIHcclFileWriter
                     if (this->cv.wait_for(lock, std::chrono::seconds(5)) ==
                         std::cv_status::timeout)
                     {
-                        this->hcclActivityFormatToCSV();
+                        this->hcclActivityFormatToJson();
                     }
                     else if (this->stop.load())
                     {
@@ -142,57 +123,51 @@ class MSPTIHcclFileWriter
             });
     }
 
-    void replaceCommasWithExclamation(const char *input, char *output)
-    {
-        for (int i = 0; input[i] != '\0'; i++)
-        {
-            if (input[i] == ',')
-            {
-                output[i] = '!';
-            }
-            else
-            {
-                output[i] = input[i];
-            }
-        }
-        output[strlen(input)] = '\0';
-    }
-
-    void hcclActivityFormatToCSV()
-    {
+   void hcclActivityFormatToJson() {
         std::lock_guard<std::mutex> lock(this->buffermtx);
-        if (this->file.is_open())
-        {
-            // enumerate the buffer and write to file
-            for (auto activity : *this->markerActivityBuffer)
-            {
-                char result[strlen(activity.name) + 1];
-                this->replaceCommasWithExclamation(activity.name, result);
-                if (activity.sourceKind == MSPTI_ACTIVITY_SOURCE_KIND_HOST)
-                {
-                    this->file << activity.kind << "," << activity.sourceKind
-                               << "," << activity.timestamp << ","
-                               << activity.id << ","
-                               << activity.objectId.pt.processId << ","
-                               << activity.objectId.pt.threadId << "," << result
-                               << std::endl;
+        if (this->file.is_open()) {
+            for (auto activity : *this->markerActivityBuffer) {
+                Json::Value markerJson;
+                markerJson["Kind"] = activity.kind;
+                markerJson["SourceKind"] = activity.sourceKind;
+                markerJson["Timestamp"] = activity.timestamp;
+                markerJson["Id"] = activity.id;
+                markerJson["Domain"] = "";
+                markerJson["Flag"] = activity.flag;
+                Json::Value msptiObjecId;
+                if (activity.sourceKind == MSPTI_ACTIVITY_SOURCE_KIND_HOST) {
+                    Json::Value pt;
+                    pt["ProcessId"] = activity.objectId.pt.processId;
+                    pt["ThreadId"] = activity.objectId.pt.threadId;
+                    Json::Value ds;
+                    ds["DeviceId"] = activity.objectId.pt.processId;
+                    ds["StreamId"] = activity.objectId.pt.threadId;
+                    msptiObjecId["Pt"] = pt;
+                    msptiObjecId["Ds"] = ds;
+
+                } else if (activity.sourceKind == MSPTI_ACTIVITY_SOURCE_KIND_DEVICE) {
+                    Json::Value ds;
+                    ds["DeviceId"] = activity.objectId.ds.deviceId;
+                    ds["StreamId"] = activity.objectId.ds.streamId;
+                    Json::Value pt;
+                    pt["ProcessId"] = activity.objectId.ds.deviceId;
+                    pt["ThreadId"] = activity.objectId.ds.streamId;
+                    msptiObjecId["Pt"] = pt;
+                    msptiObjecId["Ds"] = ds;
+
                 }
-                else if (activity.sourceKind ==
-                         MSPTI_ACTIVITY_SOURCE_KIND_DEVICE)
-                {
-                    this->file << activity.kind << "," << activity.sourceKind
-                               << "," << activity.timestamp << ","
-                               << activity.id << ","
-                               << activity.objectId.ds.deviceId << ","
-                               << activity.objectId.ds.streamId << "," << result
-                               << std::endl;
-                }
+                markerJson["msptiObjecId"] = msptiObjecId;
+                markerJson["Name"] = activity.name;
+                this->root.append(markerJson);
+            }
+            if (this->root.size() > 0) {
+                Json::StyledWriter writer;
+                this->file << writer.write(this->root);
+                this->root.clear();
             }
             this->markerActivityBuffer->clear();
-        }
-        else
-        {
+        } else {
             std::cout << "File is not open" << std::endl;
         }
-    }
+    }  
 };

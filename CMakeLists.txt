@@ -67,5 +67,6 @@ target_link_libraries(sysTrace_hook
     unwind
     ${UNWIND_LIB}
     pthread
+    jsoncpp
     -ldl
 )
