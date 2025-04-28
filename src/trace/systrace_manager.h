@@ -93,7 +93,7 @@ class PyTorchTrace
     static void watchControlFile()
     {
         auto last_mtime = std::filesystem::file_time_type::min();
-        while (1)
+        while (!PyTorchTrace::getInstance().stop_watcher_.load())
         {
             try
             {
@@ -141,7 +141,14 @@ class PyTorchTrace
     pytorch_tracing::PyTorchTracingLibrary *pytorch_tracing_library_;
 
     PyTorchTrace() = default;
-    ~PyTorchTrace() = default;
+    ~PyTorchTrace()
+    {
+        stop_watcher_.store(true);
+        if (file_watcher_.joinable())
+        {
+            file_watcher_.join();
+        }
+    };
 
     static void initSingleton();
     void reset(const std::string &barrier_name);
@@ -149,7 +156,8 @@ class PyTorchTrace
     std::atomic<bool> dump_gc_{false};
     std::atomic<bool> dump_stack_{false};
     std::atomic<bool> dump_{false};
-    static std::thread file_watcher_;
+    std::thread file_watcher_;
+    std::atomic<bool> stop_watcher_{false};
 };
 
 class SysTrace

@@ -13,7 +13,6 @@
 #include "systrace_manager.h"
 
 namespace bip = boost::interprocess;
-std::thread systrace::PyTorchTrace::file_watcher_;
 namespace systrace
 {
 
@@ -26,7 +25,7 @@ PyTorchTrace &PyTorchTrace::getInstance()
 void PyTorchTrace::initSingleton()
 {
     instance_ = new PyTorchTrace;
-    file_watcher_ = std::thread(&PyTorchTrace::watchControlFile);
+    instance_->file_watcher_ = std::thread(&PyTorchTrace::watchControlFile);
 
     // Initialize rank and library
     instance_->pytorch_trace_.set_rank(config::GlobalConfig::rank);
