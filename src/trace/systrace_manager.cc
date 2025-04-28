@@ -169,7 +169,7 @@ void PyTorchTrace::dumpPyTorchTracing()
         std::string file_path =
             dump_path + "/" + util::getUniqueFileNameByCluster(".timeline");
         std::ofstream file(file_path,
-                           std::ios::binary | std::ios::out | std::ios::app);
+                           std::ios::binary | std::ios::out);
         if (!file)
         {
             STLOG(ERROR) << "[PyTorchTrace] Failed to open timeline file"
