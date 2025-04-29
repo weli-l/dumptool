@@ -227,39 +227,22 @@ void SysTrace::stopWork() noexcept
 }
 
 void SysTrace::doWork()
-{
-    if (!sampling_active_)
-    {
-        sampling_start_ = std::chrono::steady_clock::now();
-        sampling_active_ = true;
-        STLOG(INFO) << "[SysTrace] Started 3-minute sampling window";
-    }
-
+{    
     while (should_run_.load())
     {
-        if (std::chrono::steady_clock::now() - sampling_start_ >
-            std::chrono::minutes(3))
-        {
-            if (sampling_active_)
-            {
-                STLOG(INFO) << "[SysTrace] 3-minute sampling window ended";
-                sampling_active_ = false;
-            }
-            continue;
-        }
-
-        if (loop_count_.fetch_add(1) %
-                constant::TorchTraceConstant::DEFAULT_TRACE_COUNT ==
-            0)
+        if (loop_count_.fetch_add(1) % 
+                constant::TorchTraceConstant::DEFAULT_TRACE_COUNT == 0)
         {
             if (PyTorchTrace::getInstance().triggerTrace())
             {
                 PyTorchTrace::getInstance().dumpPyTorchTracing();
             }
         }
+        
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
-    if (sampling_active_ && PyTorchTrace::getInstance().triggerTrace())
+    if (PyTorchTrace::getInstance().triggerTrace())
     {
         PyTorchTrace::getInstance().dumpPyTorchTracing();
     }
