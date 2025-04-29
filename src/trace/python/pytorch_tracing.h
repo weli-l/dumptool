@@ -18,10 +18,6 @@ extern "C"
                                                int type, int name);
     __attribute__((visibility("default"))) void
     systrace_register_tracing(const char **, int, char **);
-    __attribute__((visibility("default"))) void
-    systrace_switch_pytorch_tracing(int s);
-    __attribute__((visibility("default"))) int64_t
-    systrace_get_pytorch_tracing_count(int);
 #ifdef __cplusplus
 }
 #endif

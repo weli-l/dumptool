@@ -377,19 +377,6 @@ systrace_get_partial_pytorch_tracing_data_array(int name)
     return result;
 }
 
-void systrace_switch_pytorch_tracing(int set_start_tracing)
-{
-    start_tracing = set_start_tracing;
-}
-
-int64_t systrace_get_pytorch_tracing_count(int name)
-{
-    TracingData *tracing_data = getTracingData(name);
-    if (!tracing_data)
-        return 0;
-    return tracing_data->count;
-}
-
 void systrace_register_gc(char **error_message)
 {
     addTracingData(PY_TRACING_GC, "GC");

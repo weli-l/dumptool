@@ -14,7 +14,7 @@ namespace pytorch_tracing
 PyTorchTracingLibrary::PyTorchTracingLibrary(const std::string &library_path)
     : LibraryLoader(library_path), register_tracing_(nullptr),
       get_tracing_data_(nullptr), get_partial_tracing_data_(nullptr),
-      return_tracing_data_(nullptr), switch_tracing_(nullptr)
+      return_tracing_data_(nullptr)
 {
     const std::string err =
         "libsysTrace.so, skip recording python gc in timeline ";
@@ -30,10 +30,6 @@ PyTorchTracingLibrary::PyTorchTracingLibrary(const std::string &library_path)
     SETUP_SYMBOL_FOR_LOAD_LIBRARY(
         handle_, "systrace_get_partial_pytorch_tracing_data_array",
         get_partial_tracing_data_, GetPartialTracingDataArrayFunc, err);
-    SETUP_SYMBOL_FOR_LOAD_LIBRARY(handle_, "systrace_switch_pytorch_tracing",
-                                  switch_tracing_, SwitchTracingFunc, err);
-    SETUP_SYMBOL_FOR_LOAD_LIBRARY(handle_, "systrace_get_pytorch_tracing_count",
-                                  get_tracing_count_, GetTracingCountFunc, err);
     can_use_ = true;
 }
 
@@ -88,12 +84,6 @@ void PyTorchTracingLibrary::ReturnTracingData(PyTorchTracingDataArray *data,
 {
     if (can_use_ && data)
         return_tracing_data_(data, type, name);
-}
-
-void PyTorchTracingLibrary::SwitchTracing(int flag)
-{
-    if (can_use_)
-        switch_tracing_(flag);
 }
 
 } // namespace pytorch_tracing

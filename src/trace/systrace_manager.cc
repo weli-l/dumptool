@@ -65,18 +65,6 @@ void PyTorchTrace::initSingleton()
 }
 bool PyTorchTrace::triggerTrace() { return true; }
 
-void PyTorchTrace::reset(const std::string &barrier_name)
-{
-    std::lock_guard<std::mutex> lock(trace_mutex_);
-    STLOG(INFO) << "[PyTorchTrace] Resetting trace state at barrier: "
-                << barrier_name << std::endl;
-
-    has_trigger_trace_.store(false);
-    pytorch_tracing_library_->SwitchTracing(0);
-
-    STLOG(INFO) << "[PyTorchTrace] Reset complete" << std::endl;
-}
-
 void PyTorchTrace::dumpPyTorchTracing()
 {
     const std::string &dump_path =
