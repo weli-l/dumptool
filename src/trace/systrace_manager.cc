@@ -25,7 +25,6 @@ PyTorchTrace &PyTorchTrace::getInstance()
 void PyTorchTrace::initSingleton()
 {
     instance_ = new PyTorchTrace;
-    instance_->file_watcher_ = std::thread(&PyTorchTrace::watchControlFile);
 
     // Initialize rank and library
     instance_->pytorch_trace_.set_rank(config::GlobalConfig::rank);
@@ -80,8 +79,6 @@ void PyTorchTrace::reset(const std::string &barrier_name)
 
 void PyTorchTrace::dumpPyTorchTracing()
 {
-    if (dump_)
-    {
         const std::string &dump_path = "/root";
 
         if (util::ensureDirExists(dump_path))
@@ -129,8 +126,7 @@ void PyTorchTrace::dumpPyTorchTracing()
                     trace->set_stage_id(each_tracing_data->data[i].count);
                     trace->set_stage_type(name);
 
-                    if (dump_stack_ &&
-                        each_tracing_data->data[i].stack_depth > 0)
+                    if (each_tracing_data->data[i].stack_depth > 0)
                     {
                         trace->mutable_stack_frames()->Reserve(
                             each_tracing_data->data[i].stack_depth);
@@ -147,8 +143,7 @@ void PyTorchTrace::dumpPyTorchTracing()
                         }
                     }
 
-                    if (dump_gc_ &&
-                        each_tracing_data->data[i].type == PAYLOAD_GC)
+                    if (each_tracing_data->data[i].type == PAYLOAD_GC)
                     {
                         GcDebugData *gc_debug = trace->mutable_gc_debug();
                         gc_debug->set_collected(
@@ -186,7 +181,6 @@ void PyTorchTrace::dumpPyTorchTracing()
         }
 
         file << binary_message;
-    }
 }
 
 SysTrace &SysTrace::getInstance()

@@ -37,95 +37,6 @@ class PyTorchTrace
     void dumpPyTorchTracing();
     void dumpPyTorchTracing(bool incremental, bool async);
     bool triggerTrace();
-    bool shouldDumpGc() const
-    {
-        return dump_gc_.load(std::memory_order_acquire);
-    }
-    bool shouldDumpStack() const
-    {
-        return dump_stack_.load(std::memory_order_acquire);
-    }
-
-    void setDumpGc(bool enable)
-    {
-        dump_gc_.store(enable, std::memory_order_release);
-    }
-    void setDumpStack(bool enable)
-    {
-        dump_stack_.store(enable, std::memory_order_release);
-    }
-
-    bool shouldDump() const { return dump_.load(std::memory_order_acquire); }
-
-    void setDump(bool enable)
-    {
-        dump_.store(enable, std::memory_order_release);
-    }
-
-    void updateControlFlags()
-    {
-        std::ifstream file(control_file_);
-        if (file)
-        {
-            std::string line;
-            while (std::getline(file, line))
-            {
-                if (line == "ENABLE_STACK")
-                {
-                    dump_stack_.store(true);
-                    dump_gc_.store(true);
-                }
-                else if (line == "ENABLE_DUMP")
-                {
-                    dump_.store(true);
-                }
-            }
-        }
-        else
-        {
-            dump_stack_.store(false);
-            dump_gc_.store(false);
-            dump_.store(false);
-        }
-    }
-
-    const std::string control_file_ = "/tmp/systrace_dump_control";
-    static void watchControlFile()
-    {
-        auto last_mtime = std::filesystem::file_time_type::min();
-        while (!PyTorchTrace::getInstance().stop_watcher_.load())
-        {
-            try
-            {
-                const auto current_mtime = std::filesystem::last_write_time(
-                    PyTorchTrace::getInstance().control_file_);
-                if (current_mtime != last_mtime)
-                {
-                    PyTorchTrace::getInstance().updateControlFlags();
-                    last_mtime = current_mtime;
-                    STLOG(INFO)
-                        << "Control file updated. Current state: " << "GC="
-                        << PyTorchTrace::getInstance().shouldDumpGc()
-                        << ", STACK="
-                        << PyTorchTrace::getInstance().shouldDumpStack();
-                }
-            }
-            catch (...)
-            {
-                if (PyTorchTrace::getInstance().shouldDumpStack() ||
-                    PyTorchTrace::getInstance().shouldDumpGc() ||
-                    PyTorchTrace::getInstance().shouldDump())
-                {
-                    PyTorchTrace::getInstance().setDumpStack(false);
-                    PyTorchTrace::getInstance().setDumpGc(false);
-                    PyTorchTrace::getInstance().setDump(false);
-                    STLOG(WARNING)
-                        << "Control file removed, disabling all dumping";
-                }
-            }
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-        }
-    }
 
   private:
     inline static PyTorchTrace *instance_ = nullptr;
@@ -141,23 +52,11 @@ class PyTorchTrace
     pytorch_tracing::PyTorchTracingLibrary *pytorch_tracing_library_;
 
     PyTorchTrace() = default;
-    ~PyTorchTrace()
-    {
-        stop_watcher_.store(true);
-        if (file_watcher_.joinable())
-        {
-            file_watcher_.join();
-        }
-    };
+    ~PyTorchTrace() = default;
 
     static void initSingleton();
     void reset(const std::string &barrier_name);
 
-    std::atomic<bool> dump_gc_{false};
-    std::atomic<bool> dump_stack_{false};
-    std::atomic<bool> dump_{false};
-    std::thread file_watcher_;
-    std::atomic<bool> stop_watcher_{false};
 };
 
 class SysTrace
