@@ -1,5 +1,6 @@
 #pragma once
 
+#include "logging.h"
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -20,25 +21,6 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
-
-enum LogLevel
-{
-    INFO,
-    WARNING,
-    ERROR,
-    FATAL
-};
-
-#define LOG(level)                                                             \
-    if (level == INFO)                                                         \
-        std::cerr << "[INFO] ";                                                \
-    else if (level == WARNING)                                                 \
-        std::cerr << "[WARNING] ";                                             \
-    else if (level == ERROR)                                                   \
-        std::cerr << "[ERROR] ";                                               \
-    else if (level == FATAL)                                                   \
-        std::cerr << "[FATAL] ";                                               \
-    std::cerr
 
 namespace bip = boost::interprocess;
 
@@ -73,9 +55,7 @@ std::vector<std::string> split(const std::string &str,
 class ScopeGuard
 {
   public:
-    explicit ScopeGuard(std::function<void()> cb)
-        : cb_(cb)
-    {} 
+    explicit ScopeGuard(std::function<void()> cb) : cb_(cb) {}
 
     ~ScopeGuard() { cb_(); }
 
