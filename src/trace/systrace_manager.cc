@@ -79,7 +79,7 @@ void PyTorchTrace::reset(const std::string &barrier_name)
 
 void PyTorchTrace::dumpPyTorchTracing()
 {
-    const std::string &dump_path = "/root";
+    const std::string &dump_path = "/home";
 
     if (util::ensureDirExists(dump_path))
     {

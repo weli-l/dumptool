@@ -45,7 +45,6 @@ class PyTorchTrace
 
     Pytorch pytorch_trace_;
     std::atomic<bool> has_trigger_trace_{false};
-    std::unique_ptr<util::ShmSwitch> switch_;
     std::mutex trace_mutex_;
 
     std::vector<std::string> pytorch_tracing_functions_;

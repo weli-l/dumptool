@@ -19,154 +19,6 @@ namespace systrace
 {
 namespace util
 {
-
-namespace detail
-{
-
-void ShmSwitch::reset()
-{
-    // Call the parameterized reset() with default values
-    this->reset(
-        std::string(constant::TorchTraceConstant::DEFAULT_TRACE_DUMP_PATH),
-        std::string(constant::TorchTraceConstant::DEFAULT_TRACE_DUMP_PATH), 0);
-}
-
-void ShmSwitch::reset(const std::string &path, const std::string &oss_args,
-                      int64_t stamp)
-{
-    if (path.length() >= sizeof(dump_path) ||
-        oss_args.length() >= sizeof(oss_dump_args))
-    {
-        LOG(ERROR) << "Path or args too long for buffer (max: "
-                   << sizeof(dump_path) - 1 << " bytes)" << std::endl;
-        return;
-    }
-
-    strncpy(dump_path, path.data(), sizeof(dump_path) - 1);
-    dump_path[sizeof(dump_path) - 1] = '\0';
-
-    strncpy(oss_dump_args, oss_args.data(), sizeof(oss_dump_args) - 1);
-    oss_dump_args[sizeof(oss_dump_args) - 1] = '\0';
-
-    start_dump = 1;
-    timestamp = stamp;
-    reset_flag = false; // Default reset_flag to false
-}
-
-void ShmSwitch::reset(const std::string &path, const std::string &oss_args,
-                      int64_t stamp, bool reset_signal)
-{
-    // Reuse the 3-parameter version and just set the flag
-    this->reset(path, oss_args, stamp);
-    reset_flag = reset_signal;
-}
-
-InterProcessBarrierImpl::InterProcessBarrierImpl(std::string name,
-                                                 int world_size, int rank)
-    : name_(name)
-{
-    bip::managed_shared_memory managed_shm(bip::open_or_create, name.c_str(),
-                                           4096); // one page is enough
-    LOG(INFO) << "Barrier name in shm is " << name << std::endl;
-    LOG(INFO) << "World size " << world_size << " rank " << rank << std::endl;
-    InterProcessBarrierImpl::Inner
-        *barriers[world_size]; // world size is small, allocate on stack is safe
-    std::string barrier_name("InterProcessBarrierImpl" + std::to_string(rank));
-    auto this_bar =
-        managed_shm.find<InterProcessBarrierImpl::Inner>(barrier_name.c_str());
-    if (this_bar.first)
-    {
-        barriers[rank] = this_bar.first;
-    }
-    else
-    {
-        barriers[rank] = managed_shm.construct<InterProcessBarrierImpl::Inner>(
-            barrier_name.c_str())(false);
-    }
-    int index = 0;
-    uint64_t try_count = 0;
-    while (index < world_size)
-    {
-        std::string name = "InterProcessBarrierImpl" + std::to_string(index);
-        auto this_bar =
-            managed_shm.find<InterProcessBarrierImpl::Inner>(name.c_str());
-        if (this_bar.first)
-        {
-            barriers[index] = this_bar.first;
-            LOG(INFO) << "rank " << rank << " found index is " << index
-                      << std::endl;
-            index++;
-        }
-        else
-        {
-            std::this_thread::sleep_for(std::chrono::microseconds(100));
-            try_count++;
-            if (try_count > 10000 * 10)
-            {
-                LOG(INFO) << "Rank " << rank << " waiting 10s for rank "
-                          << index << " to create barrier obj in " << name_
-                          << std::endl;
-                try_count = 0;
-            }
-        }
-    }
-    // reset all state
-    for (auto barrier : barriers)
-        barrier->reset(false);
-    try_count = 0;
-    bool ready = false;
-    // clang-format off
-	// https://www.boost.org/doc/libs/1_84_0/doc/html/interprocess/some_basic_explanations.html#interprocess.some_basic_explanations.persistence
-	// Note on Shared Memory Cleanup:
-	// In Boost 1.84.0, shared memory resources (kernel or filesystem level) may not be correctly cleaned up 
-	// if a process exits unexpectedly, despite utilizing RAII for resource management. This can lead to 
-	// scenarios where shared memory resources are not properly initialized upon subsequent process startups.
-	//
-	// Solution for Barrier Synchronization:
-	// To address potential initialization issues, we implement eventual consistency for barrier synchronization. 
-	// Initially, all participating processes (ranks) reset their respective barrier flags to false before entering 
-	// the barrier loop. Within this loop, each rank then independently marks itself as ready. This approach 
-	// ensures robust barrier synchronization even if shared memory initialization is inconsistent.
-    // clang-format on
-    while (!ready)
-    {
-        ready = true;
-        for (int i = 0; i < world_size; i++)
-        {
-            ready = barriers[i]->val && ready;
-            if (try_count > 10000 && !barriers[i]->val)
-            {
-                LOG(INFO) << "Waiting rank " << i << " sleep 1s" << std::endl;
-                try_count = 0;
-            }
-        }
-        std::this_thread::sleep_for(std::chrono::microseconds(100));
-        try_count++;
-        // only set state in barrier operation
-        barriers[rank]->reset(true);
-    }
-    LOG(INFO) << "Rank " << rank << " pass barrier " << name_ << std::endl;
-}
-InterProcessBarrierImpl::~InterProcessBarrierImpl()
-{
-    bip::shared_memory_object::remove(name_.c_str());
-}
-} // namespace detail
-
-void InterProcessBarrier(int world_size, int rank, std::string name)
-{
-    try
-    {
-        LOG(INFO) << "InterProcessBarrier name is " << name << std::endl;
-        detail::InterProcessBarrierImpl(name, world_size, rank);
-    }
-    catch (const std::exception &e)
-    {
-        LOG(ERROR) << "InterProcessBarrier failed: " << e.what() << std::endl;
-        throw;
-    }
-}
-
 int ensureDirExists(const std::string &path)
 {
     std::filesystem::path dir_path(path);
@@ -176,7 +28,6 @@ int ensureDirExists(const std::string &path)
         {
             std::filesystem::create_directories(dir_path);
         }
-        // Verify directory is actually accessible
         if (!std::filesystem::is_directory(dir_path))
         {
             LOG(ERROR) << "Path exists but is not a directory: " << path
@@ -232,9 +83,6 @@ bool GlobalConfig::enable{true};
 std::vector<uint64_t> GlobalConfig::all_devices;
 bool GlobalConfig::debug_mode{false};
 std::unordered_map<std::string, std::string> GlobalConfig::dlopen_path;
-
-// std::atomic<bool> GlobalConfig::initialized{false};
-// std::mutex GlobalConfig::init_mutex;
 
 void setUpConfig() { setUpGlobalConfig(); }
 
@@ -378,7 +226,6 @@ std::string getUniqueFileNameByCluster(const std::string &suffix)
         std::string world_size_str =
             std::to_string(config::GlobalConfig::world_size);
 
-        // Ensure we have at least 5 digits with leading zeros
         oss << std::setw(5) << std::setfill('0') << rank_str << "-"
             << std::setw(5) << std::setfill('0') << world_size_str << suffix;
 
