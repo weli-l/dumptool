@@ -5,16 +5,14 @@ import os
 import json
 import subprocess
 from collections import defaultdict
-from mem_profile_pb2 import ProcMem, MemAllocEntry, StackFrame, StageType
+from systrace_pb2 import ProcMem, MemAllocEntry, StackFrame, StageType
 
 class SymbolResolver:
-    """轻量级符号解析器，不依赖/proc文件系统"""
     def __init__(self):
-        self._symbol_cache = {}  # {(abs_path, address): symbol}
-        self._path_cache = {}    # {rel_path: abs_path}
+        self._symbol_cache = {}
+        self._path_cache = {}
 
     def resolve_frame(self, frame):
-        """解析单个堆栈帧为可读字符串"""
         if not frame.so_name or not frame.address:
             return f"unknown@{hex(frame.address)}"
 
@@ -29,19 +27,17 @@ class SymbolResolver:
         return resolved
 
     def _resolve_path(self, rel_path):
-        """将相对路径转换为绝对路径"""
         if rel_path.startswith('/'):
             return rel_path
 
         if rel_path in self._path_cache:
             return self._path_cache[rel_path]
 
-        # 标准库搜索路径（可按需扩展）
         search_paths = [
             '/lib', '/lib64', 
             '/usr/lib', '/usr/lib64',
             '/usr/local/lib', 
-            os.getcwd()  # 当前工作目录
+            os.getcwd()
         ]
 
         for path in search_paths:
@@ -50,11 +46,9 @@ class SymbolResolver:
                 self._path_cache[rel_path] = abs_path
                 return abs_path
 
-        # 未找到则返回原始路径（保持兼容性）
         return rel_path
 
     def _resolve_symbol(self, abs_path, address):
-        """使用addr2line解析符号"""
         if not os.path.exists(abs_path):
             return f"unresolved@{hex(address)}"
 
@@ -90,7 +84,6 @@ class ProcMemConverter:
         self.symbol_resolver = SymbolResolver()
 
     def convert(self, input_pb, output_json):
-        """主转换流程"""
         print(f"[INFO] Converting {input_pb} -> {output_json}")
         proc_mem = self._load_proc_mem(input_pb)
         card_data = self._analyze_allocations(proc_mem)
@@ -99,7 +92,6 @@ class ProcMemConverter:
         print(f"[SUCCESS] Saved {len(events)} events to {output_json}")
 
     def _load_proc_mem(self, path):
-        """加载protobuf数据"""
         print(f"[DEBUG] Loading {path}")
         with open(path, "rb") as f:
             proc_mem = ProcMem()
@@ -109,7 +101,6 @@ class ProcMemConverter:
             return proc_mem
 
     def _analyze_allocations(self, proc_mem):
-        """分析内存分配数据"""
         freed_ptrs = {free.alloc_ptr for free in proc_mem.mem_free_stacks}
         
         active_allocs = defaultdict(list)
@@ -127,7 +118,6 @@ class ProcMemConverter:
         }
 
     def _build_call_tree(self, allocations, stage_type):
-        """构建调用树结构"""
         root = {
             "name": self.stage_names.get(stage_type, "UNKNOWN"),
             "children": {},
@@ -152,7 +142,6 @@ class ProcMemConverter:
         return root
 
     def _compute_tree_sizes(self, node):
-        """递归计算子树大小"""
         if not node["children"]:
             return node["size"]
         
@@ -164,12 +153,10 @@ class ProcMemConverter:
         return total
 
     def _generate_flamegraph_events(self, card_data):
-        """生成Chrome Trace格式事件"""
         print(f"[DEBUG] Generating events for PID {card_data['pid']}")
         events = []
         current_time = 0
 
-        # 按stage_id排序保证时间轴顺序
         sorted_groups = sorted(
             card_data["alloc_groups"].items(),
             key=lambda x: x[0][1]
@@ -191,7 +178,6 @@ class ProcMemConverter:
         return events
 
     def _create_events_from_tree(self, tree, pid, start_time, stage_type, stage_id):
-        """将调用树转换为trace事件"""
         events = []
         
         def _traverse(node, ts, depth):
@@ -210,7 +196,6 @@ class ProcMemConverter:
                 }
             })
             
-            # 按名称排序保证输出一致性
             for child in sorted(node["children"].values(), key=lambda x: x["name"]):
                 _traverse(child, ts, depth + 1)
                 ts += child["size"]
@@ -219,7 +204,6 @@ class ProcMemConverter:
         return events
 
     def _save_json(self, path, events):
-        """保存为JSON文件"""
         output = {
             "traceEvents": sorted(events, key=lambda x: x["ts"]),
             "displayTimeUnit": "ns",
