@@ -3,12 +3,12 @@
 #include <atomic>
 #include <condition_variable>
 #include <fstream>
+#include <iostream>
+#include <json/json.h>
 #include <mutex>
+#include <string.h>
 #include <thread>
 #include <vector>
-#include <iostream>
-#include <string.h>
-#include <json/json.h> 
 
 class MSPTIHcclFileWriter
 {
@@ -53,10 +53,15 @@ class MSPTIHcclFileWriter
         std::string localRank =
             localRankCStr; // Now safe to construct std::string
         auto rank = std::stoi(localRank);
-        if (saveFilename.length() >= 5 && saveFilename.substr(saveFilename.length() - 5) == ".json") {
-            std::string baseName = saveFilename.substr(0, saveFilename.length() - 5);
+        if (saveFilename.length() >= 5 &&
+            saveFilename.substr(saveFilename.length() - 5) == ".json")
+        {
+            std::string baseName =
+                saveFilename.substr(0, saveFilename.length() - 5);
             filenameWithRank = baseName + "." + std::to_string(rank) + ".json";
-        } else {
+        }
+        else
+        {
             filenameWithRank = saveFilename + "." + std::to_string(rank);
         }
         std::cout << "Filename: " << filenameWithRank << std::endl;
@@ -123,10 +128,13 @@ class MSPTIHcclFileWriter
             });
     }
 
-   void hcclActivityFormatToJson() {
+    void hcclActivityFormatToJson()
+    {
         std::lock_guard<std::mutex> lock(this->buffermtx);
-        if (this->file.is_open()) {
-            for (auto activity : *this->markerActivityBuffer) {
+        if (this->file.is_open())
+        {
+            for (auto activity : *this->markerActivityBuffer)
+            {
                 Json::Value markerJson;
                 markerJson["Kind"] = activity.kind;
                 markerJson["SourceKind"] = activity.sourceKind;
@@ -135,7 +143,8 @@ class MSPTIHcclFileWriter
                 markerJson["Domain"] = "";
                 markerJson["Flag"] = activity.flag;
                 Json::Value msptiObjecId;
-                if (activity.sourceKind == MSPTI_ACTIVITY_SOURCE_KIND_HOST) {
+                if (activity.sourceKind == MSPTI_ACTIVITY_SOURCE_KIND_HOST)
+                {
                     Json::Value pt;
                     pt["ProcessId"] = activity.objectId.pt.processId;
                     pt["ThreadId"] = activity.objectId.pt.threadId;
@@ -144,8 +153,10 @@ class MSPTIHcclFileWriter
                     ds["StreamId"] = activity.objectId.pt.threadId;
                     msptiObjecId["Pt"] = pt;
                     msptiObjecId["Ds"] = ds;
-
-                } else if (activity.sourceKind == MSPTI_ACTIVITY_SOURCE_KIND_DEVICE) {
+                }
+                else if (activity.sourceKind ==
+                         MSPTI_ACTIVITY_SOURCE_KIND_DEVICE)
+                {
                     Json::Value ds;
                     ds["DeviceId"] = activity.objectId.ds.deviceId;
                     ds["StreamId"] = activity.objectId.ds.streamId;
@@ -154,20 +165,22 @@ class MSPTIHcclFileWriter
                     pt["ThreadId"] = activity.objectId.ds.streamId;
                     msptiObjecId["Pt"] = pt;
                     msptiObjecId["Ds"] = ds;
-
                 }
                 markerJson["msptiObjecId"] = msptiObjecId;
                 markerJson["Name"] = activity.name;
                 this->root.append(markerJson);
             }
-            if (this->root.size() > 0) {
+            if (this->root.size() > 0)
+            {
                 Json::StyledWriter writer;
                 this->file << writer.write(this->root);
                 this->root.clear();
             }
             this->markerActivityBuffer->clear();
-        } else {
+        }
+        else
+        {
             std::cout << "File is not open" << std::endl;
         }
-    }  
+    }
 };

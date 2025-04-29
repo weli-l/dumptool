@@ -56,7 +56,6 @@ class PyTorchTrace
 
     static void initSingleton();
     void reset(const std::string &barrier_name);
-
 };
 
 class SysTrace
