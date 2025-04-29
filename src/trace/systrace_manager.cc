@@ -8,8 +8,6 @@
 #include <sstream>
 #include <unistd.h>
 #include <vector>
-#include <Python.h>
-#include <string>
 
 #include "../../include/common/constant.h"
 #include "systrace_manager.h"
@@ -79,36 +77,6 @@ void PyTorchTrace::reset(const std::string &barrier_name)
     STLOG(INFO) << "[PyTorchTrace] Reset complete" << std::endl;
 }
 
-std::string get_task_name() {
-    Py_Initialize();  // 确保 Python 已初始化
-    PyGILState_STATE gstate = PyGILState_Ensure();  // 获取 GIL
-
-    std::string task_name = "default_task";
-    PyObject* main_module = PyImport_AddModule("__main__");
-    if (main_module) {
-        PyObject* file_attr = PyObject_GetAttrString(main_module, "__file__");
-        if (file_attr) {
-            if (PyUnicode_Check(file_attr)) {
-                const char* file_path = PyUnicode_AsUTF8(file_attr);
-                if (file_path) {
-                    std::string full_path(file_path);
-                    size_t last_slash = full_path.find_last_of("/\\");
-                    size_t last_dot = full_path.find_last_of('.');
-                    if (last_slash != std::string::npos && last_dot != std::string::npos && last_dot > last_slash) {
-                        task_name = full_path.substr(last_slash + 1, last_dot - last_slash - 1);
-                    }
-                }
-            }
-            Py_XDECREF(file_attr);
-        } else {
-            task_name = "interactive_session";  // __file__ 不存在
-        }
-    }
-
-    PyGILState_Release(gstate);  // 释放 GIL
-    return task_name;
-}
-
 void PyTorchTrace::dumpPyTorchTracing()
 {
     const std::string &dump_path = "/root";
@@ -119,11 +87,7 @@ void PyTorchTrace::dumpPyTorchTracing()
                      << std::endl;
         return;
     }
-
-    std::string task_name = get_task_name();
-
     pytorch_trace_.set_rank(config::GlobalConfig::local_rank);
-    pytorch_trace_.set_comm(task_name);
 
     for (size_t name_index = 0; name_index < pytorch_tracing_functions_.size();
          name_index++)
