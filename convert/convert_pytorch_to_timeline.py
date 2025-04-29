@@ -1,31 +1,26 @@
 import json
 import systrace_pb2
 import argparse
+import glob
 
-def proto_to_json(input_path, output_path):
+def proto_to_json(input_path, output_path=None, trace_data=None):
     with open(input_path, "rb") as f:
         pytorch_data = systrace_pb2.Pytorch()
         pytorch_data.ParseFromString(f.read())
     
-    trace_data = {
-        "traceEvents": [],
-        "displayTimeUnit": "ns",
-        "metadata": {
-            "format": "Pytorch Profiler",
-            "rank": pytorch_data.rank,
-            "step": pytorch_data.step_id
+    if trace_data is None:
+        trace_data = {
+            "traceEvents": [],
+            "displayTimeUnit": "ns",
+            "metadata": {
+                "format": "Pytorch Profiler",
+                "rank": pytorch_data.rank,
+                "step": pytorch_data.step_id
+            }
         }
-    }
-    
-    trace_data["traceEvents"].append({
-        "name": "process_name",
-        "ph": "M",
-        "pid": pytorch_data.rank,
-        "tid": 0,
-        "args": {
-            "name": f"Rank {pytorch_data.rank}"
-        }
-    })
+        output_needed = True
+    else:
+        output_needed = False
     
     for stage in pytorch_data.pytorch_stages:
         start_us = stage.start_us
@@ -46,24 +41,41 @@ def proto_to_json(input_path, output_path):
                 "gc_uncollectable": stage.gc_debug.uncollectable if stage.HasField("gc_debug") else 0
             }
         })
-        
-        trace_data["traceEvents"].append({
-            "name": "thread_name",
-            "ph": "M",
-            "pid": pytorch_data.rank,
-            "tid": stage.stage_id,
-            "args": {
-                "name": f"Stage {stage.stage_id}"
-            }
-        })
     
-    with open(output_path, "w") as f:
-        json.dump(trace_data, f, indent=None, separators=(',', ':'))
+    # 按照stage_id排序
+    trace_data["traceEvents"].sort(key=lambda x: x["args"]["stage_id"])
+    
+    if output_needed:
+        with open(output_path, "w") as f:
+            json.dump(trace_data, f, indent=None, separators=(',', ':'))
+        return None
+    else:
+        return trace_data
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Convert PyTorch protobuf trace to JSON format')
-    parser.add_argument('input', help='Input protobuf file path')
-    parser.add_argument('output', help='Output JSON file path')
+    parser.add_argument('--input', help='Input protobuf file path (single file mode)')
+    parser.add_argument('--output', help='Output JSON file path (required for single file mode)')
+    parser.add_argument('--aggregate', action='store_true', help='Aggregate all *timeline files in current directory')
+    parser.add_argument('--aggregate-output', default='aggregated.json', help='Output path for aggregated result')
+    
     args = parser.parse_args()
     
-    proto_to_json(args.input, args.output)
+    if args.aggregate:
+        all_timeline_files = glob.glob("*timeline")
+        if not all_timeline_files:
+            print("No *timeline files found in current directory")
+            exit(1)
+            
+        aggregated_data = None
+        for timeline_file in all_timeline_files:
+            print(f"Processing {timeline_file}")
+            aggregated_data = proto_to_json(timeline_file, trace_data=aggregated_data)
+        
+        with open(args.aggregate_output, "w") as f:
+            json.dump(aggregated_data, f, indent=None, separators=(',', ':'))
+        print(f"Aggregated data saved to {args.aggregate_output}")
+    elif args.input and args.output:
+        proto_to_json(args.input, args.output)
+    else:
+        parser.print_help()
