@@ -19,6 +19,7 @@ def process_timeline_file(input_path, trace_data):
             "dur": stage.end_us - stage.start_us,
             "args": {
                 "stage_id": stage.stage_id,
+                "comm": pytorch_data.comm,
                 "stack_frames": list(stage.stack_frames),
                 "gc_collected": stage.gc_debug.collected if stage.HasField("gc_debug") else 0,
                 "gc_uncollectable": stage.gc_debug.uncollectable if stage.HasField("gc_debug") else 0

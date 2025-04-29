@@ -29,7 +29,6 @@ enum LogLevel
     FATAL
 };
 
-// 自定义 LOG 宏
 #define LOG(level)                                                             \
     if (level == INFO)                                                         \
         std::cerr << "[INFO] ";                                                \
@@ -188,16 +187,12 @@ using ShmSwitch = ShmType<detail::ShmSwitch>;
 
 template <typename T> class TimerPool
 {
-    /* This is a deque for pooling XpuTimer object.
-     */
   public:
     TimerPool() = default;
 
     TimerPool(const TimerPool &) = delete;
     TimerPool &operator=(const TimerPool &) = delete;
 
-    // getObject 和
-    // returnObject，它们分别用于从对象池中获取对象和将对象返回到对象池中
     template <bool Create = true> T *getObject()
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -221,7 +216,6 @@ template <typename T> class TimerPool
         *size = 0;
         if (obj)
         {
-            // 通过 std::lock_guard<std::mutex> 确保对对象池的操作是线程安全的。
             std::lock_guard<std::mutex> lock(mutex_);
             pool_.push_back(obj);
             *size = pool_.size();
@@ -334,30 +328,6 @@ class EnvVarRegistry
             LOG(WARNING) << "[ENV] Get not register env " << name << "="
                          << result << " from default" << std::endl;
         return result;
-    }
-
-    static std::string getLibPath(const std::string &lib_name)
-    {
-        const std::string &env_name = "XPU_TIMER_" + lib_name + "_LIB_PATH";
-        auto lib_path = GetEnvVar<std::string>(env_name);
-        if (lib_path != STRING_DEFAULT_VALUE)
-        {
-            LOG(INFO) << "[ENV] Get lib path for dlopen " << lib_name << "="
-                      << lib_path << " from env " << env_name << std::endl;
-            return lib_path;
-        }
-        lib_path = config::GlobalConfig::dlopen_path[lib_name];
-        if (lib_path.empty())
-        {
-            std::cerr << "[ENV] Can't find any " << lib_name
-                      << " lib path from default" << std::endl;
-            std::exit(1);
-        }
-        LOG(INFO) << "[ENV] Get lib path for dlopen " << lib_name << "="
-                  << lib_path << " by default value. You can change it via env "
-                  << env_name << std::endl;
-
-        return lib_path;
     }
 
   private:

@@ -88,6 +88,7 @@ void PyTorchTrace::dumpPyTorchTracing()
         return;
     }
     pytorch_trace_.set_rank(config::GlobalConfig::local_rank);
+    pytorch_trace_.set_comm(config::GlobalConfig::job_name);
 
     for (size_t name_index = 0; name_index < pytorch_tracing_functions_.size();
          name_index++)

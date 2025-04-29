@@ -43,7 +43,6 @@ PyTorchTracingLibrary::Register(const std::vector<std::string> &names)
     if (!can_use_)
         return {};
     std::vector<std::string> result;
-    // this take own ship of all errors
     char **errors = (char **)malloc(names.size() * sizeof(char *));
     std::memset(errors, 0, names.size() * sizeof(char *));
 
