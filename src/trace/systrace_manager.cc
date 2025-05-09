@@ -1,5 +1,3 @@
-#include <boost/interprocess/managed_shared_memory.hpp>
-#include <boost/process/extend.hpp>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -12,7 +10,6 @@
 #include "../../include/common/constant.h"
 #include "systrace_manager.h"
 
-namespace bip = boost::interprocess;
 namespace systrace
 {
 

@@ -3,7 +3,6 @@
 
 #include <atomic>
 #include <bitset>
-#include <boost/process.hpp>
 #include <chrono>
 #include <iostream>
 #include <mutex>
@@ -18,7 +17,6 @@
 #include "library_loader.h"
 #include "python/pytorch_tracing_loader.h"
 
-namespace bp = ::boost::process;
 namespace systrace
 {
 using namespace util;

@@ -1,9 +1,6 @@
 #pragma once
 
 #include "logging.h"
-#include <boost/interprocess/managed_shared_memory.hpp>
-#include <boost/property_tree/ini_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
 #include <chrono>
 #include <condition_variable>
 #include <cstdlib>
@@ -21,8 +18,6 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
-
-namespace bip = boost::interprocess;
 
 namespace systrace
 {
