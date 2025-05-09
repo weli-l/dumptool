@@ -1,6 +1,5 @@
 #!/bin/bash
-
-cd ../protos
+cd protos
 
 protoc --c_out=. systrace.proto
 protoc --cpp_out=. systrace.proto 
