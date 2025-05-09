@@ -21,8 +21,6 @@ class PyTorchTracingLibrary : public LibraryLoader
     using GetPartialTracingDataArrayFunc = PyTorchTracingDataArray *(*)(int);
     using ReturnTracingDataArrayFunc = void (*)(PyTorchTracingDataArray *, int,
                                                 int);
-    using GetTracingCountFunc = int64_t (*)(int);
-
     std::vector<std::string> Register(const std::vector<std::string> &names);
     PyTorchTracingDataArray *GetFullTracingData(int);
     PyTorchTracingDataArray *GetPartialTracingData(int);

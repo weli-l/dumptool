@@ -1,10 +1,7 @@
 #include "pytorch_tracing_loader.h"
-
-#include <dlfcn.h>
-
-#include <cstring>
-
 #include "../../../include/common/logging.h"
+#include <cstring>
+#include <dlfcn.h>
 
 namespace systrace
 {

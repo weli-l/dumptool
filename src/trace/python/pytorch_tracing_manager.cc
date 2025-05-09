@@ -1,9 +1,7 @@
 #include "pytorch_tracing_manager.h"
-
+#include "pytorch_tracing_data.h"
 #include <cstring>
 #include <thread>
-
-#include "pytorch_tracing_data.h"
 
 namespace systrace
 {

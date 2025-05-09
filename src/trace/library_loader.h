@@ -1,19 +1,13 @@
 #pragma once
 
+#include "../../include/common/util.h"
 #include <map>
 #include <string>
 #include <string_view>
 #include <vector>
 
-#include "../../include/common/constant.h"
-#include "../../include/common/util.h"
 namespace systrace
 {
-
-namespace config = systrace::util::config;
-namespace util = systrace::util;
-namespace constant = systrace::constant;
-
 class LibraryLoader
 {
   protected:

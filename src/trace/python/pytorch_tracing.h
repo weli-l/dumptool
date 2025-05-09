@@ -4,7 +4,6 @@
 extern "C"
 {
 #endif
-
     __attribute__((visibility("default"))) PyTorchTracingDataArray *
     systrace_get_empty_pytorch_tracing_data_array(int);
     __attribute__((visibility("default"))) PyTorchTracingDataArray *
