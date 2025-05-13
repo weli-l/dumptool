@@ -46,8 +46,6 @@ namespace fs_utils
 
 std::string GenerateClusterUniqueFilename(const std::string &suffix);
 int CreateDirectoryIfNotExists(const std::string &path);
-std::vector<std::string> split(const std::string &str,
-                               const std::string &delimiter);
 
 } // namespace fs_utils
 } // namespace util
