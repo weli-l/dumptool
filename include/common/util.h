@@ -267,5 +267,6 @@ class EnvVarRegistry
 void REGISTER_ENV();
 
 } // namespace env
+void InitializeSystemUtilities();
 } // namespace util
 } // namespace systrace

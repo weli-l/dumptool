@@ -190,7 +190,7 @@ void SysTrace::initializeSystem()
     if (!config::GlobalConfig::enable)
         return;
 
-    config::InitializeGlobalConfiguration();
+    systrace::util::InitializeSystemUtilities();
     MSPTITracker::getInstance();
     PyTorchTrace::getInstance();
 
