@@ -70,7 +70,7 @@ void PyTorchTrace::dumpPyTorchTracing()
     const std::string &dump_path =
         std::string(constant::TorchTraceConstant::DEFAULT_TRACE_DUMP_PATH);
 
-    if (util::fs_utils::ensureDirExists(dump_path))
+    if (util::fs_utils::CreateDirectoryIfNotExists(dump_path))
     {
         STLOG(ERROR) << "[PyTorchTrace] Failed to create dump directory";
         return;
@@ -153,7 +153,7 @@ void PyTorchTrace::writeTraceToFile()
         std::string(constant::TorchTraceConstant::DEFAULT_TRACE_DUMP_PATH);
     std::string file_path =
         dump_path + "/" +
-        util::fs_utils::getUniqueFileNameByCluster(".timeline");
+        util::fs_utils::GenerateClusterUniqueFilename(".timeline");
 
     std::ofstream file(file_path, std::ios::binary | std::ios::out);
     if (!file)
@@ -190,7 +190,7 @@ void SysTrace::initializeSystem()
     if (!config::GlobalConfig::enable)
         return;
 
-    config::setUpConfig();
+    config::InitializeGlobalConfiguration();
     MSPTITracker::getInstance();
     PyTorchTrace::getInstance();
 

@@ -29,11 +29,9 @@ struct GlobalConfig
     static bool enable;
     static std::vector<uint64_t> all_devices;
     static bool debug_mode;
-    static std::unordered_map<std::string, std::string> dlopen_path;
 };
 
-void setUpConfig();
-void setUpGlobalConfig();
+void InitializeGlobalConfiguration();
 
 } // namespace config
 } // namespace util
@@ -46,8 +44,8 @@ namespace util
 namespace fs_utils
 {
 
-std::string getUniqueFileNameByCluster(const std::string &suffix);
-int ensureDirExists(const std::string &path);
+std::string GenerateClusterUniqueFilename(const std::string &suffix);
+int CreateDirectoryIfNotExists(const std::string &path);
 std::vector<std::string> split(const std::string &str,
                                const std::string &delimiter);
 
