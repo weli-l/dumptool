@@ -1,20 +1,12 @@
 #pragma once
 
 #include "logging.h"
-#include <chrono>
-#include <condition_variable>
-#include <cstdlib>
 #include <deque>
 #include <filesystem>
 #include <functional>
 #include <iostream>
-#include <map>
 #include <memory>
 #include <mutex>
-#include <sstream>
-#include <string>
-#include <type_traits>
-#include <typeinfo>
 #include <unordered_map>
 #include <variant>
 #include <vector>
@@ -25,6 +17,7 @@ namespace util
 {
 namespace config
 {
+
 struct GlobalConfig
 {
     static uint32_t rank;
@@ -41,30 +34,48 @@ struct GlobalConfig
 
 void setUpConfig();
 void setUpGlobalConfig();
+
 } // namespace config
+} // namespace util
+} // namespace systrace
+
+namespace systrace
+{
+namespace util
+{
+namespace fs_utils
+{
 
 std::string getUniqueFileNameByCluster(const std::string &suffix);
-void REGISTER_ENV();
+int ensureDirExists(const std::string &path);
 std::vector<std::string> split(const std::string &str,
                                const std::string &delimiter);
+
+} // namespace fs_utils
+} // namespace util
+} // namespace systrace
+
+namespace systrace
+{
+namespace util
+{
+namespace resource
+{
+
 class ScopeGuard
 {
   public:
     explicit ScopeGuard(std::function<void()> cb) : cb_(cb) {}
-
     ~ScopeGuard() { cb_(); }
 
   private:
     std::function<void()> cb_;
 };
 
-int ensureDirExists(const std::string &path);
-
 template <typename T> class TimerPool
 {
   public:
     TimerPool() = default;
-
     TimerPool(const TimerPool &) = delete;
     TimerPool &operator=(const TimerPool &) = delete;
 
@@ -77,12 +88,10 @@ template <typename T> class TimerPool
                 return new T();
             return nullptr;
         }
-        else
-        {
-            T *obj = pool_.front();
-            pool_.pop_front();
-            return obj;
-        }
+
+        T *obj = pool_.front();
+        pool_.pop_front();
+        return obj;
     }
 
     void returnObject(T *obj, int *size)
@@ -100,6 +109,17 @@ template <typename T> class TimerPool
     std::deque<T *> pool_;
     std::mutex mutex_;
 };
+
+} // namespace resource
+} // namespace util
+} // namespace systrace
+
+namespace systrace
+{
+namespace util
+{
+namespace env
+{
 
 class EnvVarRegistry
 {
@@ -146,6 +166,7 @@ class EnvVarRegistry
         std::cout << "[ENV] GetEnvVar " << name << std::endl;
         auto &registry = GetRegistry();
         bool has_env = true;
+
         if (auto it = registry.find(name); it != registry.end())
         {
             auto result = getEnvInner<T>(name, &has_env);
@@ -156,6 +177,7 @@ class EnvVarRegistry
                               << " from environment" << std::endl;
                 return result;
             }
+
             if (const T *result_p = std::get_if<T>(&it->second))
             {
                 if constexpr (Print)
@@ -181,6 +203,7 @@ class EnvVarRegistry
                 return result;
             }
         }
+
         auto result = getDefault<T>();
         if constexpr (Print)
             LOG(WARNING) << "[ENV] Get not register env " << name << "="
@@ -198,6 +221,7 @@ class EnvVarRegistry
             *has_env = false;
             return T{};
         }
+
         if constexpr (std::is_same_v<T, int>)
         {
             return std::atoi(env);
@@ -223,15 +247,15 @@ class EnvVarRegistry
     {
         if constexpr (std::is_same_v<T, int>)
         {
-            return EnvVarRegistry::INT_DEFAULT_VALUE;
+            return env::EnvVarRegistry::INT_DEFAULT_VALUE;
         }
         else if constexpr (std::is_same_v<T, bool>)
         {
-            return EnvVarRegistry::BOOL_DEFAULT_VALUE;
+            return env::EnvVarRegistry::BOOL_DEFAULT_VALUE;
         }
         else if constexpr (std::is_same_v<T, std::string>)
         {
-            return std::string(EnvVarRegistry::STRING_DEFAULT_VALUE);
+            return std::string(env::EnvVarRegistry::STRING_DEFAULT_VALUE);
         }
         else
         {
@@ -250,8 +274,12 @@ class EnvVarRegistry
 };
 
 #define REGISTER_ENV_VAR(name, value)                                          \
-    ::systrace::util::EnvVarRegistry::RegisterEnvVar(                          \
-        name, ::systrace::util::EnvVarRegistry::convert_to_variant(value))
+    ::systrace::util::env::EnvVarRegistry::RegisterEnvVar(                     \
+        name,                                                                  \
+        ::systrace::util::env::EnvVarRegistry::convert_to_variant(value))
 
+void REGISTER_ENV();
+
+} // namespace env
 } // namespace util
 } // namespace systrace

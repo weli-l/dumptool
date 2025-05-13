@@ -32,8 +32,8 @@ class PyTorchTracingManager
     inline static std::once_flag init_flag_;
     struct Pool
     {
-        util::TimerPool<PyTorchTracingDataArray> empty_pool;
-        util::TimerPool<PyTorchTracingDataArray> ready_pool;
+        util::resource::TimerPool<PyTorchTracingDataArray> empty_pool;
+        util::resource::TimerPool<PyTorchTracingDataArray> ready_pool;
     };
     std::unordered_map<int, Pool> pool_;
 };
