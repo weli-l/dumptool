@@ -87,6 +87,7 @@
         "typeindex": "cpp",
         "__tree": "cpp",
         "any": "cpp",
-        "shared_mutex": "cpp"
+        "shared_mutex": "cpp",
+        "protobuf-c.h": "c"
     }
 }

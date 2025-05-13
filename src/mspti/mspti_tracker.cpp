@@ -30,7 +30,6 @@ MSPTITracker::~MSPTITracker()
     msptiActivityFlushAll(1);
     msptiActivityDisable(MSPTI_ACTIVITY_KIND_MARKER);
     finish();
-    msptiUnsubscribe(subscriber);
 }
 
 MSPTITracker &MSPTITracker::getInstance()
