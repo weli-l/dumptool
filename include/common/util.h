@@ -1,12 +1,16 @@
 #pragma once
 
 #include "logging.h"
+#include <cstdlib>
 #include <deque>
 #include <filesystem>
 #include <functional>
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <sstream>
+#include <string>
+#include <string_view>
 #include <unordered_map>
 #include <variant>
 #include <vector>
@@ -34,13 +38,7 @@ struct GlobalConfig
 void InitializeGlobalConfiguration();
 
 } // namespace config
-} // namespace util
-} // namespace systrace
 
-namespace systrace
-{
-namespace util
-{
 namespace fs_utils
 {
 
@@ -48,20 +46,14 @@ std::string GenerateClusterUniqueFilename(const std::string &suffix);
 int CreateDirectoryIfNotExists(const std::string &path);
 
 } // namespace fs_utils
-} // namespace util
-} // namespace systrace
 
-namespace systrace
-{
-namespace util
-{
 namespace resource
 {
 
 class ScopeGuard
 {
   public:
-    explicit ScopeGuard(std::function<void()> cb) : cb_(cb) {}
+    explicit ScopeGuard(std::function<void()> cb) : cb_(std::move(cb)) {}
     ~ScopeGuard() { cb_(); }
 
   private:
@@ -81,7 +73,9 @@ template <typename T> class TimerPool
         if (pool_.empty())
         {
             if constexpr (Create)
+            {
                 return new T();
+            }
             return nullptr;
         }
 
@@ -97,7 +91,7 @@ template <typename T> class TimerPool
         {
             std::lock_guard<std::mutex> lock(mutex_);
             pool_.push_back(obj);
-            *size = pool_.size();
+            *size = static_cast<int>(pool_.size());
         }
     }
 
@@ -107,13 +101,7 @@ template <typename T> class TimerPool
 };
 
 } // namespace resource
-} // namespace util
-} // namespace systrace
 
-namespace systrace
-{
-namespace util
-{
 namespace env
 {
 
@@ -121,15 +109,68 @@ class EnvVarRegistry
 {
   public:
     using VarType = std::variant<int, bool, std::string>;
+
     static constexpr std::string_view STRING_DEFAULT_VALUE = "NOT_SET";
     static constexpr int INT_DEFAULT_VALUE = 0;
     static constexpr bool BOOL_DEFAULT_VALUE = false;
 
+    // Register an env var with a default value
+    static void RegisterEnvVar(const std::string &name, VarType default_value)
+    {
+        auto &registry = GetRegistry();
+        LOG(INFO) << "[ENV] Register ENV " << name << " with default "
+                  << VariantToString(default_value) << std::endl;
+        registry[name] = std::move(default_value);
+    }
+
+    // Get an env var value, with optional printing
+    template <typename T, bool Print = true>
+    static T GetEnvVar(const std::string &name)
+    {
+        auto &registry = GetRegistry();
+        bool has_env = false;
+
+        // Try to get from environment first
+        T result = getEnvInner<T>(name, &has_env);
+        if (has_env)
+        {
+            if constexpr (Print)
+                LOG(INFO) << "[ENV] Get " << name << "=" << result
+                          << " from environment" << std::endl;
+            return result;
+        }
+
+        // Try to get from registered defaults
+        if (auto it = registry.find(name); it != registry.end())
+        {
+            if (const T *val = std::get_if<T>(&it->second))
+            {
+                if constexpr (Print)
+                    LOG(INFO) << "[ENV] Get " << name << "=" << *val
+                              << " from register default" << std::endl;
+                return *val;
+            }
+            else
+            {
+                if constexpr (Print)
+                    LOG(FATAL)
+                        << "[ENV] Wrong data type in `GetEnvVar`" << std::endl;
+            }
+        }
+
+        // Fall back to static default
+        result = getDefault<T>();
+        if constexpr (Print)
+            LOG(WARNING) << "[ENV] Get not register env " << name << "="
+                         << result << " from default" << std::endl;
+        return result;
+    }
+
+    // Convert values into variant
     static inline VarType convert_to_variant(const std::string_view &sv)
     {
         return std::string(sv);
     }
-
     static inline VarType convert_to_variant(const char *s)
     {
         return std::string(s);
@@ -140,76 +181,10 @@ class EnvVarRegistry
         return val;
     }
 
-    static void RegisterEnvVar(const std::string &name, VarType default_value)
-    {
-        auto &registry = GetRegistry();
-        std::string str_val = std::visit(
-            [](const auto &value) -> std::string
-            {
-                std::stringstream ss;
-                ss << value;
-                return ss.str();
-            },
-            default_value);
-        LOG(INFO) << "[ENV] Register ENV " << name << " with default "
-                  << str_val << std::endl;
-        registry[name] = default_value;
-    }
-
-    template <typename T, bool Print = true>
-    static T GetEnvVar(const std::string &name)
-    {
-        std::cout << "[ENV] GetEnvVar " << name << std::endl;
-        auto &registry = GetRegistry();
-        bool has_env = true;
-
-        if (auto it = registry.find(name); it != registry.end())
-        {
-            auto result = getEnvInner<T>(name, &has_env);
-            if (has_env)
-            {
-                if constexpr (Print)
-                    LOG(INFO) << "[ENV] Get " << name << "=" << result
-                              << " from environment" << std::endl;
-                return result;
-            }
-
-            if (const T *result_p = std::get_if<T>(&it->second))
-            {
-                if constexpr (Print)
-                    LOG(INFO) << "[ENV] Get " << name << "=" << *result_p
-                              << " from register default" << std::endl;
-                return *result_p;
-            }
-            else
-            {
-                if constexpr (Print)
-                    LOG(FATAL)
-                        << "[ENV] Wrong data type in `GetEnvVar`" << std::endl;
-            }
-        }
-        else
-        {
-            auto result = getEnvInner<T>(name, &has_env);
-            if (has_env)
-            {
-                if constexpr (Print)
-                    LOG(INFO) << "[ENV] Get " << name << "=" << result
-                              << " from environment" << std::endl;
-                return result;
-            }
-        }
-
-        auto result = getDefault<T>();
-        if constexpr (Print)
-            LOG(WARNING) << "[ENV] Get not register env " << name << "="
-                         << result << " from default" << std::endl;
-        return result;
-    }
-
   private:
+    // Get value from real environment
     template <typename T>
-    static T getEnvInner(std::string env_name, bool *has_env)
+    static T getEnvInner(const std::string &env_name, bool *has_env)
     {
         const char *env = std::getenv(env_name.c_str());
         if (!env)
@@ -217,6 +192,7 @@ class EnvVarRegistry
             *has_env = false;
             return T{};
         }
+        *has_env = true;
 
         if constexpr (std::is_same_v<T, int>)
         {
@@ -232,41 +208,55 @@ class EnvVarRegistry
         }
         else
         {
-            static_assert(std::is_same_v<T, int> || std::is_same_v<T, bool> ||
-                              std::is_same_v<T, std::string>,
-                          "Unsupported type");
-            return T{};
+            static_assert(always_false<T>::value, "Unsupported type");
         }
     }
 
+    // Default values for fallback
     template <typename T> static T getDefault()
     {
         if constexpr (std::is_same_v<T, int>)
         {
-            return env::EnvVarRegistry::INT_DEFAULT_VALUE;
+            return INT_DEFAULT_VALUE;
         }
         else if constexpr (std::is_same_v<T, bool>)
         {
-            return env::EnvVarRegistry::BOOL_DEFAULT_VALUE;
+            return BOOL_DEFAULT_VALUE;
         }
         else if constexpr (std::is_same_v<T, std::string>)
         {
-            return std::string(env::EnvVarRegistry::STRING_DEFAULT_VALUE);
+            return std::string(STRING_DEFAULT_VALUE);
         }
         else
         {
-            static_assert(std::is_same_v<T, int> || std::is_same_v<T, bool> ||
-                              std::is_same_v<T, std::string>,
-                          "Unsupported type");
-            return T{};
+            static_assert(always_false<T>::value, "Unsupported type");
         }
     }
 
+    // Static registry accessor
     static std::unordered_map<std::string, VarType> &GetRegistry()
     {
         static std::unordered_map<std::string, VarType> registry;
         return registry;
     }
+
+    // Convert variant to string (for logging)
+    static std::string VariantToString(const VarType &var)
+    {
+        return std::visit(
+            [](const auto &value)
+            {
+                std::stringstream ss;
+                ss << value;
+                return ss.str();
+            },
+            var);
+    }
+
+    // Helper for static_assert false on unsupported types
+    template <typename> struct always_false : std::false_type
+    {
+    };
 };
 
 #define REGISTER_ENV_VAR(name, value)                                          \
