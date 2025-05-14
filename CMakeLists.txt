@@ -65,7 +65,6 @@ target_link_libraries(sysTrace_hook
     ${Python3_LIBRARIES}
     protobuf::libprotobuf
     ${CMAKE_THREAD_LIBS}
-    ${ASCEND_MSPTI}
     unwind
     ${UNWIND_LIB}
     pthread
