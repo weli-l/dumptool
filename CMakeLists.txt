@@ -5,13 +5,21 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-set(ASCEND_TOOLKIT_HOME $ENV{ASCEND_TOOLKIT_HOME})
-set(ASCEND_HOME /usr/local/Ascend)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|ARM64")
+    set(UNWIND_LIB "unwind-aarch64")
+    set(MSPTI_INCLUDE "${PROJECT_SOURCE_DIR}/thirdparty/aarch64/mspti/include")
+    set(MSPTI_LIB "${PROJECT_SOURCE_DIR}/thirdparty/aarch64/mspti/lib64")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
+    set(UNWIND_LIB "unwind")
+    set(MSPTI_INCLUDE "${PROJECT_SOURCE_DIR}/thirdparty/x86_64/mspti/include")
+    set(MSPTI_LIB "${PROJECT_SOURCE_DIR}/thirdparty/x86_64/mspti/lib64")
+else()
+    message(WARNING "Unknown architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+    set(UNWIND_LIB "unwind")
+endif()
+
 include_directories(
-    ${ASCEND_TOOLKIT_HOME}/include
-    ${ASCEND_TOOLKIT_HOME}/runtime/include
-    ${ASCEND_TOOLKIT_HOME}/tools/mspti/include
-    ${ASCEND_HOME}/driver/include
+    ${MSPTI_INCLUDE}
 )
 
 find_package(Python3 REQUIRED COMPONENTS Development)
@@ -20,7 +28,7 @@ find_package(Threads REQUIRED)
 
 find_library(ASCEND_MSPTI 
     NAMES mspti
-    HINTS ${ASCEND_TOOLKIT_HOME}/lib64
+    HINTS ${MSPTI_LIB}
 )
 if(NOT ASCEND_MSPTI)
     message(FATAL_ERROR "Ascend mspti library not found!")
@@ -47,15 +55,6 @@ add_library(sysTrace_hook SHARED
 )
 
 set_target_properties(sysTrace_hook PROPERTIES OUTPUT_NAME "sysTrace")
-
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|ARM64")
-    set(UNWIND_LIB "unwind-aarch64")
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
-    set(UNWIND_LIB "unwind")
-else()
-    message(WARNING "Unknown architecture: ${CMAKE_SYSTEM_PROCESSOR}")
-    set(UNWIND_LIB "unwind")
-endif()
 
 target_link_libraries(sysTrace_hook
     common
