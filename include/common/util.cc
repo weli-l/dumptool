@@ -11,6 +11,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <thread>
+#include <unistd.h>
 
 namespace systrace
 {
@@ -47,10 +48,11 @@ std::string GenerateClusterUniqueFilename(const std::string &suffix)
 {
     try
     {
+        char hostname[128];
+        gethostname(hostname, sizeof(hostname));
         std::ostringstream oss;
-        oss << std::setw(5) << std::setfill('0') << config::GlobalConfig::rank
-            << "-" << std::setw(5) << std::setfill('0')
-            << config::GlobalConfig::world_size << suffix;
+        oss << hostname << "--" << std::setw(5) << std::setfill('0')
+            << config::GlobalConfig::rank << suffix;
         return oss.str();
     }
     catch (const std::exception &e)
