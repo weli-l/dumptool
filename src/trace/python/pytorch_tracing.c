@@ -12,7 +12,8 @@
 
 typedef struct _frame PyFrameObject;
 uint64_t getCodeOfFrame(PyFrameObject *frame);
-static void capture_stack(PyFrameObject *frame, PyTorchTracingData *trace_entry);
+static void capture_stack(PyFrameObject *frame,
+                          PyTorchTracingData *trace_entry);
 #if PY_MAJOR_VERSION >= 3 && PY_MINOR_VERSION >= 11
 #include <pyframe.h>
 uint64_t getCodeOfFrame(PyFrameObject *frame)
@@ -24,11 +25,23 @@ static void capture_stack(PyFrameObject *frame, PyTorchTracingData *trace_entry)
     int depth = 0;
     while (frame && depth < MAX_STACK_DEPTH)
     {
+        PyCodeObject *code = PyFrame_GetCode(frame);
+        if (!code)
+        {
+            break;
+        }
+
+        const char *name = PyUnicode_AsUTF8(code->co_name);
+        const char *file = PyUnicode_AsUTF8(code->co_filename);
+        int line = PyFrame_GetLineNumber(frame);
+
         snprintf(trace_entry->stack_info[depth], 256, "%s@%s:%d",
-                 PyUnicode_AsUTF8(frame->f_code->co_name),
-                 PyUnicode_AsUTF8(frame->f_code->co_filename),
-                 PyFrame_GetLineNumber(frame));
-        frame = frame->f_back;
+                 name ? name : "unknown", file ? file : "unknown", line);
+
+        PyFrameObject *next_frame = PyFrame_GetBack(frame);
+        Py_DECREF(code);
+        frame = next_frame;
+
         depth++;
     }
 }
