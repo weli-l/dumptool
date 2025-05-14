@@ -12,17 +12,46 @@
 
 typedef struct _frame PyFrameObject;
 uint64_t getCodeOfFrame(PyFrameObject *frame);
+static void capture_stack(PyFrameObject *frame, PyTorchTracingData *trace_entry);
 #if PY_MAJOR_VERSION >= 3 && PY_MINOR_VERSION >= 11
 #include <pyframe.h>
 uint64_t getCodeOfFrame(PyFrameObject *frame)
 {
     return (int64_t)(uintptr_t)PyFrame_GetCode(frame);
 }
+static void capture_stack(PyFrameObject *frame, PyTorchTracingData *trace_entry)
+{
+    int depth = 0;
+    while (frame && depth < MAX_STACK_DEPTH)
+    {
+        snprintf(trace_entry->stack_info[depth], 256, "%s@%s:%d",
+                 PyUnicode_AsUTF8(frame->f_code->co_name),
+                 PyUnicode_AsUTF8(frame->f_code->co_filename),
+                 PyFrame_GetLineNumber(frame));
+        frame = frame->f_back;
+        depth++;
+    }
+}
+
 #else
 uint64_t getCodeOfFrame(PyFrameObject *frame)
 {
     return (int64_t)(uintptr_t)(frame->f_code);
 }
+static void capture_stack(PyFrameObject *frame, PyTorchTracingData *trace_entry)
+{
+    int depth = 0;
+    while (frame && depth < MAX_STACK_DEPTH)
+    {
+        snprintf(trace_entry->stack_info[depth], 256, "%s@%s:%d",
+                 PyUnicode_AsUTF8(frame->f_code->co_name),
+                 PyUnicode_AsUTF8(frame->f_code->co_filename),
+                 PyFrame_GetLineNumber(frame));
+        frame = frame->f_back;
+        depth++;
+    }
+}
+
 #endif
 
 typedef struct
@@ -58,20 +87,6 @@ static TracingData *getTracingData(int name);
 static void addTracingData(int name, const char *func_name);
 static int profiler(PyObject *obj, PyFrameObject *frame, int what,
                     PyObject *arg);
-
-static void capture_stack(PyFrameObject *frame, PyTorchTracingData *trace_entry)
-{
-    int depth = 0;
-    while (frame && depth < MAX_STACK_DEPTH)
-    {
-        snprintf(trace_entry->stack_info[depth], 256, "%s@%s:%d",
-                 PyUnicode_AsUTF8(frame->f_code->co_name),
-                 PyUnicode_AsUTF8(frame->f_code->co_filename),
-                 PyFrame_GetLineNumber(frame));
-        frame = frame->f_back;
-        depth++;
-    }
-}
 
 uint64_t getMicrosecondTimestamp()
 {
