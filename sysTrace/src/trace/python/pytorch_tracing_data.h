@@ -19,6 +19,16 @@ typedef enum
     PAYLOAD_GC = 1,
 } PayloadType;
 
+typedef enum
+{
+    UNKNOWN = 0,
+    DATALOADER,
+    FORWARD,
+    BACKWARD,
+    SYNCHRONIZATION,
+    GC,
+} Stagetype;
+
 typedef union
 {
     int gc_debug[2];
@@ -30,6 +40,7 @@ typedef struct
     uint64_t end;
     uint32_t count;
     uint32_t stage_id;
+    Stagetype stage_type;
     Payload payload;
     PayloadType type;
     char stack_info[MAX_STACK_DEPTH][256];

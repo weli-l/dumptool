@@ -8,6 +8,7 @@
 #include "systrace_manager.h"
 
 int global_stage_id = 0;
+int global_stage_type = 0;
 namespace systrace
 {
 

@@ -24,9 +24,12 @@ message ProcMem {
 }
 
 enum StageType {
-  STAGE_DATALOADER = 0;
-  STAGE_FORWARD = 1;
-  STAGE_BACKWARD = 2;
+  STAGE_UNKNOWN = 0;
+  STAGE_DATALOADER = 1;
+  STAGE_FORWARD = 2;
+  STAGE_BACKWARD = 3;
+  STAGE_SYNCHRONIZATION = 4;
+  STAGE_GC = 5;
 }
 
 message GcDebugData {

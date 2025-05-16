@@ -293,7 +293,7 @@ static void add_mem_alloc_entry(void *pp, size_t size)
     entry->alloc_ptr = (uint64_t)pp;
     entry->mem_size = size;
     entry->stage_id = global_stage_id;
-    entry->stage_type = 1;
+    entry->stage_type = global_stage_type;
     entry->n_stack_frames = 0;
     entry->stack_frames = NULL;
 

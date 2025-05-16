@@ -109,6 +109,38 @@ uint64_t getMicrosecondTimestamp()
     return (uint64_t)tv.tv_sec * 1000000 + (uint64_t)tv.tv_usec;
 }
 
+Stagetype determine_stage_type(const char *function_name) {
+    if (function_name == NULL) {
+        return UNKNOWN;
+    }
+
+    if (strcmp(function_name, "GC") == 0) {
+        return GC;
+    }
+    if (strcmp(function_name, "torch.utils.data.dataloader@_BaseDataLoaderIter@__next__") == 0) {
+        return DATALOADER;
+    }
+    if (strcmp(function_name, "torch_npu@npu@synchronize") == 0 ||
+        strcmp(function_name, "torch_npu.npu@Event@synchronize") == 0 ||
+        strcmp(function_name, "torch_npu.npu@Event@wait") == 0 ||
+        strcmp(function_name, "torch_npu.npu@Stream@synchronize") == 0 ||
+        strcmp(function_name, "torch_npu.npu@Stream@wait_event") == 0 ||
+        strcmp(function_name, "torch_npu.npu@Stream@wait_stream") == 0) {
+        return SYNCHRONIZATION;
+    }
+    if (strcmp(function_name, "torch@autograd@backward") == 0 ||
+        strcmp(function_name, "torch@autograd@grad") == 0) {
+        return BACKWARD;
+    }
+    if (strcmp(function_name, "megatron.core.pipeline_parallel@schedules@forward_step") == 0) {
+        return FORWARD;
+    }
+    if (strcmp(function_name, "megatron.core.pipeline_parallel@schedules@backward_step") == 0) {
+        return BACKWARD;
+    }
+    return UNKNOWN;
+}
+
 TracingFunction *isTracedPyTorchFunction(PyFrameObject *frame)
 {
     uint64_t code_address = getCodeOfFrame(frame);
@@ -125,6 +157,7 @@ static int profiler(PyObject *obj, PyFrameObject *frame, int what,
     if (!func_data)
         return 0;
     int tag_name = func_data->tag_name;
+    int stage_type = determine_stage_type(func_data->function_name);
     if ((what == PyTrace_CALL) && start_tracing)
     {
         pthread_mutex_lock(&mutex);
@@ -139,6 +172,12 @@ static int profiler(PyObject *obj, PyFrameObject *frame, int what,
             curr_data = tracing_data->curr_data;
         }
         curr_data->data[curr_data->cur].start = getMicrosecondTimestamp();
+        if (stage_type == DATALOADER) {
+            global_stage_id++;
+        }
+        curr_data->data[curr_data->cur].stage_id = global_stage_id;
+        curr_data->data[curr_data->cur].stage_type = stage_type;
+        global_stage_type = stage_type;
         capture_stack(frame, &curr_data->data[curr_data->cur]);
 
         pthread_mutex_unlock(&mutex);
@@ -151,7 +190,6 @@ static int profiler(PyObject *obj, PyFrameObject *frame, int what,
         {
             PyTorchTracingDataArray *curr_data = tracing_data->curr_data;
             curr_data->data[curr_data->cur].count = tracing_data->count;
-            curr_data->data[curr_data->cur].stage_id = global_stage_id++;
             curr_data->data[curr_data->cur++].end = getMicrosecondTimestamp();
         }
         tracing_data->count++;
