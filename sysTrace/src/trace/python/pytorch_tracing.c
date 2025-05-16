@@ -9,6 +9,7 @@
 
 #include "pytorch_tracing_data.h"
 #include "uthash.h"
+#include "../../../include/common/shared_constants.h"
 
 typedef struct _frame PyFrameObject;
 uint64_t getCodeOfFrame(PyFrameObject *frame);
@@ -150,6 +151,7 @@ static int profiler(PyObject *obj, PyFrameObject *frame, int what,
         {
             PyTorchTracingDataArray *curr_data = tracing_data->curr_data;
             curr_data->data[curr_data->cur].count = tracing_data->count;
+            curr_data->data[curr_data->cur].stage_id = global_stage_id++;
             curr_data->data[curr_data->cur++].end = getMicrosecondTimestamp();
         }
         tracing_data->count++;
@@ -328,6 +330,7 @@ static void gcCallback(PyObject *phase, PyObject *info)
                     getMicrosecondTimestamp();
             }
             curr_data->data[curr_data->cur].count = tracing_data->count;
+            curr_data->data[curr_data->cur].stage_id = global_stage_id++;
             curr_data->data[curr_data->cur++].end = getMicrosecondTimestamp();
         }
         tracing_data->count++;

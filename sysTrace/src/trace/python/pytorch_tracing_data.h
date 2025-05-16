@@ -29,6 +29,7 @@ typedef struct
     uint64_t start;
     uint64_t end;
     uint32_t count;
+    uint32_t stage_id;
     Payload payload;
     PayloadType type;
     char stack_info[MAX_STACK_DEPTH][256];

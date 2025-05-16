@@ -4,8 +4,10 @@
 #include <vector>
 
 #include "../../include/common/constant.h"
+#include "../../include/common/shared_constants.h"
 #include "systrace_manager.h"
 
+int global_stage_id = 0;
 namespace systrace
 {
 

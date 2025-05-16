@@ -1,5 +1,6 @@
 #define _GNU_SOURCE
 #include "../../protos/systrace.pb-c.h"
+#include "../../include/common/shared_constants.h"
 #include <dlfcn.h>
 #include <google/protobuf-c/protobuf-c.h>
 #include <libunwind.h>
@@ -42,6 +43,7 @@ static halMemReleaseFunc_t orig_halMemRelease = NULL;
 static pthread_key_t thread_data_key;
 static pthread_once_t key_once = PTHREAD_ONCE_INIT;
 static pthread_mutex_t file_mutex = PTHREAD_MUTEX_INITIALIZER;
+extern int global_stage_id; 
 
 typedef struct
 {
@@ -290,7 +292,7 @@ static void add_mem_alloc_entry(void *pp, size_t size)
     mem_alloc_entry__init(entry);
     entry->alloc_ptr = (uint64_t)pp;
     entry->mem_size = size;
-    entry->stage_id = 1;
+    entry->stage_id = global_stage_id;
     entry->stage_type = 1;
     entry->n_stack_frames = 0;
     entry->stack_frames = NULL;
