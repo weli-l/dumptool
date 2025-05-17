@@ -23,6 +23,7 @@ uint64_t getCodeOfFrame(PyFrameObject *frame)
 }
 static void capture_stack(PyFrameObject *frame, PyTorchTracingData *trace_entry)
 {
+    PyGILState_STATE gstate = PyGILState_Ensure();
     int depth = 0;
     while (frame && depth < MAX_STACK_DEPTH)
     {
@@ -45,6 +46,8 @@ static void capture_stack(PyFrameObject *frame, PyTorchTracingData *trace_entry)
 
         depth++;
     }
+    trace_entry->stack_depth = depth;
+    PyGILState_Release(gstate);
 }
 
 #else
@@ -54,6 +57,7 @@ uint64_t getCodeOfFrame(PyFrameObject *frame)
 }
 static void capture_stack(PyFrameObject *frame, PyTorchTracingData *trace_entry)
 {
+    PyGILState_STATE gstate = PyGILState_Ensure();
     int depth = 0;
     while (frame && depth < MAX_STACK_DEPTH)
     {
@@ -64,6 +68,8 @@ static void capture_stack(PyFrameObject *frame, PyTorchTracingData *trace_entry)
         frame = frame->f_back;
         depth++;
     }
+    trace_entry->stack_depth = depth;
+    PyGILState_Release(gstate);
 }
 
 #endif

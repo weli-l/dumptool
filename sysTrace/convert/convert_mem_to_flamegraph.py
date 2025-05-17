@@ -5,7 +5,7 @@ import json
 import os
 import subprocess
 from collections import defaultdict
-from mem_profile_pb2 import ProcMem, StageType
+from systrace_pb2 import ProcMem, StageType
 
 class ProcMemConverter:
     def __init__(self):

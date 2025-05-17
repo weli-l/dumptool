@@ -195,6 +195,8 @@ class SlowNodeDetector:
             if self.model_args.get("use_plot", False):
                 self.plot_step_time(data_df[TableItem.op_execute], metric_name, rank_id)
 
+            # Clip the data of the initial step 
+            data_df = data_df[int(len(data_df) * 0.2):]
             aggerated_data_dfs: Dict = self.aggregate_by_timestamp(data_df, metric_name)
             if aggerated_data_dfs:
                 length = len(list(aggerated_data_dfs.values())[0])
