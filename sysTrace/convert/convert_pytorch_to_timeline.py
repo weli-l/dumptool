@@ -14,7 +14,7 @@ def process_timeline_file(input_path, trace_data):
             "cat": "pytorch",
             "ph": "X",
             "pid": pytorch_data.rank,
-            "tid": pytorch_data.rank,
+            "tid": pytorch_data.rank if "GC" not in stage.stage_type else f"{pytorch_data.rank}:gc",
             "ts": stage.start_us,
             "dur": stage.end_us - stage.start_us,
             "args": {

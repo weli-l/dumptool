@@ -61,6 +61,7 @@ class SlowNodeDetector:
             restore_comm()
             hccl_domains = restore_comm.comm_domain
 
+        logger.info(f"hccl_domains: {hccl_domains}")
         return hccl_domains
 
     def generate_aggregate_strategy(self, metric_name: str):
