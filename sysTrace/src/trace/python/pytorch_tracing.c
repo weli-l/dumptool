@@ -368,7 +368,7 @@ static void gcCallback(PyObject *phase, PyObject *info)
                     getMicrosecondTimestamp();
             }
             curr_data->data[curr_data->cur].count = tracing_data->count;
-            curr_data->data[curr_data->cur].stage_id = global_stage_id++;
+            curr_data->data[curr_data->cur].stage_id = global_stage_id;
             curr_data->data[curr_data->cur++].end = getMicrosecondTimestamp();
         }
         tracing_data->count++;
