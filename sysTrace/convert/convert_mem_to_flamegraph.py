@@ -12,7 +12,9 @@ class ProcMemConverter:
         self.stage_names = {
             StageType.STAGE_DATALOADER: "DATA_LOAD",
             StageType.STAGE_FORWARD: "FORWARD",
-            StageType.STAGE_BACKWARD: "BACKWARD"
+            StageType.STAGE_BACKWARD: "BACKWARD",
+            StageType.STAGE_UNKNOWN: "UNKNOWN",
+            StageType.STAGE_SYNCHRONIZATION: "SYNCHRONIZATION"
         }
         self.symbol_cache = {}
         self.so_path_cache = {}
@@ -47,7 +49,7 @@ class ProcMemConverter:
             card_data["alloc_groups"].items(), 
             key=lambda x: x[0][1]
         ):
-            call_tree = self._build_call_tree(allocs, stage_type)
+            call_tree = self._build_call_tree(allocs, stage_type, stage_id)
             events.extend(self._create_events_from_tree(
                 call_tree, card_data["pid"], current_time, stage_type, stage_id
             ))
@@ -111,8 +113,12 @@ class ProcMemConverter:
         
         return None
 
-    def _build_call_tree(self, allocations, stage_type):
-        root = {"name": self.stage_names.get(stage_type, "UNKNOWN"), "children": {}, "size": 0}
+    def _build_call_tree(self, allocations, stage_type, stage_id):
+        root = {
+            "name": f"{stage_id}_{self.stage_names.get(stage_type, 'UNKNOWN')}",
+            "children": {},
+            "size": 0
+        }
         
         for alloc in allocations:
             current = root
