@@ -181,6 +181,7 @@ class SlowNodeDetector:
         # 2 filter by comm_op
         # 3 calculate latency of comm_op
         # 4 按照开始时间戳5s内设置step组合
+        # 5 裁剪掉最前面step的数据
         new_detect_group_data = []
         length = 0
         for rank_id, data_df in group_data.items():

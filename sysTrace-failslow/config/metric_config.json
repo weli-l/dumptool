@@ -2,7 +2,7 @@
   "HcclAllGather": {
     "metric_type": "device",
     "aggregation": {
-      "during_s": 5,
+      "during_s": 3,
       "funcs": [
         {
           "func": "percentile",
@@ -19,7 +19,7 @@
       "eps": 0.4,
       "cv_threshold": 0.03,
       "min_samples": 2,
-      "window_size": 20,
+      "window_size": 5,
       "scaling": false,
       "type": "SlidingWindowDBSCAN"
     },
@@ -48,7 +48,7 @@
   "HcclAllGather_launch": {
     "metric_type": "host",
     "aggregation": {
-      "during_s": 5,
+      "during_s": 3,
       "funcs": [
         {
           "func": "percentile",
@@ -62,7 +62,7 @@
     "alarm_filter_window_size": 5,
     "space_detector": {
       "dist_metric": "euclidean",
-      "eps": 4,
+      "eps": 3.0,
       "cv_threshold": 0.03,
       "min_samples": 2,
       "window_size": 20,
