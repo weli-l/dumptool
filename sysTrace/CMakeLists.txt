@@ -64,8 +64,6 @@ target_link_libraries(sysTrace_hook
     ${Python3_LIBRARIES}
     protobuf::libprotobuf
     ${CMAKE_THREAD_LIBS}
-    unwind
-    ${UNWIND_LIB}
     pthread
     jsoncpp
     -ldl
