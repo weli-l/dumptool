@@ -20,9 +20,10 @@ else()
     message(WARNING "Unknown architecture: ${CMAKE_SYSTEM_PROCESSOR}")
     set(UNWIND_LIB "unwind")
 endif()
-
+set(LIBUNWIND_INCLUDE "/usr/local/include")
 include_directories(
     ${MSPTI_INCLUDE}
+    ${LIBUNWIND_INCLUDE}
 )
 
 find_package(Python3 REQUIRED COMPONENTS Development)
