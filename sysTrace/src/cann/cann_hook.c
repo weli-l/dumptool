@@ -14,11 +14,10 @@
     #include "../../thirdparty/aarch64/libunwind/libunwind.h"
 #elif defined(__x86_64__)
     #include "../../thirdparty/x86_64/libunwind/libunwind.h"
-#elif defined(__arm__)
-    #include "../../thirdparty/arm/libunwind/libunwind.h"
 #else
-    #error "Unsupported architecture for libunwind"
+    #error "Unsupported architecture - only aarch64 and x86_64 are supported"
 #endif
+
 
 // export LD_PRELOAD=/home/MindSpeed-LLM-1.0.RC3/libascend_hal_jack.so
 // cd /home/hbdir/mspti_test-megatron
@@ -103,7 +102,6 @@ static void free_thread_data(void *data)
     free(td);
 }
 
-// 获取当前进程ID
 static inline uint32_t get_current_pid() { return (uint32_t)getpid(); }
 
 static void make_key()
@@ -265,6 +263,14 @@ int init_mem_trace()
     return 0;
 }
 
+unw_word_t get_so_base(unw_word_t addr) {
+    Dl_info info;
+    if (dladdr((void*)addr, &info) != 0) {
+        return (unw_word_t)info.dli_fbase;
+    }
+    return 0; 
+}
+
 static void collect_stack_frames(MemAllocEntry *entry)
 {
     unw_cursor_t cursor;
@@ -281,10 +287,14 @@ static void collect_stack_frames(MemAllocEntry *entry)
     {
         unw_get_reg(&cursor, UNW_REG_IP, &ip);
 
+        // Get the SO name and base address for this IP
+        const char *so_name = get_so_name(ip);
+        unw_word_t so_base = get_so_base(ip);  // You'll need to implement this
+
         StackFrame *frame = malloc(sizeof(StackFrame));
         stack_frame__init(frame);
-        frame->address = ip;
-        frame->so_name = strdup(get_so_name(ip));
+        frame->address = ip - so_base;  // Store offset within SO instead of virtual address
+        frame->so_name = strdup(so_name);
 
         entry->stack_frames[frame_count] = frame;
         entry->n_stack_frames++;
