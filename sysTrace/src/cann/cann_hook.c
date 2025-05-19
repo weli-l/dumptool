@@ -1,7 +1,6 @@
 #define _GNU_SOURCE
 #include "../../protos/systrace.pb-c.h"
 #include "../../include/common/shared_constants.h"
-#include "../../thirdparty/aarch64/libunwind/libunwind.h"
 #include <dlfcn.h>
 #include <google/protobuf-c/protobuf-c.h>
 #include <pthread.h>
@@ -11,6 +10,15 @@
 #include <sys/syscall.h>
 #include <sys/time.h>
 #include <unistd.h>
+#if defined(__aarch64__)
+    #include "../../thirdparty/aarch64/libunwind/libunwind.h"
+#elif defined(__x86_64__)
+    #include "../../thirdparty/x86_64/libunwind/libunwind.h"
+#elif defined(__arm__)
+    #include "../../thirdparty/arm/libunwind/libunwind.h"
+#else
+    #error "Unsupported architecture for libunwind"
+#endif
 
 // export LD_PRELOAD=/home/MindSpeed-LLM-1.0.RC3/libascend_hal_jack.so
 // cd /home/hbdir/mspti_test-megatron

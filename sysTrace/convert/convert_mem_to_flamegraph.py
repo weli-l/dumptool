@@ -47,7 +47,7 @@ class ProcMemConverter:
         
         for (stage_type, stage_id), allocs in sorted(
             card_data["alloc_groups"].items(), 
-            key=lambda x: x[0][1]
+            key=lambda x: (x[0][1], x[0][0])
         ):
             call_tree = self._build_call_tree(allocs, stage_type, stage_id)
             events.extend(self._create_events_from_tree(
