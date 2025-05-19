@@ -138,9 +138,14 @@ static const char *get_so_name(uint64_t ip)
 static void get_log_filename(time_t current, uint32_t pid, char *buf,
                              size_t buf_size)
 {
+    const char *rank_str = getenv("RANK");
+    int rank = 0;  // Default rank if not set
+    if (rank_str) {
+        rank = atoi(rank_str);
+    }
     struct tm *tm = localtime(&current);
-    snprintf(buf, buf_size, "mem_trace_%04d%02d%02d_%02d_%u.pb",
-             tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, pid);
+    snprintf(buf, buf_size, "mem_trace_%04d%02d%02d_%02d_%u_rank%d.pb",
+             tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, pid, rank);
 }
 
 static char is_ready_to_write(ThreadData *td, time_t *current)
