@@ -266,10 +266,6 @@ static void collect_stack_frames(MemAllocEntry *entry)
     entry->stack_frames = calloc(max_frames, sizeof(StackFrame *));
     while (unw_step(&cursor) > 0 && frame_count < max_frames)
     {
-        if (frame_count >= 1)
-        {
-            fprintf(stderr, "frame_count  %d\n", frame_count);
-        }
         unw_get_reg(&cursor, UNW_REG_IP, &ip);
 
         StackFrame *frame = malloc(sizeof(StackFrame));
