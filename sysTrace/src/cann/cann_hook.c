@@ -1,9 +1,9 @@
 #define _GNU_SOURCE
 #include "../../protos/systrace.pb-c.h"
 #include "../../include/common/shared_constants.h"
+#include "../../thirdparty/aarch64/libunwind/libunwind.h"
 #include <dlfcn.h>
 #include <google/protobuf-c/protobuf-c.h>
-#include <libunwind.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
