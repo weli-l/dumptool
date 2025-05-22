@@ -1,4 +1,6 @@
 #pragma once
+#include "../../include/common/shared_constants.h"
+#include "../../include/common/util.h"
 #include "mspti.h"
 #include <atomic>
 #include <condition_variable>
@@ -30,10 +32,12 @@ class MSPTIHcclFileWriter
         // obtain environment variable LOCAL_RANK
         // to determine the rank of the process
         // and append it to the filename
-        const char *savePath = std::getenv("METRIC_PATH");
-        if (savePath == nullptr)
+        const char *path = std::getenv("METRIC_PATH");
+        std::string savePath = path ? path : SYS_TRACE_ROOT_DIR "mspti/";
+        if (systrace::util::fs_utils::CreateDirectoryIfNotExists(savePath))
         {
-            savePath = "/var/log";
+            STLOG(ERROR) << "[MSPTI] Failed to create dump directory";
+            return;
         }
         std::string savePathStr = savePath;
         if (!savePathStr.empty() && savePathStr.back() != '/')

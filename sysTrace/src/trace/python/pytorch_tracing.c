@@ -7,9 +7,9 @@
 #include <string.h>
 #include <sys/time.h>
 
+#include "../../../include/common/shared_constants.h"
 #include "pytorch_tracing_data.h"
 #include "uthash.h"
-#include "../../../include/common/shared_constants.h"
 
 typedef struct _frame PyFrameObject;
 uint64_t getCodeOfFrame(PyFrameObject *frame);
@@ -115,15 +115,20 @@ uint64_t getMicrosecondTimestamp()
     return (uint64_t)tv.tv_sec * 1000000 + (uint64_t)tv.tv_usec;
 }
 
-Stagetype determine_stage_type(const char *function_name) {
-    if (function_name == NULL) {
+Stagetype determine_stage_type(const char *function_name)
+{
+    if (function_name == NULL)
+    {
         return UNKNOWN;
     }
 
-    if (strcmp(function_name, "GC") == 0) {
+    if (strcmp(function_name, "GC") == 0)
+    {
         return GC;
     }
-    if (strcmp(function_name, "torch.utils.data.dataloader@_BaseDataLoaderIter@__next__") == 0) {
+    if (strcmp(function_name,
+               "torch.utils.data.dataloader@_BaseDataLoaderIter@__next__") == 0)
+    {
         return DATALOADER;
     }
     if (strcmp(function_name, "torch_npu@npu@synchronize") == 0 ||
@@ -131,17 +136,23 @@ Stagetype determine_stage_type(const char *function_name) {
         strcmp(function_name, "torch_npu.npu@Event@wait") == 0 ||
         strcmp(function_name, "torch_npu.npu@Stream@synchronize") == 0 ||
         strcmp(function_name, "torch_npu.npu@Stream@wait_event") == 0 ||
-        strcmp(function_name, "torch_npu.npu@Stream@wait_stream") == 0) {
+        strcmp(function_name, "torch_npu.npu@Stream@wait_stream") == 0)
+    {
         return SYNCHRONIZATION;
     }
     if (strcmp(function_name, "torch@autograd@backward") == 0 ||
-        strcmp(function_name, "torch@autograd@grad") == 0) {
+        strcmp(function_name, "torch@autograd@grad") == 0)
+    {
         return BACKWARD;
     }
-    if (strcmp(function_name, "megatron.core.pipeline_parallel@schedules@forward_step") == 0) {
+    if (strcmp(function_name,
+               "megatron.core.pipeline_parallel@schedules@forward_step") == 0)
+    {
         return FORWARD;
     }
-    if (strcmp(function_name, "megatron.core.pipeline_parallel@schedules@backward_step") == 0) {
+    if (strcmp(function_name,
+               "megatron.core.pipeline_parallel@schedules@backward_step") == 0)
+    {
         return BACKWARD;
     }
     return UNKNOWN;
@@ -178,7 +189,8 @@ static int profiler(PyObject *obj, PyFrameObject *frame, int what,
             curr_data = tracing_data->curr_data;
         }
         curr_data->data[curr_data->cur].start = getMicrosecondTimestamp();
-        if (stage_type == DATALOADER) {
+        if (stage_type == DATALOADER)
+        {
             global_stage_id++;
         }
         curr_data->data[curr_data->cur].stage_id = global_stage_id;

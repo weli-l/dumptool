@@ -1,23 +1,24 @@
 #define _GNU_SOURCE
-#include "../../protos/systrace.pb-c.h"
 #include "../../include/common/shared_constants.h"
+#include "../../protos/systrace.pb-c.h"
 #include <dlfcn.h>
+#include <errno.h>
 #include <google/protobuf-c/protobuf-c.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/time.h>
 #include <unistd.h>
 #if defined(__aarch64__)
-    #include "../../thirdparty/aarch64/libunwind/libunwind.h"
+#include "../../thirdparty/aarch64/libunwind/libunwind.h"
 #elif defined(__x86_64__)
-    #include "../../thirdparty/x86_64/libunwind/libunwind.h"
+#include "../../thirdparty/x86_64/libunwind/libunwind.h"
 #else
-    #error "Unsupported architecture - only aarch64 and x86_64 are supported"
+#error "Unsupported architecture - only aarch64 and x86_64 are supported"
 #endif
-
 
 // export LD_PRELOAD=/home/MindSpeed-LLM-1.0.RC3/libascend_hal_jack.so
 // cd /home/hbdir/mspti_test-megatron
@@ -50,7 +51,7 @@ static halMemReleaseFunc_t orig_halMemRelease = NULL;
 static pthread_key_t thread_data_key;
 static pthread_once_t key_once = PTHREAD_ONCE_INIT;
 static pthread_mutex_t file_mutex = PTHREAD_MUTEX_INITIALIZER;
-extern int global_stage_id; 
+extern int global_stage_id;
 
 typedef struct
 {
@@ -145,13 +146,24 @@ static void get_log_filename(time_t current, uint32_t pid, char *buf,
                              size_t buf_size)
 {
     const char *rank_str = getenv("RANK");
-    int rank = 0;  // Default rank if not set
-    if (rank_str) {
-        rank = atoi(rank_str);
-    }
+    int rank = rank_str ? atoi(rank_str) : 0;
     struct tm *tm = localtime(&current);
-    snprintf(buf, buf_size, "mem_trace_%04d%02d%02d_%02d_%u_rank%d.pb",
-             tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, pid, rank);
+
+    const char *dir_path = SYS_TRACE_ROOT_DIR "cann";
+    if (access(dir_path, F_OK) != 0)
+    {
+        if (mkdir(dir_path, 0755) != 0 && errno != EEXIST)
+        {
+            perror("Failed to create directory");
+            snprintf(buf, buf_size, "mem_trace_%04d%02d%02d_%02d_%u_rank%d.pb",
+                     tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+                     tm->tm_hour, pid, rank);
+            return;
+        }
+    }
+    snprintf(buf, buf_size, "%s/mem_trace_%04d%02d%02d_%02d_%u_rank%d.pb",
+             dir_path, tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+             tm->tm_hour, pid, rank);
 }
 
 static char is_ready_to_write(ThreadData *td, time_t *current)
@@ -263,12 +275,14 @@ int init_mem_trace()
     return 0;
 }
 
-unw_word_t get_so_base(unw_word_t addr) {
+unw_word_t get_so_base(unw_word_t addr)
+{
     Dl_info info;
-    if (dladdr((void*)addr, &info) != 0) {
+    if (dladdr((void *)addr, &info) != 0)
+    {
         return (unw_word_t)info.dli_fbase;
     }
-    return 0; 
+    return 0;
 }
 
 static void collect_stack_frames(MemAllocEntry *entry)
@@ -289,11 +303,12 @@ static void collect_stack_frames(MemAllocEntry *entry)
 
         // Get the SO name and base address for this IP
         const char *so_name = get_so_name(ip);
-        unw_word_t so_base = get_so_base(ip);  // You'll need to implement this
+        unw_word_t so_base = get_so_base(ip); // You'll need to implement this
 
         StackFrame *frame = malloc(sizeof(StackFrame));
         stack_frame__init(frame);
-        frame->address = ip - so_base;  // Store offset within SO instead of virtual address
+        frame->address =
+            ip - so_base; // Store offset within SO instead of virtual address
         frame->so_name = strdup(so_name);
 
         entry->stack_frames[frame_count] = frame;
