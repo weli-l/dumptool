@@ -144,7 +144,6 @@ class MSPTIHcclFileWriter
                 markerJson["SourceKind"] = activity.sourceKind;
                 markerJson["Timestamp"] = activity.timestamp;
                 markerJson["Id"] = activity.id;
-                markerJson["Domain"] = "";
                 markerJson["Flag"] = activity.flag;
                 Json::Value msptiObjecId;
                 if (activity.sourceKind == MSPTI_ACTIVITY_SOURCE_KIND_HOST)
@@ -170,7 +169,7 @@ class MSPTIHcclFileWriter
                     msptiObjecId["Pt"] = pt;
                     msptiObjecId["Ds"] = ds;
                 }
-                markerJson["msptiObjecId"] = msptiObjecId;
+                markerJson["msptiObjectId"] = msptiObjecId;
                 markerJson["Name"] = activity.name;
                 this->root.append(markerJson);
             }
