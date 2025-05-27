@@ -36,6 +36,17 @@
 #define LOG_ITEMS_MIN 1000
 
 typedef int drvError_t;
+
+typedef enum aclrtMemMallocPolicy {
+    ACL_MEM_MALLOC_HUGE_FIRST,
+    ACL_MEM_MALLOC_HUGE_ONLY,
+    ACL_MEM_MALLOC_NORMAL_ONLY,
+    ACL_MEM_MALLOC_HUGE_FIRST_P2P,
+    ACL_MEM_MALLOC_HUGE_ONLY_P2P,
+    ACL_MEM_MALLOC_NORMAL_ONLY_P2P,
+    ACL_MEM_TYPE_LOW_BAND_WIDTH   = 0x0100,
+    ACL_MEM_TYPE_HIGH_BAND_WIDTH  = 0x1000,
+} aclrtMemMallocPolicy;
 typedef drvError_t (*halMemAllocFunc_t)(void **pp, unsigned long long size,
                                         unsigned long long flag);
 typedef drvError_t (*halMemFreeFunc_t)(void *pp);
@@ -43,10 +54,19 @@ typedef drvError_t (*halMemCreateFunc_t)(void **handle, size_t size, void *prop,
                                          uint64_t flag);
 typedef drvError_t (*halMemReleaseFunc_t)(void *handle);
 
+typedef drvError_t (*aclrtMallocFunc_t)(void **devPtr, size_t size, aclrtMemMallocPolicy policy);
+typedef drvError_t (*aclrtMallocCachedFunc_t)(void **devPtr, size_t size, aclrtMemMallocPolicy policy);
+typedef drvError_t (*aclrtMallocAlign32Func_t)(void **devPtr, size_t size, aclrtMemMallocPolicy policy);
+typedef drvError_t (*aclrtFreeFunc_t)(void *devPtr);
+
 static halMemAllocFunc_t orig_halMemAlloc = NULL;
 static halMemFreeFunc_t orig_halMemFree = NULL;
 static halMemCreateFunc_t orig_halMemCreate = NULL;
 static halMemReleaseFunc_t orig_halMemRelease = NULL;
+static aclrtMallocFunc_t orig_aclrtMalloc = NULL;
+static aclrtMallocCachedFunc_t orig_aclrtMallocCached = NULL;
+static aclrtMallocAlign32Func_t orig_aclrtMallocAlign32 = NULL;
+static aclrtFreeFunc_t orig_aclrtFree = NULL;
 
 static pthread_key_t thread_data_key;
 static pthread_once_t key_once = PTHREAD_ONCE_INIT;
@@ -238,7 +258,7 @@ static void write_protobuf_to_file()
 
 int init_mem_trace()
 {
-    void *hal_lib = dlopen("libascend_hal.so", RTLD_LAZY);
+    void *hal_lib = dlopen("/usr/local/Ascend/ascend-toolkit/latest/lib64/libascendcl.so", RTLD_LAZY);
     if (!hal_lib)
     {
         fprintf(stderr, "Failed to dlopen target library: %s\n", dlerror());
@@ -255,6 +275,30 @@ int init_mem_trace()
     if (!orig_halMemFree)
     {
         fprintf(stderr, "Failed to find original halMemFree function\n");
+        return -1;
+    }
+    orig_aclrtMalloc = dlsym(hal_lib, "aclrtMalloc");
+    if (!orig_aclrtMalloc)
+    {
+        fprintf(stderr, "Failed to find original aclrtMalloc function\n");
+        return -1;
+    }
+    orig_aclrtMallocCached = dlsym(hal_lib, "aclrtMallocCached");
+    if (!orig_aclrtMallocCached)
+    {
+        fprintf(stderr, "Failed to find original aclrtMallocCached function\n");
+        return -1;
+    }
+    orig_aclrtMallocAlign32 = dlsym(hal_lib, "aclrtMallocAlign32");
+    if (!orig_aclrtMallocAlign32)
+    {
+        fprintf(stderr, "Failed to find original aclrtMallocAlign32 function\n");
+        return -1;
+    }
+    orig_aclrtFree = dlsym(hal_lib, "aclrtFree");
+    if (!orig_aclrtFree)
+    {
+        fprintf(stderr, "Failed to find original aclrtFree function\n");
         return -1;
     }
 
@@ -384,6 +428,74 @@ drvError_t halMemFree(void *pp)
     if (ret == 0 && pp)
     {
         add_mem_free_entry(pp);
+    }
+
+    write_protobuf_to_file();
+
+    return ret;
+}
+
+drvError_t aclrtMalloc(void **devPtr, size_t size, aclrtMemMallocPolicy policy)
+{
+    if (!orig_aclrtMalloc)
+    {
+        init_mem_trace();
+    }
+    int ret = orig_aclrtMalloc(devPtr, size, policy);
+    if (ret == 0 && devPtr && *devPtr)
+    {
+        add_mem_alloc_entry(*devPtr, size);
+    }
+
+    write_protobuf_to_file();
+
+    return ret;
+}
+
+drvError_t aclrtMallocCached(void **devPtr, size_t size, aclrtMemMallocPolicy policy)
+{
+    if (!orig_aclrtMallocCached)
+    {
+        init_mem_trace();
+    }
+    int ret = orig_aclrtMallocCached(devPtr, size, policy);
+    if (ret == 0 && devPtr && *devPtr)
+    {
+        add_mem_alloc_entry(*devPtr, size);
+    }
+
+    write_protobuf_to_file();
+
+    return ret;
+}
+
+drvError_t aclrtMallocAlign32(void **devPtr, size_t size, aclrtMemMallocPolicy policy)
+{
+    if (!orig_aclrtMallocAlign32)
+    {
+        init_mem_trace();
+    }
+    int ret = orig_aclrtMallocAlign32(devPtr, size, policy);
+    if (ret == 0 && devPtr && *devPtr)
+    {
+        add_mem_alloc_entry(*devPtr, size);
+    }
+
+    write_protobuf_to_file();
+
+    return ret;
+}
+
+drvError_t aclrtFree(void *devPtr)
+{
+    if (!orig_aclrtFree)
+    {
+        init_mem_trace();
+    }
+    int ret = orig_aclrtFree(devPtr);
+    if (ret == 0 && devPtr)
+    {
+        add_mem_free_entry(devPtr);
     }
 
     write_protobuf_to_file();
