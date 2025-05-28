@@ -79,6 +79,14 @@ typedef struct
     time_t last_log_time;
 } ThreadData;
 
+static void *load_symbol(void *lib, const char *symbol_name) {
+    void *sym = dlsym(lib, symbol_name);
+    if (!sym) {
+        fprintf(stderr, "Failed to find symbol %s: %s\n", symbol_name, dlerror());
+    }
+    return sym;
+}
+
 static void free_proc_mem(ProcMem *proc_mem)
 {
     if (!proc_mem)
@@ -256,63 +264,24 @@ static void write_protobuf_to_file()
     td->last_log_time = current;
 }
 
-int init_mem_trace()
-{
-    void *hal_lib = dlopen("/usr/local/Ascend/ascend-toolkit/latest/lib64/libascendcl.so", RTLD_LAZY);
-    if (!hal_lib)
-    {
-        fprintf(stderr, "Failed to dlopen target library: %s\n", dlerror());
-        return -1;
-    }
-    orig_halMemAlloc = dlsym(hal_lib, "halMemAlloc");
-    if (!orig_halMemAlloc)
-    {
-        fprintf(stderr, "Failed to find original halMemAlloc function\n");
+int init_mem_trace() {
+    void *lib = dlopen("/usr/local/Ascend/ascend-toolkit/latest/lib64/libascendcl.so", RTLD_LAZY);
+    if (!lib) {
+        fprintf(stderr, "dlopen failed: %s\n", dlerror());
         return -1;
     }
 
-    orig_halMemFree = dlsym(hal_lib, "halMemFree");
-    if (!orig_halMemFree)
-    {
-        fprintf(stderr, "Failed to find original halMemFree function\n");
-        return -1;
-    }
-    orig_aclrtMalloc = dlsym(hal_lib, "aclrtMalloc");
-    if (!orig_aclrtMalloc)
-    {
-        fprintf(stderr, "Failed to find original aclrtMalloc function\n");
-        return -1;
-    }
-    orig_aclrtMallocCached = dlsym(hal_lib, "aclrtMallocCached");
-    if (!orig_aclrtMallocCached)
-    {
-        fprintf(stderr, "Failed to find original aclrtMallocCached function\n");
-        return -1;
-    }
-    orig_aclrtMallocAlign32 = dlsym(hal_lib, "aclrtMallocAlign32");
-    if (!orig_aclrtMallocAlign32)
-    {
-        fprintf(stderr, "Failed to find original aclrtMallocAlign32 function\n");
-        return -1;
-    }
-    orig_aclrtFree = dlsym(hal_lib, "aclrtFree");
-    if (!orig_aclrtFree)
-    {
-        fprintf(stderr, "Failed to find original aclrtFree function\n");
-        return -1;
-    }
+    orig_halMemAlloc        = (halMemAllocFunc_t)load_symbol(lib, "halMemAlloc");
+    orig_halMemFree         = (halMemFreeFunc_t)load_symbol(lib, "halMemFree");
+    orig_halMemCreate       = (halMemCreateFunc_t)load_symbol(lib, "halMemCreate");
+    orig_halMemRelease      = (halMemReleaseFunc_t)load_symbol(lib, "halMemRelease");
+    orig_aclrtMalloc        = (aclrtMallocFunc_t)load_symbol(lib, "aclrtMalloc");
+    orig_aclrtMallocCached  = (aclrtMallocCachedFunc_t)load_symbol(lib, "aclrtMallocCached");
+    orig_aclrtMallocAlign32 = (aclrtMallocAlign32Func_t)load_symbol(lib, "aclrtMallocAlign32");
+    orig_aclrtFree          = (aclrtFreeFunc_t)load_symbol(lib, "aclrtFree");
 
-    orig_halMemCreate = dlsym(hal_lib, "halMemCreate");
-    if (!orig_halMemCreate)
-    {
-        fprintf(stderr, "Failed to find original halMemCreate function\n");
-        return -1;
-    }
-
-    orig_halMemRelease = dlsym(hal_lib, "halMemRelease");
-    if (!orig_halMemRelease)
-    {
-        fprintf(stderr, "Failed to find original halMemRelease function\n");
+    if (!orig_halMemAlloc || !orig_halMemFree || !orig_aclrtMalloc || !orig_aclrtFree
+        || !orig_halMemCreate || !orig_halMemRelease || !orig_aclrtMallocCached || orig_aclrtMallocAlign32) {
         return -1;
     }
 
