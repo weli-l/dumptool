@@ -368,6 +368,8 @@ static void add_mem_free_entry(void *pp)
     MemFreeEntry *entry = malloc(sizeof(MemFreeEntry));
     mem_free_entry__init(entry);
     entry->alloc_ptr = (uint64_t)pp;
+    entry->stage_id = global_stage_id;
+    entry->stage_type = global_stage_type;
 
     td->proc_mem->n_mem_free_stacks++;
     td->proc_mem->mem_free_stacks =
