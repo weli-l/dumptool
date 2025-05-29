@@ -72,6 +72,7 @@ static pthread_key_t thread_data_key;
 static pthread_once_t key_once = PTHREAD_ONCE_INIT;
 static pthread_mutex_t file_mutex = PTHREAD_MUTEX_INITIALIZER;
 extern int global_stage_id;
+extern int global_stage_type;
 
 typedef struct
 {
@@ -264,6 +265,10 @@ static void write_protobuf_to_file()
     td->last_log_time = current;
 }
 
+static void exit_handler(void) {
+    write_protobuf_to_file();
+}
+
 int init_mem_trace() {
     void *lib = dlopen("/usr/local/Ascend/ascend-toolkit/latest/lib64/libascendcl.so", RTLD_LAZY);
     if (!lib) {
@@ -284,6 +289,8 @@ int init_mem_trace() {
         || !orig_halMemCreate || !orig_halMemRelease || !orig_aclrtMallocCached || orig_aclrtMallocAlign32) {
         return -1;
     }
+
+    atexit(exit_handler);
 
     return 0;
 }
