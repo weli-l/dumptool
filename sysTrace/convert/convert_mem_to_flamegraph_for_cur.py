@@ -27,25 +27,27 @@ class FixedFlameGraphConverter:
         self._precache_symbols(alloc_groups)
         
         trace_events = []
-        global_timestamp = 0
-
+        current_ts = 0 
         alloc_records = {alloc.alloc_ptr: alloc for alloc in proc_mem.mem_alloc_stacks}
         stage_stats = defaultdict(lambda: {'allocated': 0, 'freed': 0})
+
+        # 统计分配和释放
         for alloc in proc_mem.mem_alloc_stacks:
             stage_key = (alloc.stage_type, alloc.stage_id)
             stage_stats[stage_key]['allocated'] += alloc.mem_size
-        
         for free in proc_mem.mem_free_stacks:
             if free.alloc_ptr in alloc_records:
                 alloc = alloc_records[free.alloc_ptr]
                 stage_key = (free.stage_type, free.stage_id)
                 stage_stats[stage_key]['freed'] += alloc.mem_size
-        
+
+        # 按stage_name分组（仅一次）
         stage_data = defaultdict(list)
         for (stage_type, stage_id), allocs in alloc_groups.items():
             stage_name = f"{stage_id}_{self.stage_names.get(stage_type, 'UNKNOWN')}"
             stage_data[stage_name].extend(allocs)
-        
+
+        # 计算累计分配和持有内存
         cumulative_alloc = 0
         stage_alloc_info = {}
         for stage_name, allocs in stage_data.items():
@@ -53,39 +55,30 @@ class FixedFlameGraphConverter:
                             if f"{k[1]}_{self.stage_names.get(k[0], 'UNKNOWN')}" == stage_name)
             current_alloc = sum(a.mem_size for a in allocs)
             current_free = stage_stats[stage_key]['freed']
-            
             held_memory = cumulative_alloc - current_free
-            
             stage_alloc_info[stage_name] = {
                 'allocated': current_alloc,
                 'freed': current_free,
-                'held': held_memory
+                'held': max(held_memory, 0)  # 避免负数
             }
-            
             cumulative_alloc += current_alloc
-        
-        # 按stage_name分组处理
-        stage_data = defaultdict(list)
-        for (stage_type, stage_id), allocs in alloc_groups.items():
-            stage_name = f"{stage_id}_{self.stage_names.get(stage_type, 'UNKNOWN')}"
-            stage_data[stage_name].extend(allocs)
-        
+
+        # 生成时间轴
         for stage_name, allocs in stage_data.items():
             if stage_name.startswith(("0_", "1_", "2_")):
                 continue
 
             stage_events = []
-            min_ts = global_timestamp
-        
-            held_memory = stage_alloc_info[stage_name]['held']
-            max_ts = global_timestamp + sum(a.mem_size for a in allocs)
-            
-            # 先添加容器事件（强制置顶）
+            min_ts = current_ts  # 使用严格连续的时间戳
+            allocated_size = sum(a.mem_size for a in allocs)
+            max_ts = min_ts + allocated_size  # 时间范围 = 新分配的内存
+
+            # 容器事件（时间范围反映新分配的内存）
             container_event = {
                 "name": stage_name,
                 "ph": "X",
                 "ts": min_ts,
-                "dur": max(held_memory, 1),
+                "dur": max_ts - min_ts,  # 等于allocated_size
                 "pid": proc_mem.pid,
                 "tid": proc_mem.pid,
                 "args": {
@@ -94,23 +87,20 @@ class FixedFlameGraphConverter:
                     "is_container": True,
                     "allocated": stage_alloc_info[stage_name]['allocated'],
                     "freed": stage_alloc_info[stage_name]['freed'],
-                    "held": stage_alloc_info[stage_name]['held']
+                    "held": stage_alloc_info[stage_name]['held']  # 持有的内存量（元数据）
                 }
             }
             stage_events.append(container_event)
-            
-            # 处理每个分配
-            current_ts = global_timestamp
+
+            alloc_start_ts = min_ts
             for alloc in allocs:
-                alloc_events, _ = self._process_allocation(alloc, proc_mem.pid, current_ts)
+                alloc_events, _ = self._process_allocation(alloc, proc_mem.pid, alloc_start_ts)
                 stage_events.extend(alloc_events)
-                current_ts += alloc.mem_size
-            
-            # 合并同名调用
-            merged_events = self._merge_calls(stage_events, stage_name)
-            trace_events.extend(merged_events)
-            global_timestamp = max_ts
-        
+                alloc_start_ts += alloc.mem_size
+
+            trace_events.extend(self._merge_calls(stage_events, stage_name))
+            current_ts = max_ts
+
         self._save_json(output_json, trace_events)
         self.executor.shutdown()
 
