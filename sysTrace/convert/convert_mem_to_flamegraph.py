@@ -36,8 +36,8 @@ class FixedFlameGraphConverter:
             stage_data[stage_name].extend(allocs)
         
         for stage_name, allocs in stage_data.items():
-            if any(s in stage_name for s in ["0_", "1_", "2_"]):
-                continue
+            # if any(s in stage_name for s in ["0_", "1_", "2_"]):
+            #     continue
                 
             # 生成该stage的所有事件
             stage_events = []
