@@ -55,11 +55,12 @@ class FixedFlameGraphConverter:
                             if f"{k[1]}_{self.stage_names.get(k[0], 'UNKNOWN')}" == stage_name)
             current_alloc = sum(a.mem_size for a in allocs)
             current_free = stage_stats[stage_key]['freed']
-            held_memory = cumulative_alloc - current_free
+            cumulative_alloc += (current_alloc - current_free)
+            held_memory = max(cumulative_alloc, 0)
             stage_alloc_info[stage_name] = {
                 'allocated': current_alloc,
                 'freed': current_free,
-                'held': max(held_memory, 0)  # 避免负数
+                'held': held_memory  # 避免负数
             }
             cumulative_alloc += current_alloc
 
@@ -78,9 +79,9 @@ class FixedFlameGraphConverter:
                 "name": stage_name,
                 "ph": "X",
                 "ts": min_ts,
-                "dur": max_ts - min_ts,  # 等于allocated_size
+                "dur": stage_alloc_info[stage_name]['held'] / 10000000, # 等于allocated_size
                 "pid": proc_mem.pid,
-                "tid": proc_mem.pid,
+                "tid": 1,
                 "args": {
                     "stage_type": self.stage_names.get(next(iter(alloc_groups.keys()))[0], "UNKNOWN"),
                     "stage_id": next(iter(alloc_groups.keys()))[1],
@@ -190,7 +191,7 @@ class FixedFlameGraphConverter:
                 "ts": ts,
                 "dur": node["duration"],
                 "pid": pid,
-                "tid": pid,
+                "tid": 2,
                 "args": {
                     "depth": depth,
                     "bytes": alloc.mem_size,
