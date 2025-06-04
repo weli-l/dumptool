@@ -98,9 +98,9 @@ uint32_t GlobalConfig::local_rank{0};
 uint32_t GlobalConfig::world_size{0};
 uint32_t GlobalConfig::local_world_size{0};
 std::string GlobalConfig::job_name("");
-std::string GlobalConfig::rank_str("");
 bool GlobalConfig::enable{true};
-std::vector<uint64_t> GlobalConfig::all_devices;
+std::vector<uint64_t> GlobalConfig::devices;
+std::string GlobalConfig::rank_str("");
 
 void InitializeGlobalConfiguration()
 {
@@ -120,15 +120,15 @@ void InitializeGlobalConfiguration()
         GlobalConfig::rank_str =
             "[RANK " + std::to_string(GlobalConfig::rank) + "] ";
 
-        GlobalConfig::all_devices = DeviceManager::DetectAvailableDevices();
+        GlobalConfig::devices = DeviceManager::DetectAvailableDevices();
 
-        if (GlobalConfig::all_devices.empty())
+        if (GlobalConfig::devices.empty())
         {
             GlobalConfig::enable = false;
             LOG(WARNING) << "No devices found, disabling tracing";
         }
 
-        if (GlobalConfig::local_world_size != GlobalConfig::all_devices.size())
+        if (GlobalConfig::local_world_size != GlobalConfig::devices.size())
         {
             LOG(WARNING) << "Local world size mismatch, disabling hook";
             GlobalConfig::enable = false;

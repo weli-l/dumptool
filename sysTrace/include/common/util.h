@@ -31,8 +31,7 @@ struct GlobalConfig
     static std::string job_name;
     static std::string rank_str;
     static bool enable;
-    static std::vector<uint64_t> all_devices;
-    static bool debug_mode;
+    static std::vector<uint64_t> devices;
 };
 
 void InitializeGlobalConfiguration();
@@ -49,17 +48,6 @@ int CreateDirectoryIfNotExists(const std::string &path);
 
 namespace resource
 {
-
-class ScopeGuard
-{
-  public:
-    explicit ScopeGuard(std::function<void()> cb) : cb_(std::move(cb)) {}
-    ~ScopeGuard() { cb_(); }
-
-  private:
-    std::function<void()> cb_;
-};
-
 template <typename T> class TimerPool
 {
   public:

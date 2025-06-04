@@ -37,15 +37,16 @@
 
 typedef int drvError_t;
 
-typedef enum aclrtMemMallocPolicy {
+typedef enum aclrtMemMallocPolicy
+{
     ACL_MEM_MALLOC_HUGE_FIRST,
     ACL_MEM_MALLOC_HUGE_ONLY,
     ACL_MEM_MALLOC_NORMAL_ONLY,
     ACL_MEM_MALLOC_HUGE_FIRST_P2P,
     ACL_MEM_MALLOC_HUGE_ONLY_P2P,
     ACL_MEM_MALLOC_NORMAL_ONLY_P2P,
-    ACL_MEM_TYPE_LOW_BAND_WIDTH   = 0x0100,
-    ACL_MEM_TYPE_HIGH_BAND_WIDTH  = 0x1000,
+    ACL_MEM_TYPE_LOW_BAND_WIDTH = 0x0100,
+    ACL_MEM_TYPE_HIGH_BAND_WIDTH = 0x1000,
 } aclrtMemMallocPolicy;
 typedef drvError_t (*halMemAllocFunc_t)(void **pp, unsigned long long size,
                                         unsigned long long flag);
@@ -54,9 +55,12 @@ typedef drvError_t (*halMemCreateFunc_t)(void **handle, size_t size, void *prop,
                                          uint64_t flag);
 typedef drvError_t (*halMemReleaseFunc_t)(void *handle);
 
-typedef drvError_t (*aclrtMallocFunc_t)(void **devPtr, size_t size, aclrtMemMallocPolicy policy);
-typedef drvError_t (*aclrtMallocCachedFunc_t)(void **devPtr, size_t size, aclrtMemMallocPolicy policy);
-typedef drvError_t (*aclrtMallocAlign32Func_t)(void **devPtr, size_t size, aclrtMemMallocPolicy policy);
+typedef drvError_t (*aclrtMallocFunc_t)(void **devPtr, size_t size,
+                                        aclrtMemMallocPolicy policy);
+typedef drvError_t (*aclrtMallocCachedFunc_t)(void **devPtr, size_t size,
+                                              aclrtMemMallocPolicy policy);
+typedef drvError_t (*aclrtMallocAlign32Func_t)(void **devPtr, size_t size,
+                                               aclrtMemMallocPolicy policy);
 typedef drvError_t (*aclrtFreeFunc_t)(void *devPtr);
 
 static halMemAllocFunc_t orig_halMemAlloc = NULL;
@@ -80,10 +84,13 @@ typedef struct
     time_t last_log_time;
 } ThreadData;
 
-static void *load_symbol(void *lib, const char *symbol_name) {
+static void *load_symbol(void *lib, const char *symbol_name)
+{
     void *sym = dlsym(lib, symbol_name);
-    if (!sym) {
-        fprintf(stderr, "Failed to find symbol %s: %s\n", symbol_name, dlerror());
+    if (!sym)
+    {
+        fprintf(stderr, "Failed to find symbol %s: %s\n", symbol_name,
+                dlerror());
     }
     return sym;
 }
@@ -265,28 +272,34 @@ static void write_protobuf_to_file()
     td->last_log_time = current;
 }
 
-static void exit_handler(void) {
-    write_protobuf_to_file();
-}
+static void exit_handler(void) { write_protobuf_to_file(); }
 
-int init_mem_trace() {
-    void *lib = dlopen("/usr/local/Ascend/ascend-toolkit/latest/lib64/libascendcl.so", RTLD_LAZY);
-    if (!lib) {
+int init_mem_trace()
+{
+    void *lib =
+        dlopen("/usr/local/Ascend/ascend-toolkit/latest/lib64/libascendcl.so",
+               RTLD_LAZY);
+    if (!lib)
+    {
         fprintf(stderr, "dlopen failed: %s\n", dlerror());
         return -1;
     }
 
-    orig_halMemAlloc        = (halMemAllocFunc_t)load_symbol(lib, "halMemAlloc");
-    orig_halMemFree         = (halMemFreeFunc_t)load_symbol(lib, "halMemFree");
-    orig_halMemCreate       = (halMemCreateFunc_t)load_symbol(lib, "halMemCreate");
-    orig_halMemRelease      = (halMemReleaseFunc_t)load_symbol(lib, "halMemRelease");
-    orig_aclrtMalloc        = (aclrtMallocFunc_t)load_symbol(lib, "aclrtMalloc");
-    orig_aclrtMallocCached  = (aclrtMallocCachedFunc_t)load_symbol(lib, "aclrtMallocCached");
-    orig_aclrtMallocAlign32 = (aclrtMallocAlign32Func_t)load_symbol(lib, "aclrtMallocAlign32");
-    orig_aclrtFree          = (aclrtFreeFunc_t)load_symbol(lib, "aclrtFree");
+    orig_halMemAlloc = (halMemAllocFunc_t)load_symbol(lib, "halMemAlloc");
+    orig_halMemFree = (halMemFreeFunc_t)load_symbol(lib, "halMemFree");
+    orig_halMemCreate = (halMemCreateFunc_t)load_symbol(lib, "halMemCreate");
+    orig_halMemRelease = (halMemReleaseFunc_t)load_symbol(lib, "halMemRelease");
+    orig_aclrtMalloc = (aclrtMallocFunc_t)load_symbol(lib, "aclrtMalloc");
+    orig_aclrtMallocCached =
+        (aclrtMallocCachedFunc_t)load_symbol(lib, "aclrtMallocCached");
+    orig_aclrtMallocAlign32 =
+        (aclrtMallocAlign32Func_t)load_symbol(lib, "aclrtMallocAlign32");
+    orig_aclrtFree = (aclrtFreeFunc_t)load_symbol(lib, "aclrtFree");
 
-    if (!orig_halMemAlloc || !orig_halMemFree || !orig_aclrtMalloc || !orig_aclrtFree
-        || !orig_halMemCreate || !orig_halMemRelease || !orig_aclrtMallocCached || orig_aclrtMallocAlign32) {
+    if (!orig_halMemAlloc || !orig_halMemFree || !orig_aclrtMalloc ||
+        !orig_aclrtFree || !orig_halMemCreate || !orig_halMemRelease ||
+        !orig_aclrtMallocCached || orig_aclrtMallocAlign32)
+    {
         return -1;
     }
 
@@ -430,7 +443,8 @@ drvError_t aclrtMalloc(void **devPtr, size_t size, aclrtMemMallocPolicy policy)
     return ret;
 }
 
-drvError_t aclrtMallocCached(void **devPtr, size_t size, aclrtMemMallocPolicy policy)
+drvError_t aclrtMallocCached(void **devPtr, size_t size,
+                             aclrtMemMallocPolicy policy)
 {
     if (!orig_aclrtMallocCached)
     {
@@ -447,7 +461,8 @@ drvError_t aclrtMallocCached(void **devPtr, size_t size, aclrtMemMallocPolicy po
     return ret;
 }
 
-drvError_t aclrtMallocAlign32(void **devPtr, size_t size, aclrtMemMallocPolicy policy)
+drvError_t aclrtMallocAlign32(void **devPtr, size_t size,
+                              aclrtMemMallocPolicy policy)
 {
     if (!orig_aclrtMallocAlign32)
     {
