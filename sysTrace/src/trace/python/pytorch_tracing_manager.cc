@@ -22,30 +22,37 @@ void PyTorchTracingManager::initSingleton()
 PyTorchTracingDataArray *
 PyTorchTracingManager::getEmptyPyTorchTracingDataArray(int name)
 {
-    auto &item = pool_[name];
-    PyTorchTracingDataArray *data = item.empty_pool.getObject();
+    auto &pool_item = pool_[name];
+    auto *data = pool_item.empty_pool.getObject();
     std::memset(data, 0, sizeof(PyTorchTracingDataArray));
     return data;
 }
+
 void PyTorchTracingManager::returnPyTorchTracingDataArray(
     PyTorchTracingDataArray *array, int type, int name)
 {
+
     if (!array)
         return;
 
-    int pool_queue_size;
-    auto &item = pool_[name];
-    if (type == PY_TRACING_READY_POOL)
-        item.ready_pool.returnObject(array, &pool_queue_size);
-    else if (type == PY_TRACING_EMPTY_POOL)
-        item.empty_pool.returnObject(array, &pool_queue_size);
+    auto &pool_item = pool_[name];
+    int pool_queue_size = 0;
+
+    switch (type)
+    {
+    case PY_TRACING_READY_POOL:
+        pool_item.ready_pool.returnObject(array, &pool_queue_size);
+        break;
+    case PY_TRACING_EMPTY_POOL:
+        pool_item.empty_pool.returnObject(array, &pool_queue_size);
+        break;
+    }
 }
 
 PyTorchTracingDataArray *
 PyTorchTracingManager::getPyTorchTracingDataArray(int name)
 {
-    auto &item = pool_[name];
-    return item.ready_pool.getObject<false>();
+    return pool_[name].ready_pool.getObject<false>();
 }
 } // namespace pytorch_tracing_manager
 } // namespace systrace
