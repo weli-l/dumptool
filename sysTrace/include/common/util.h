@@ -58,30 +58,46 @@ template <typename T> class TimerPool
     template <bool Create = true> T *getObject()
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        if (pool_.empty())
+        if (!pool_.empty())
         {
-            if constexpr (Create)
-            {
-                return new T();
-            }
-            return nullptr;
+            T *obj = pool_.front();
+            pool_.pop_front();
+            return obj;
         }
 
-        T *obj = pool_.front();
-        pool_.pop_front();
-        return obj;
+        if constexpr (Create)
+        {
+            return new T();
+        }
+        return nullptr;
     }
 
     void returnObject(T *obj, int *size)
     {
-        *size = 0;
-        if (obj)
+        if (!obj)
         {
-            std::lock_guard<std::mutex> lock(mutex_);
-            pool_.push_back(obj);
-            *size = static_cast<int>(pool_.size());
+            if (size)
+                *size = 0;
+            return;
         }
+
+        std::lock_guard<std::mutex> lock(mutex_);
+        pool_.push_back(obj);
+        if (size)
+            *size = static_cast<int>(pool_.size());
     }
+
+    void clear()
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        for (auto obj : pool_)
+        {
+            delete obj;
+        }
+        pool_.clear();
+    }
+
+    ~TimerPool() { clear(); }
 
   private:
     std::deque<T *> pool_;
@@ -112,8 +128,7 @@ class EnvVarRegistry
     }
 
     // Get an env var value, with optional printing
-    template <typename T, bool Print = true>
-    static T GetEnvVar(const std::string &name)
+    template <typename T> static T GetEnvVar(const std::string &name)
     {
         auto &registry = GetRegistry();
         bool has_env = false;
@@ -122,9 +137,8 @@ class EnvVarRegistry
         T result = getEnvInner<T>(name, &has_env);
         if (has_env)
         {
-            if constexpr (Print)
-                LOG(INFO) << "[ENV] Get " << name << "=" << result
-                          << " from environment" << std::endl;
+            LOG(INFO) << "[ENV] Get " << name << "=" << result
+                      << " from environment" << std::endl;
             return result;
         }
 
@@ -133,24 +147,21 @@ class EnvVarRegistry
         {
             if (const T *val = std::get_if<T>(&it->second))
             {
-                if constexpr (Print)
-                    LOG(INFO) << "[ENV] Get " << name << "=" << *val
-                              << " from register default" << std::endl;
+                LOG(INFO) << "[ENV] Get " << name << "=" << *val
+                          << " from register default" << std::endl;
                 return *val;
             }
             else
             {
-                if constexpr (Print)
-                    LOG(FATAL)
-                        << "[ENV] Wrong data type in `GetEnvVar`" << std::endl;
+                LOG(FATAL) << "[ENV] Wrong data type in `GetEnvVar`"
+                           << std::endl;
             }
         }
 
         // Fall back to static default
         result = getDefault<T>();
-        if constexpr (Print)
-            LOG(WARNING) << "[ENV] Get not register env " << name << "="
-                         << result << " from default" << std::endl;
+        LOG(WARNING) << "[ENV] Get not register env " << name << "=" << result
+                     << " from default" << std::endl;
         return result;
     }
 
