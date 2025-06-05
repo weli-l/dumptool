@@ -63,29 +63,35 @@ std::string GenerateClusterUniqueFilename(const std::string &suffix)
 namespace config
 {
 
-class DeviceManager
-{
-  public:
-    static std::vector<uint64_t> DetectAvailableDevices()
-    {
-        std::vector<uint64_t> devices;
-        const std::string dev_path = "/dev/davinci";
+class DeviceManager {
+public:
+    static constexpr uint64_t MAX_DEVICES = 16;
+    static constexpr const char* DEVICE_PATH_PREFIX = "/dev/davinci";
 
-        for (uint64_t device_index = 0; device_index < 16; device_index++)
-        {
-            std::filesystem::path dev(dev_path + std::to_string(device_index));
-            if (std::filesystem::exists(dev))
-            {
-                devices.push_back(device_index);
-                if (GlobalConfig::local_rank == 0)
-                {
-                    LOG(INFO) << "Found device: " << dev;
+    static std::vector<uint64_t> DetectAvailableDevices() {
+        std::vector<uint64_t> available_devices;
+        available_devices.reserve(MAX_DEVICES);
+
+        for (uint64_t device_index = 0; device_index < MAX_DEVICES; ++device_index) {
+            if (IsDevicePresent(device_index)) {
+                available_devices.push_back(device_index);
+                if (GlobalConfig::local_rank == 0) {
+                    LOG(INFO) << "Found device: " << GetDevicePath(device_index);
                 }
             }
         }
 
-        std::sort(devices.begin(), devices.end());
-        return devices;
+        std::sort(available_devices.begin(), available_devices.end());
+        return available_devices;
+    }
+
+private:
+    static bool IsDevicePresent(uint64_t index) {
+        return std::filesystem::exists(GetDevicePath(index));
+    }
+
+    static std::string GetDevicePath(uint64_t index) {
+        return std::string(DEVICE_PATH_PREFIX) + std::to_string(index);
     }
 };
 
