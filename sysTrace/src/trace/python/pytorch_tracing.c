@@ -115,6 +115,12 @@ uint64_t getMicrosecondTimestamp()
     return (uint64_t)tv.tv_sec * 1000000 + (uint64_t)tv.tv_usec;
 }
 
+static void ensure_python_initialized() {
+    if (!Py_IsInitialized()) {
+        Py_Initialize();
+    }
+}
+
 Stagetype determine_stage_type(const char *function_name)
 {
     if (function_name == NULL)
@@ -503,62 +509,131 @@ void systrace_register_gc(char **error_message)
     *error_message = strdup("Import gc Ok");
 }
 
-void systrace_register_tracing(const char **names, int count, char **errors)
-{
-    if (!Py_IsInitialized())
-    {
-        Py_Initialize();
-    }
-    PyGILState_STATE gstate = PyGILState_Ensure();
+// void systrace_register_tracing(const char **names, int count, char **errors)
+// {
+//     if (!Py_IsInitialized())
+//     {
+//         Py_Initialize();
+//     }
+//     PyGILState_STATE gstate = PyGILState_Ensure();
+//     tracing_data_count = count;
+//     pytorch_tracing_data_array =
+//         (TracingData *)malloc(sizeof(TracingData) * tracing_data_count);
+//     memset(pytorch_tracing_data_array, 0,
+//            sizeof(TracingData) * tracing_data_count);
+//     systrace_register_gc(errors);
+//     int64_t code_address;
+//     int is_native;
+
+//     for (int i = 1; i < count; i++)
+//     {
+//         int ret = runPyTorchCodeGetAddress(names[i], errors + i, &code_address,
+//                                            &is_native);
+//         if (ret)
+//         {
+//             printf("register function `%s` error\n", names[i]);
+//             continue;
+//         }
+//         printf("register function `%s` at address %ld\n", names[i],
+//                code_address);
+//         addTracingData(i, names[i]);
+
+//         TracingFunction *traced_function =
+//             (TracingFunction *)malloc(sizeof(TracingFunction));
+//         traced_function->tag_name = i;
+//         traced_function->function_name = strdup(names[i]);
+//         traced_function->py_code_address = code_address;
+//         traced_function->is_native = is_native;
+
+//         HASH_ADD(hh, pytorch_tracing_func_map, py_code_address, sizeof(int64_t),
+//                  traced_function);
+//     }
+//     PyEval_SetProfile(profiler, NULL);
+//     PyThreadState *tstate = PyThreadState_Get();
+//     PyThreadState *thread_array[PY_TRACING_MAX_THREADS];
+//     memset(thread_array, 0, sizeof(thread_array));
+//     int thread_count = 0;
+//     while (tstate != NULL && thread_count < PY_TRACING_MAX_THREADS)
+//     {
+//         thread_array[thread_count++] = tstate;
+//         printf("Set profiler for thread %ld\n", tstate->thread_id);
+//         tstate = PyThreadState_Next(tstate);
+//     }
+//     for (int i = 0; i < thread_count; i++)
+//     {
+//         PyThreadState_Swap(thread_array[i]);
+//         PyEval_SetProfile(profiler, NULL);
+//     }
+//     PyThreadState_Swap(thread_array[0]);
+
+//     PyGILState_Release(gstate);
+// }
+
+static void init_tracing_data_array(int count) {
     tracing_data_count = count;
-    pytorch_tracing_data_array =
-        (TracingData *)malloc(sizeof(TracingData) * tracing_data_count);
-    memset(pytorch_tracing_data_array, 0,
-           sizeof(TracingData) * tracing_data_count);
-    systrace_register_gc(errors);
+    pytorch_tracing_data_array = (TracingData *)malloc(sizeof(TracingData) * tracing_data_count);
+    memset(pytorch_tracing_data_array, 0, sizeof(TracingData) * tracing_data_count);
+}
+
+static int register_tracing_function(const char *name, int index, char **errors) {
     int64_t code_address;
     int is_native;
-
-    for (int i = 1; i < count; i++)
-    {
-        int ret = runPyTorchCodeGetAddress(names[i], errors + i, &code_address,
-                                           &is_native);
-        if (ret)
-        {
-            printf("register function `%s` error\n", names[i]);
-            continue;
-        }
-        printf("register function `%s` at address %ld\n", names[i],
-               code_address);
-        addTracingData(i, names[i]);
-
-        TracingFunction *traced_function =
-            (TracingFunction *)malloc(sizeof(TracingFunction));
-        traced_function->tag_name = i;
-        traced_function->function_name = strdup(names[i]);
-        traced_function->py_code_address = code_address;
-        traced_function->is_native = is_native;
-
-        HASH_ADD(hh, pytorch_tracing_func_map, py_code_address, sizeof(int64_t),
-                 traced_function);
+    int ret = runPyTorchCodeGetAddress(name, errors + index, &code_address, &is_native);
+    
+    if (ret) {
+        printf("register function `%s` error\n", name);
+        return ret;
     }
+    
+    printf("register function `%s` at address %ld\n", name, code_address);
+    addTracingData(index, name);
+
+    TracingFunction *traced_function = (TracingFunction *)malloc(sizeof(TracingFunction));
+    traced_function->tag_name = index;
+    traced_function->function_name = strdup(name);
+    traced_function->py_code_address = code_address;
+    traced_function->is_native = is_native;
+
+    HASH_ADD(hh, pytorch_tracing_func_map, py_code_address, sizeof(int64_t), traced_function);
+    
+    return 0;
+}
+
+static void set_profiler_for_all_threads() {
     PyEval_SetProfile(profiler, NULL);
+    
     PyThreadState *tstate = PyThreadState_Get();
     PyThreadState *thread_array[PY_TRACING_MAX_THREADS];
     memset(thread_array, 0, sizeof(thread_array));
+    
     int thread_count = 0;
-    while (tstate != NULL && thread_count < PY_TRACING_MAX_THREADS)
-    {
+    while (tstate != NULL && thread_count < PY_TRACING_MAX_THREADS) {
         thread_array[thread_count++] = tstate;
         printf("Set profiler for thread %ld\n", tstate->thread_id);
         tstate = PyThreadState_Next(tstate);
     }
-    for (int i = 0; i < thread_count; i++)
-    {
+    
+    for (int i = 0; i < thread_count; i++) {
         PyThreadState_Swap(thread_array[i]);
         PyEval_SetProfile(profiler, NULL);
     }
+    
     PyThreadState_Swap(thread_array[0]);
+}
 
+void systrace_register_tracing(const char **names, int count, char **errors) {
+    ensure_python_initialized();
+    
+    PyGILState_STATE gstate = PyGILState_Ensure();
+    
+    init_tracing_data_array(count);
+    systrace_register_gc(errors);
+    
+    for (int i = 1; i < count; i++) {
+        register_tracing_function(names[i], i, errors);
+    }
+    
+    set_profiler_for_all_threads();
+    
     PyGILState_Release(gstate);
 }
