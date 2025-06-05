@@ -22,16 +22,23 @@ namespace util
 namespace config
 {
 
-struct GlobalConfig
-{
-    static uint32_t rank;
-    static uint32_t local_rank;
-    static uint32_t local_world_size;
-    static uint32_t world_size;
-    static std::string job_name;
-    static std::string rank_str;
-    static bool enable;
-    static std::vector<uint64_t> devices;
+struct GlobalConfig {
+    uint32_t rank{0};
+    uint32_t local_rank{0};
+    uint32_t world_size{0};
+    uint32_t local_world_size{0};
+    std::string job_name;
+    bool enable{true};
+    std::vector<uint64_t> devices;
+    std::string rank_str;
+
+    static GlobalConfig& Instance() {
+        static GlobalConfig instance;
+        return instance;
+    }
+
+private:
+    GlobalConfig() = default;
 };
 
 void InitializeGlobalConfiguration();

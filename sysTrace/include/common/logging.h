@@ -20,7 +20,7 @@ enum LogLevel
     std::cerr
 
 #define STLOG(level)                                                           \
-    LOG(level) << ::systrace::util::config::GlobalConfig::rank_str
+    LOG(level) << ::systrace::util::config::GlobalConfig::Instance().rank_str
 
 namespace systrace
 {

@@ -31,8 +31,8 @@ PyTorchTrace &PyTorchTrace::getInstance()
 
 void PyTorchTrace::initialize()
 {
-    pytorch_trace_.set_rank(config::GlobalConfig::rank);
-    STLOG(INFO) << "[PyTorchTrace] Rank set to: " << config::GlobalConfig::rank;
+    pytorch_trace_.set_rank(config::GlobalConfig::Instance().rank);
+    STLOG(INFO) << "[PyTorchTrace] Rank set to: " << config::GlobalConfig::Instance().rank;
 
     pytorch_tracing_library_ =
         new pytorch_tracing::PyTorchTracingLibrary("libsysTrace.so");
@@ -81,8 +81,8 @@ void PyTorchTrace::dumpPyTorchTracing()
 
     std::lock_guard<std::mutex> lock(trace_mutex_);
 
-    pytorch_trace_.set_rank(config::GlobalConfig::local_rank);
-    pytorch_trace_.set_comm(config::GlobalConfig::job_name);
+    pytorch_trace_.set_rank(config::GlobalConfig::Instance().local_rank);
+    pytorch_trace_.set_comm(config::GlobalConfig::Instance().job_name);
 
     for (size_t i = 0; i < pytorch_tracing_functions_.size(); ++i)
     {
@@ -190,7 +190,7 @@ SysTrace::~SysTrace() { stopEventPoller(); }
 
 void SysTrace::initializeSystem()
 {
-    if (!config::GlobalConfig::enable)
+    if (!config::GlobalConfig::Instance().enable)
         return;
 
     systrace::util::InitializeSystemUtilities();

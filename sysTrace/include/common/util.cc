@@ -48,7 +48,7 @@ std::string GenerateClusterUniqueFilename(const std::string &suffix)
         gethostname(hostname, sizeof(hostname));
         std::ostringstream oss;
         oss << hostname << "--" << std::setw(5) << std::setfill('0')
-            << config::GlobalConfig::rank << suffix;
+            << config::GlobalConfig::Instance().rank << suffix;
         return oss.str();
     }
     catch (const std::exception &e)
@@ -75,7 +75,7 @@ public:
         for (uint64_t device_index = 0; device_index < MAX_DEVICES; ++device_index) {
             if (IsDevicePresent(device_index)) {
                 available_devices.push_back(device_index);
-                if (GlobalConfig::local_rank == 0) {
+                if (config::GlobalConfig::Instance().local_rank == 0) {
                     LOG(INFO) << "Found device: " << GetDevicePath(device_index);
                 }
             }
@@ -95,55 +95,57 @@ private:
     }
 };
 
-uint32_t GlobalConfig::rank{0};
-uint32_t GlobalConfig::local_rank{0};
-uint32_t GlobalConfig::world_size{0};
-uint32_t GlobalConfig::local_world_size{0};
-std::string GlobalConfig::job_name("");
-bool GlobalConfig::enable{true};
-std::vector<uint64_t> GlobalConfig::devices;
-std::string GlobalConfig::rank_str("");
+namespace {
 
-void InitializeGlobalConfiguration()
-{
-    LOG(INFO) << "Initializing global configuration";
+    GlobalConfig& config = GlobalConfig::Instance();
 
-    try
-    {
-        GlobalConfig::rank = env::EnvVarRegistry::GetEnvVar<int>("RANK");
-        GlobalConfig::job_name = env::EnvVarRegistry::GetEnvVar<std::string>(
-            "ENV_ARGO_WORKFLOW_NAME");
-        GlobalConfig::local_rank =
-            env::EnvVarRegistry::GetEnvVar<int>("LOCAL_RANK");
-        GlobalConfig::local_world_size =
-            env::EnvVarRegistry::GetEnvVar<int>("LOCAL_WORLD_SIZE");
-        GlobalConfig::world_size =
-            env::EnvVarRegistry::GetEnvVar<int>("WORLD_SIZE");
-        GlobalConfig::rank_str =
-            "[RANK " + std::to_string(GlobalConfig::rank) + "] ";
+    void LoadEnvironmentVariables() {
+        auto loadInt = [](const char* name) {
+            return env::EnvVarRegistry::GetEnvVar<int>(name);
+        };
 
-        GlobalConfig::devices = DeviceManager::DetectAvailableDevices();
+        auto loadStr = [](const char* name) {
+            return env::EnvVarRegistry::GetEnvVar<std::string>(name);
+        };
 
-        if (GlobalConfig::devices.empty())
-        {
-            GlobalConfig::enable = false;
+        config.rank = loadInt("RANK");
+        config.job_name = loadStr("ENV_ARGO_WORKFLOW_NAME");
+        config.local_rank = loadInt("LOCAL_RANK");
+        config.local_world_size = loadInt("LOCAL_WORLD_SIZE");
+        config.world_size = loadInt("WORLD_SIZE");
+        config.rank_str = "[RANK " + std::to_string(config.rank) + "] ";
+    }
+
+    void ValidateDeviceConfiguration() {
+        config.devices = DeviceManager::DetectAvailableDevices();
+        
+        if (config.devices.empty()) {
+            config.enable = false;
             LOG(WARNING) << "No devices found, disabling tracing";
+            return;
         }
 
-        if (GlobalConfig::local_world_size != GlobalConfig::devices.size())
-        {
+        if (config.local_world_size != config.devices.size()) {
             LOG(WARNING) << "Local world size mismatch, disabling hook";
-            GlobalConfig::enable = false;
+            config.enable = false;
         }
+    }
 
-        LOG(INFO) << "Global configuration initialized successfully";
+    } // namespace
+
+    void InitializeGlobalConfiguration() {
+        LOG(INFO) << "Initializing global configuration";
+
+        try {
+            LoadEnvironmentVariables();
+            ValidateDeviceConfiguration();
+            LOG(INFO) << "Global configuration initialized successfully";
+        } 
+        catch (const std::exception& e) {
+            LOG(ERROR) << "Global config initialization failed: " << e.what();
+            throw;
+        }
     }
-    catch (const std::exception &e)
-    {
-        LOG(ERROR) << "Global config initialization failed: " << e.what();
-        throw;
-    }
-}
 
 } // namespace config
 
