@@ -6,10 +6,6 @@
 #include <filesystem>
 #include <fstream>
 #include <mutex>
-#include <openssl/bio.h>
-#include <openssl/buffer.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
 #include <thread>
 #include <unistd.h>
 
@@ -23,14 +19,14 @@ namespace fs_utils
 
 int CreateDirectoryIfNotExists(const std::string &path)
 {
-    std::filesystem::path dir_path(path);
+    std::filesystem::path d_path(path);
     try
     {
-        if (!std::filesystem::exists(dir_path))
+        if (!std::filesystem::exists(d_path))
         {
-            std::filesystem::create_directories(dir_path);
+            std::filesystem::create_directories(d_path);
         }
-        if (!std::filesystem::is_directory(dir_path))
+        if (!std::filesystem::is_directory(d_path))
         {
             LOG(ERROR) << "Path exists but is not a directory: " << path;
             return 1;
