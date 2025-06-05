@@ -15,22 +15,22 @@ namespace pytorch_tracing
 class PyTorchTracingLibrary : public LibraryLoader
 {
   public:
-    PyTorchTracingLibrary(const std::string &);
-    using SysTraceRegisterTracingFunc = void (*)(const char **, int, char **);
-    using GetFullTracingDataArrayFunc = PyTorchTracingDataArray *(*)(int);
-    using GetPartialTracingDataArrayFunc = PyTorchTracingDataArray *(*)(int);
-    using ReturnTracingDataArrayFunc = void (*)(PyTorchTracingDataArray *, int,
+    explicit PyTorchTracingLibrary(const std::string &);
+    using TracingRegistrationFunc = void (*)(const char **, int, char **);
+    using DataArrayRetrievalAllFunc = PyTorchTracingDataArray *(*)(int);
+    using GetPartialTracingDataArrayPartFunc = PyTorchTracingDataArray *(*)(int);
+    using DataArrayReleaseFunc = void (*)(PyTorchTracingDataArray *, int,
                                                 int);
+    PyTorchTracingDataArray *RetrieveAllTracingData(int);
+    PyTorchTracingDataArray *RetrievePartialTracingData(int);
     std::vector<std::string> Register(const std::vector<std::string> &names);
-    PyTorchTracingDataArray *GetFullTracingData(int);
-    PyTorchTracingDataArray *GetPartialTracingData(int);
-    void ReturnTracingData(PyTorchTracingDataArray *data, int type, int name);
+    void ReleaseTracingData(PyTorchTracingDataArray *data, int type, int name);
 
   private:
-    SysTraceRegisterTracingFunc register_tracing_;
-    GetFullTracingDataArrayFunc get_tracing_data_;
-    GetPartialTracingDataArrayFunc get_partial_tracing_data_;
-    ReturnTracingDataArrayFunc return_tracing_data_;
+    TracingRegistrationFunc register_tracing_;
+    DataArrayRetrievalAllFunc get_tracing_data_;
+    GetPartialTracingDataArrayPartFunc get_partial_tracing_data_;
+    DataArrayReleaseFunc return_tracing_data_;
 };
 
 } // namespace pytorch_tracing

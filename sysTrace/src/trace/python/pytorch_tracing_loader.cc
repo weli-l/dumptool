@@ -17,16 +17,16 @@ PyTorchTracingLibrary::PyTorchTracingLibrary(const std::string &library_path)
         "libsysTrace.so, skip recording python gc in timeline ";
     SETUP_SYMBOL_FOR_LOAD_LIBRARY(handle_, "systrace_register_tracing",
                                   register_tracing_,
-                                  SysTraceRegisterTracingFunc, err);
+                                  TracingRegistrationFunc, err);
     SETUP_SYMBOL_FOR_LOAD_LIBRARY(
         handle_, "systrace_get_full_pytorch_tracing_data_array",
-        get_tracing_data_, GetFullTracingDataArrayFunc, err);
+        get_tracing_data_, DataArrayRetrievalAllFunc, err);
     SETUP_SYMBOL_FOR_LOAD_LIBRARY(
         handle_, "systrace_return_pytorch_tracing_data_array",
-        return_tracing_data_, ReturnTracingDataArrayFunc, err);
+        return_tracing_data_, DataArrayReleaseFunc, err);
     SETUP_SYMBOL_FOR_LOAD_LIBRARY(
         handle_, "systrace_get_partial_pytorch_tracing_data_array",
-        get_partial_tracing_data_, GetPartialTracingDataArrayFunc, err);
+        get_partial_tracing_data_, GetPartialTracingDataArrayPartFunc, err);
     can_use_ = true;
 }
 
@@ -58,7 +58,7 @@ PyTorchTracingLibrary::Register(const std::vector<std::string> &names)
     return result;
 }
 
-PyTorchTracingDataArray *PyTorchTracingLibrary::GetFullTracingData(int name)
+PyTorchTracingDataArray *PyTorchTracingLibrary::RetrieveAllTracingData(int name)
 {
     if (can_use_)
     {
@@ -67,7 +67,7 @@ PyTorchTracingDataArray *PyTorchTracingLibrary::GetFullTracingData(int name)
     return nullptr;
 }
 
-PyTorchTracingDataArray *PyTorchTracingLibrary::GetPartialTracingData(int name)
+PyTorchTracingDataArray *PyTorchTracingLibrary::RetrievePartialTracingData(int name)
 {
     if (can_use_)
     {
@@ -76,7 +76,7 @@ PyTorchTracingDataArray *PyTorchTracingLibrary::GetPartialTracingData(int name)
     return nullptr;
 }
 
-void PyTorchTracingLibrary::ReturnTracingData(PyTorchTracingDataArray *data,
+void PyTorchTracingLibrary::ReleaseTracingData(PyTorchTracingDataArray *data,
                                               int type, int name)
 {
     if (can_use_ && data)

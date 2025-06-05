@@ -97,13 +97,13 @@ void PyTorchTrace::processFunctionTracingData(size_t function_index)
     std::vector<PyTorchTracingDataArray *> data_holders;
 
     if (auto data =
-            pytorch_tracing_library_->GetPartialTracingData(function_index))
+            pytorch_tracing_library_->RetrievePartialTracingData(function_index))
     {
         data_holders.push_back(data);
     }
 
     while (auto data =
-               pytorch_tracing_library_->GetFullTracingData(function_index))
+               pytorch_tracing_library_->RetrieveAllTracingData(function_index))
     {
         data_holders.push_back(data);
     }
@@ -145,7 +145,7 @@ void PyTorchTrace::processFunctionTracingData(size_t function_index)
 
     for (auto data : data_holders)
     {
-        pytorch_tracing_library_->ReturnTracingData(data, PY_TRACING_EMPTY_POOL,
+        pytorch_tracing_library_->ReleaseTracingData(data, PY_TRACING_EMPTY_POOL,
                                                     function_index);
     }
 }
