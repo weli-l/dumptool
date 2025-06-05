@@ -12,15 +12,15 @@ namespace systrace
 namespace pytorch_tracing
 {
 
-class PyTorchTracingLibrary : public LibraryLoader
+class PyTorchTracingLibrary : public DynamicLibraryLoader
 {
   public:
     explicit PyTorchTracingLibrary(const std::string &);
     using TracingRegistrationFunc = void (*)(const char **, int, char **);
     using DataArrayRetrievalAllFunc = PyTorchTracingDataArray *(*)(int);
-    using GetPartialTracingDataArrayPartFunc = PyTorchTracingDataArray *(*)(int);
-    using DataArrayReleaseFunc = void (*)(PyTorchTracingDataArray *, int,
-                                                int);
+    using GetPartialTracingDataArrayPartFunc =
+        PyTorchTracingDataArray *(*)(int);
+    using DataArrayReleaseFunc = void (*)(PyTorchTracingDataArray *, int, int);
     PyTorchTracingDataArray *RetrieveAllTracingData(int);
     PyTorchTracingDataArray *RetrievePartialTracingData(int);
     std::vector<std::string> Register(const std::vector<std::string> &names);

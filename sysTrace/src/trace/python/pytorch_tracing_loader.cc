@@ -9,31 +9,31 @@ namespace pytorch_tracing
 {
 
 PyTorchTracingLibrary::PyTorchTracingLibrary(const std::string &library_path)
-    : LibraryLoader(library_path), register_tracing_(nullptr),
+    : DynamicLibraryLoader(library_path), register_tracing_(nullptr),
       get_tracing_data_(nullptr), get_partial_tracing_data_(nullptr),
       return_tracing_data_(nullptr)
 {
     const std::string err =
         "libsysTrace.so, skip recording python gc in timeline ";
-    SETUP_SYMBOL_FOR_LOAD_LIBRARY(handle_, "systrace_register_tracing",
-                                  register_tracing_,
-                                  TracingRegistrationFunc, err);
+    SETUP_SYMBOL_FOR_LOAD_LIBRARY(library_handle_, "systrace_register_tracing",
+                                  register_tracing_, TracingRegistrationFunc,
+                                  err);
     SETUP_SYMBOL_FOR_LOAD_LIBRARY(
-        handle_, "systrace_get_full_pytorch_tracing_data_array",
+        library_handle_, "systrace_get_full_pytorch_tracing_data_array",
         get_tracing_data_, DataArrayRetrievalAllFunc, err);
     SETUP_SYMBOL_FOR_LOAD_LIBRARY(
-        handle_, "systrace_return_pytorch_tracing_data_array",
+        library_handle_, "systrace_return_pytorch_tracing_data_array",
         return_tracing_data_, DataArrayReleaseFunc, err);
     SETUP_SYMBOL_FOR_LOAD_LIBRARY(
-        handle_, "systrace_get_partial_pytorch_tracing_data_array",
+        library_handle_, "systrace_get_partial_pytorch_tracing_data_array",
         get_partial_tracing_data_, GetPartialTracingDataArrayPartFunc, err);
-    can_use_ = true;
+    is_usable_ = true;
 }
 
 std::vector<std::string>
 PyTorchTracingLibrary::Register(const std::vector<std::string> &names)
 {
-    if (!can_use_)
+    if (!is_usable_)
         return {};
     std::vector<std::string> result;
     char **errors = (char **)malloc(names.size() * sizeof(char *));
@@ -60,16 +60,17 @@ PyTorchTracingLibrary::Register(const std::vector<std::string> &names)
 
 PyTorchTracingDataArray *PyTorchTracingLibrary::RetrieveAllTracingData(int name)
 {
-    if (can_use_)
+    if (is_usable_)
     {
         return get_tracing_data_(name);
     }
     return nullptr;
 }
 
-PyTorchTracingDataArray *PyTorchTracingLibrary::RetrievePartialTracingData(int name)
+PyTorchTracingDataArray *
+PyTorchTracingLibrary::RetrievePartialTracingData(int name)
 {
-    if (can_use_)
+    if (is_usable_)
     {
         return get_partial_tracing_data_(name);
     }
@@ -77,9 +78,9 @@ PyTorchTracingDataArray *PyTorchTracingLibrary::RetrievePartialTracingData(int n
 }
 
 void PyTorchTracingLibrary::ReleaseTracingData(PyTorchTracingDataArray *data,
-                                              int type, int name)
+                                               int type, int name)
 {
-    if (can_use_ && data)
+    if (is_usable_ && data)
         return_tracing_data_(data, type, name);
 }
 

@@ -9,22 +9,24 @@
 namespace systrace
 {
 
-class LibraryLoader
+class DynamicLibraryLoader
 {
   protected:
-    void *handle_;
-    bool can_use_;
+    void *library_handle_;
+    bool is_usable_;
     const std::string library_path_;
 
-    void LoadLibrary();
+    void LoadDynamicLibrary();
 
   public:
-    explicit LibraryLoader(const std::string &library_path);
-    virtual ~LibraryLoader();
+    explicit DynamicLibraryLoader(const std::string &library_path);
+    virtual ~DynamicLibraryLoader();
 
-    bool IsLoaded() const { return handle_ != nullptr && can_use_; }
-
-    void *GetHandle() const { return handle_; }
+    bool IsLibraryLoaded() const
+    {
+        return library_handle_ != nullptr && is_usable_;
+    }
+    void *GetLibraryHandle() const { return library_handle_; }
 };
 
 } // namespace systrace

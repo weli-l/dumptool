@@ -1,46 +1,46 @@
 #include "library_loader.h"
-#include <dlfcn.h>
-
 #include "../../include/common/logging.h"
+#include <dlfcn.h>
 
 namespace systrace
 {
 
-LibraryLoader::LibraryLoader(const std::string &lib_name)
-    : handle_(nullptr), can_use_(false), library_path_(lib_name)
+DynamicLibraryLoader::DynamicLibraryLoader(const std::string &library_path)
+    : library_handle_(nullptr), is_usable_(false), library_path_(library_path)
 {
-    LoadLibrary();
+    LoadDynamicLibrary();
 }
 
-LibraryLoader::~LibraryLoader()
+DynamicLibraryLoader::~DynamicLibraryLoader()
 {
-    if (handle_)
+    if (library_handle_)
     {
-        dlclose(handle_);
-        handle_ = nullptr;
+        dlclose(library_handle_);
+        library_handle_ = nullptr;
     }
 }
 
-void LibraryLoader::LoadLibrary()
+void DynamicLibraryLoader::LoadDynamicLibrary()
 {
-    if (handle_)
+    if (library_handle_)
     {
         STLOG(WARNING) << "Library already loaded: " << library_path_;
         return;
     }
+
     dlerror();
 
-    handle_ = dlopen(library_path_.c_str(), RTLD_LAZY);
-    if (!handle_)
+    library_handle_ = dlopen(library_path_.c_str(), RTLD_LAZY);
+    if (!library_handle_)
     {
-        const char *err_msg = dlerror();
+        const char *error_message = dlerror();
         STLOG(WARNING) << "Failed to load library: "
-                       << (err_msg ? err_msg : "Unknown error");
-        can_use_ = false;
+                       << (error_message ? error_message : "Unknown error");
+        is_usable_ = false;
         return;
     }
 
-    can_use_ = true;
+    is_usable_ = true;
 }
 
 } // namespace systrace
