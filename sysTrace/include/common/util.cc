@@ -178,7 +178,7 @@ void RegisterRequiredEnvironmentVariables()
             throw std::invalid_argument(
                 "Invalid env var name: ENV_ARGO_WORKFLOW_NAME");
         }
-        REGISTER_ENV_VAR("ENV_ARGO_WORKFLOW_NAME",
+        REGISTER_ENVIRONMENT_VARIABLE("ENV_ARGO_WORKFLOW_NAME",
                          env::EnvVarRegistry::STRING_DEFAULT_VALUE);
 
         if (!IsValidEnvironmentVariableName("SYSTRACE_SYMS_FILE"))
@@ -186,7 +186,7 @@ void RegisterRequiredEnvironmentVariables()
             throw std::invalid_argument(
                 "Invalid env var name: SYSTRACE_SYMS_FILE");
         }
-        REGISTER_ENV_VAR("SYSTRACE_SYMS_FILE",
+        REGISTER_ENVIRONMENT_VARIABLE("SYSTRACE_SYMS_FILE",
                          env::EnvVarRegistry::STRING_DEFAULT_VALUE);
 
         if (!IsValidEnvironmentVariableName("SYSTRACE_LOGGING_DIR"))
@@ -194,7 +194,7 @@ void RegisterRequiredEnvironmentVariables()
             throw std::invalid_argument(
                 "Invalid env var name: SYSTRACE_LOGGING_DIR");
         }
-        REGISTER_ENV_VAR("SYSTRACE_LOGGING_DIR",
+        REGISTER_ENVIRONMENT_VARIABLE("SYSTRACE_LOGGING_DIR",
                          env::EnvVarRegistry::STRING_DEFAULT_VALUE);
 
         if (!IsValidEnvironmentVariableName("SYSTRACE_HOST_TRACING_FUNC"))
@@ -202,14 +202,14 @@ void RegisterRequiredEnvironmentVariables()
             throw std::invalid_argument(
                 "Invalid env var name: SYSTRACE_HOST_TRACING_FUNC");
         }
-        REGISTER_ENV_VAR("SYSTRACE_HOST_TRACING_FUNC",
+        REGISTER_ENVIRONMENT_VARIABLE("SYSTRACE_HOST_TRACING_FUNC",
                          env::EnvVarRegistry::STRING_DEFAULT_VALUE);
 
-        REGISTER_ENV_VAR("RANK", 0);
-        REGISTER_ENV_VAR("LOCAL_RANK", 0);
-        REGISTER_ENV_VAR("LOCAL_WORLD_SIZE", 1);
-        REGISTER_ENV_VAR("WORLD_SIZE", 1);
-        REGISTER_ENV_VAR("SYSTRACE_LOGGING_APPEND", false);
+        REGISTER_ENVIRONMENT_VARIABLE("RANK", 0);
+        REGISTER_ENVIRONMENT_VARIABLE("LOCAL_RANK", 0);
+        REGISTER_ENVIRONMENT_VARIABLE("LOCAL_WORLD_SIZE", 1);
+        REGISTER_ENVIRONMENT_VARIABLE("WORLD_SIZE", 1);
+        REGISTER_ENVIRONMENT_VARIABLE("SYSTRACE_LOGGING_APPEND", false);
     }
     catch (const std::exception &e)
     {

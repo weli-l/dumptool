@@ -282,7 +282,7 @@ class EnvVarRegistry
     }
 };
 
-#define REGISTER_ENV_VAR(name, value)                                          \
+#define REGISTER_ENVIRONMENT_VARIABLE(name, value)                                          \
     ::systrace::util::env::EnvVarRegistry::RegisterEnvVar(                     \
         name,                                                                  \
         ::systrace::util::env::EnvVarRegistry::convert_to_variant(value))
