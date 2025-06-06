@@ -58,30 +58,18 @@ PyTorchTracingLibrary::Register(const std::vector<std::string> &names)
     return result;
 }
 
-PyTorchTracingDataArray *PyTorchTracingLibrary::RetrieveAllTracingData(int name)
-{
-    if (is_usable_)
-    {
-        return get_tracing_data_(name);
-    }
-    return nullptr;
+PyTorchTracingDataArray* PyTorchTracingLibrary::RetrieveAllTracingData(int name) {
+    return is_usable_ ? get_tracing_data_(name) : nullptr;
 }
 
-PyTorchTracingDataArray *
-PyTorchTracingLibrary::RetrievePartialTracingData(int name)
-{
-    if (is_usable_)
-    {
-        return get_partial_tracing_data_(name);
-    }
-    return nullptr;
+PyTorchTracingDataArray* PyTorchTracingLibrary::RetrievePartialTracingData(int name) {
+    return is_usable_ ? get_partial_tracing_data_(name) : nullptr;
 }
 
-void PyTorchTracingLibrary::ReleaseTracingData(PyTorchTracingDataArray *data,
-                                               int type, int name)
-{
-    if (is_usable_ && data)
+void PyTorchTracingLibrary::ReleaseTracingData(PyTorchTracingDataArray* data, int type, int name) {
+    if (is_usable_ && data) {
         return_tracing_data_(data, type, name);
+    }
 }
 
 } // namespace pytorch_tracing

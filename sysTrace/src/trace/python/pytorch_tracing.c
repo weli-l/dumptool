@@ -99,16 +99,16 @@ static TracingFunction *pytorch_tracing_func_map = NULL;
 static int start_tracing = 1;
 static int tracing_data_count = 0;
 
-static int runPyTorchCodeGetAddress(const char *input, char **error_message,
+static int GetFuncAddressByPython(const char *input, char **error_message,
                                     int64_t *code_address, int *is_native);
-static uint64_t getMicrosecondTimestamp();
+static uint64_t getMsTime();
 static TracingFunction *isTracedPyTorchFunction(PyFrameObject *frame);
-static TracingData *getTracingData(int name);
+static TracingData *receiveTracingData(int name);
 static void addTracingData(int name, const char *func_name);
 static int profiler(PyObject *obj, PyFrameObject *frame, int what,
                     PyObject *arg);
 
-uint64_t getMicrosecondTimestamp()
+uint64_t getMsTime()
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -184,7 +184,7 @@ static int profiler(PyObject *obj, PyFrameObject *frame, int what,
     if ((what == PyTrace_CALL) && start_tracing)
     {
         pthread_mutex_lock(&mutex);
-        TracingData *tracing_data = getTracingData(tag_name);
+        TracingData *tracing_data = receiveTracingData(tag_name);
         PyTorchTracingDataArray *curr_data = tracing_data->curr_data;
         if (curr_data->cur == PY_TRACING_BUFFER_SIZE)
         {
@@ -194,7 +194,7 @@ static int profiler(PyObject *obj, PyFrameObject *frame, int what,
                 systrace_get_empty_pytorch_tracing_data_array(tag_name);
             curr_data = tracing_data->curr_data;
         }
-        curr_data->data[curr_data->cur].start = getMicrosecondTimestamp();
+        curr_data->data[curr_data->cur].start = getMsTime();
         if (stage_type == DATALOADER)
         {
             global_stage_id++;
@@ -209,12 +209,12 @@ static int profiler(PyObject *obj, PyFrameObject *frame, int what,
     else if (what == PyTrace_RETURN)
     {
         pthread_mutex_lock(&mutex);
-        TracingData *tracing_data = getTracingData(tag_name);
+        TracingData *tracing_data = receiveTracingData(tag_name);
         if (start_tracing)
         {
             PyTorchTracingDataArray *curr_data = tracing_data->curr_data;
             curr_data->data[curr_data->cur].count = tracing_data->count;
-            curr_data->data[curr_data->cur++].end = getMicrosecondTimestamp();
+            curr_data->data[curr_data->cur++].end = getMsTime();
         }
         tracing_data->count++;
         pthread_mutex_unlock(&mutex);
@@ -222,7 +222,7 @@ static int profiler(PyObject *obj, PyFrameObject *frame, int what,
     return 0;
 }
 
-int runPyTorchCodeGetAddress(const char *code, char **error_message,
+int GetFuncAddressByPython(const char *code, char **error_message,
                              int64_t *address, int *is_native)
 {
     char *input = strdup(code);
@@ -320,14 +320,14 @@ int runPyTorchCodeGetAddress(const char *code, char **error_message,
     return 0;
 }
 
-static TracingData *getTracingData(int name)
+static TracingData *receiveTracingData(int name)
 {
     return pytorch_tracing_data_array + name;
 }
 
 static void addTracingData(int name, const char *func_name)
 {
-    TracingData *v = getTracingData(name);
+    TracingData *v = receiveTracingData(name);
     v->tag_name = name;
     v->curr_data = systrace_get_empty_pytorch_tracing_data_array(name);
     v->function_name = strdup(func_name);
@@ -364,7 +364,7 @@ static void gcCallback(PyObject *phase, PyObject *info)
     pthread_mutex_lock(&mutex);
     if (PyUnicode_CompareWithASCIIString(phase, "start") == 0 && start_tracing)
     {
-        TracingData *tracing_data = getTracingData(PY_TRACING_GC);
+        TracingData *tracing_data = receiveTracingData(PY_TRACING_GC);
         PyTorchTracingDataArray *curr_data = tracing_data->curr_data;
         if (curr_data->cur == PY_TRACING_BUFFER_SIZE)
         {
@@ -374,12 +374,12 @@ static void gcCallback(PyObject *phase, PyObject *info)
                 systrace_get_empty_pytorch_tracing_data_array(PY_TRACING_GC);
             curr_data = tracing_data->curr_data;
         }
-        curr_data->data[curr_data->cur].start = getMicrosecondTimestamp();
+        curr_data->data[curr_data->cur].start = getMsTime();
         pthread_mutex_unlock(&mutex);
     }
     else if (PyUnicode_CompareWithASCIIString(phase, "stop") == 0)
     {
-        TracingData *tracing_data = getTracingData(PY_TRACING_GC);
+        TracingData *tracing_data = receiveTracingData(PY_TRACING_GC);
         if (start_tracing)
         {
             PyTorchTracingDataArray *curr_data = tracing_data->curr_data;
@@ -389,11 +389,11 @@ static void gcCallback(PyObject *phase, PyObject *info)
                 curr_data->data[curr_data->cur].type = PAYLOAD_GC;
                 getGcInfo(curr_data->data + curr_data->cur, info);
                 curr_data->data[curr_data->cur++].end =
-                    getMicrosecondTimestamp();
+                    getMsTime();
             }
             curr_data->data[curr_data->cur].count = tracing_data->count;
             curr_data->data[curr_data->cur].stage_id = global_stage_id;
-            curr_data->data[curr_data->cur++].end = getMicrosecondTimestamp();
+            curr_data->data[curr_data->cur++].end = getMsTime();
         }
         tracing_data->count++;
     }
@@ -456,7 +456,7 @@ PyTorchTracingDataArray *
 systrace_get_partial_pytorch_tracing_data_array(int name)
 {
     pthread_mutex_lock(&mutex);
-    TracingData *tracing_data = getTracingData(name);
+    TracingData *tracing_data = receiveTracingData(name);
     if ((!tracing_data || !tracing_data->curr_data) ||
         (tracing_data->curr_data->cur == 0))
     {
@@ -509,66 +509,6 @@ void systrace_register_gc(char **error_message)
     *error_message = strdup("Import gc Ok");
 }
 
-// void systrace_register_tracing(const char **names, int count, char **errors)
-// {
-//     if (!Py_IsInitialized())
-//     {
-//         Py_Initialize();
-//     }
-//     PyGILState_STATE gstate = PyGILState_Ensure();
-//     tracing_data_count = count;
-//     pytorch_tracing_data_array =
-//         (TracingData *)malloc(sizeof(TracingData) * tracing_data_count);
-//     memset(pytorch_tracing_data_array, 0,
-//            sizeof(TracingData) * tracing_data_count);
-//     systrace_register_gc(errors);
-//     int64_t code_address;
-//     int is_native;
-
-//     for (int i = 1; i < count; i++)
-//     {
-//         int ret = runPyTorchCodeGetAddress(names[i], errors + i, &code_address,
-//                                            &is_native);
-//         if (ret)
-//         {
-//             printf("register function `%s` error\n", names[i]);
-//             continue;
-//         }
-//         printf("register function `%s` at address %ld\n", names[i],
-//                code_address);
-//         addTracingData(i, names[i]);
-
-//         TracingFunction *traced_function =
-//             (TracingFunction *)malloc(sizeof(TracingFunction));
-//         traced_function->tag_name = i;
-//         traced_function->function_name = strdup(names[i]);
-//         traced_function->py_code_address = code_address;
-//         traced_function->is_native = is_native;
-
-//         HASH_ADD(hh, pytorch_tracing_func_map, py_code_address, sizeof(int64_t),
-//                  traced_function);
-//     }
-//     PyEval_SetProfile(profiler, NULL);
-//     PyThreadState *tstate = PyThreadState_Get();
-//     PyThreadState *thread_array[PY_TRACING_MAX_THREADS];
-//     memset(thread_array, 0, sizeof(thread_array));
-//     int thread_count = 0;
-//     while (tstate != NULL && thread_count < PY_TRACING_MAX_THREADS)
-//     {
-//         thread_array[thread_count++] = tstate;
-//         printf("Set profiler for thread %ld\n", tstate->thread_id);
-//         tstate = PyThreadState_Next(tstate);
-//     }
-//     for (int i = 0; i < thread_count; i++)
-//     {
-//         PyThreadState_Swap(thread_array[i]);
-//         PyEval_SetProfile(profiler, NULL);
-//     }
-//     PyThreadState_Swap(thread_array[0]);
-
-//     PyGILState_Release(gstate);
-// }
-
 static void init_tracing_data_array(int count) {
     tracing_data_count = count;
     pytorch_tracing_data_array = (TracingData *)malloc(sizeof(TracingData) * tracing_data_count);
@@ -578,7 +518,7 @@ static void init_tracing_data_array(int count) {
 static int register_tracing_function(const char *name, int index, char **errors) {
     int64_t code_address;
     int is_native;
-    int ret = runPyTorchCodeGetAddress(name, errors + index, &code_address, &is_native);
+    int ret = GetFuncAddressByPython(name, errors + index, &code_address, &is_native);
     
     if (ret) {
         printf("register function `%s` error\n", name);
