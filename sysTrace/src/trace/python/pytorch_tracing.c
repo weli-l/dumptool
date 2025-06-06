@@ -9,7 +9,7 @@
 
 #include "../../../include/common/shared_constants.h"
 #include "pytorch_tracing_data.h"
-#include "uthash.h"
+#include "../../../thirdparty/uthash.h"
 
 typedef struct _frame PyFrameObject;
 uint64_t getCodeOfFrame(PyFrameObject *frame);
