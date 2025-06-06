@@ -64,21 +64,16 @@ template <typename T> class TimerPool
     TimerPool(const TimerPool &) = delete;
     TimerPool &operator=(const TimerPool &) = delete;
 
-    template <bool Create = true> T *getObject()
-    {
+    template <bool Init = true>
+    T* getObject() {
         std::lock_guard<std::mutex> lock(mutex_);
-        if (!pool_.empty())
-        {
-            T *obj = pool_.front();
+        
+        T* obj = pool_.empty() ? nullptr : pool_.front();
+        if (obj) {
             pool_.pop_front();
-            return obj;
         }
 
-        if constexpr (Create)
-        {
-            return new T();
-        }
-        return nullptr;
+        return obj ? obj : (Init ? new T() : nullptr);
     }
 
     void returnObject(T *obj, int *size)
@@ -124,11 +119,10 @@ class EnvVarRegistry
     using VarType = std::variant<int, bool, std::string>;
 
     static constexpr std::string_view STRING_DEFAULT_VALUE = "NOT_SET";
-    static constexpr int INT_DEFAULT_VALUE = 0;
-    static constexpr bool BOOL_DEFAULT_VALUE = false;
+    static constexpr int DEFAULT_VALUE_INT = 0;
+    static constexpr bool DEFAULT_VALUE_BOOL = false;
 
-    // Register an env var with a default value
-    static void RegisterEnvVar(const std::string &name, VarType default_value)
+    static void RegisterEnv(const std::string &name, VarType default_value)
     {
         auto &registry = GetRegistry();
         LOG(INFO) << "[ENV] Register ENV " << name << " with default "
@@ -214,7 +208,7 @@ class EnvVarRegistry
             }
             catch (...)
             {
-                return INT_DEFAULT_VALUE;
+                return DEFAULT_VALUE_INT;
             }
         }
         else if constexpr (std::is_same_v<T, bool>)
@@ -252,11 +246,11 @@ class EnvVarRegistry
     {
         if constexpr (std::is_same_v<T, int>)
         {
-            return INT_DEFAULT_VALUE;
+            return DEFAULT_VALUE_INT;
         }
         else if constexpr (std::is_same_v<T, bool>)
         {
-            return BOOL_DEFAULT_VALUE;
+            return DEFAULT_VALUE_BOOL;
         }
         else if constexpr (std::is_same_v<T, std::string>)
         {
@@ -285,7 +279,7 @@ class EnvVarRegistry
 };
 
 #define REGISTER_ENVIRONMENT_VARIABLE(name, value)                             \
-    ::systrace::util::env::EnvVarRegistry::RegisterEnvVar(                     \
+    ::systrace::util::env::EnvVarRegistry::RegisterEnv(                     \
         name,                                                                  \
         ::systrace::util::env::EnvVarRegistry::convert_to_variant(value))
 
