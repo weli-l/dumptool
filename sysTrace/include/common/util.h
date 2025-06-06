@@ -258,7 +258,8 @@ class EnvVarRegistry
         }
     }
 
-    static inline std::unordered_map<std::string, VarType> &GetRegistryManager() {
+    static inline std::unordered_map<std::string, VarType> &GetRegistryManager()
+    {
         static std::unordered_map<std::string, VarType> registry_manager;
         return registry_manager;
     }

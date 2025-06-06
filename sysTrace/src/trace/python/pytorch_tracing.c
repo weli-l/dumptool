@@ -1,20 +1,5 @@
 #include "pytorch_tracing.h"
 
-#include <Python.h>
-#include <frameobject.h>
-#include <pthread.h>
-#include <stdint.h>
-#include <string.h>
-#include <sys/time.h>
-
-#include "../../../include/common/shared_constants.h"
-#include "../../../thirdparty/uthash.h"
-#include "pytorch_tracing_data.h"
-
-typedef struct _frame PyFrameObject;
-uint64_t getCodeOfFrame(PyFrameObject *frame);
-static void capture_stack(PyFrameObject *frame,
-                          PyTorchTracingData *trace_entry);
 #if PY_MAJOR_VERSION >= 3 && PY_MINOR_VERSION >= 11
 #include <pyframe.h>
 static void capture_stack(PyFrameObject *frame, PyTorchTracingData *trace_entry)
@@ -74,40 +59,6 @@ uint64_t getCodeOfFrame(PyFrameObject *frame)
 }
 
 #endif
-
-typedef struct
-{
-    int64_t py_code_address;
-    const char *function_name;
-    int tag_name;
-    int is_native;
-    UT_hash_handle hh;
-} TracingFunction;
-
-typedef struct
-{
-    int tag_name;
-    PyTorchTracingDataArray *curr_data;
-    int64_t count;
-    const char *function_name;
-} TracingData;
-
-static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-
-static TracingData *pytorch_tracing_data_array = NULL;
-
-static TracingFunction *pytorch_tracing_func_map = NULL;
-static int start_tracing = 1;
-static int tracing_data_count = 0;
-
-static int GetFuncAddressByPython(const char *input, char **error_message,
-                                  int64_t *code_address, int *is_native);
-static uint64_t getMsTime();
-static TracingFunction *isTracedPyTorchFunction(PyFrameObject *frame);
-static TracingData *receiveTracingData(int name);
-static void addTracingData(int name, const char *func_name);
-static int profiler(PyObject *obj, PyFrameObject *frame, int what,
-                    PyObject *arg);
 
 uint64_t getMsTime()
 {
