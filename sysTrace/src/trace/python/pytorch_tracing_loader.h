@@ -32,12 +32,13 @@ class PyTorchTracingLibrary : public DynamicLibraryLoader
     GetPartialTracingDataArrayPartFunc get_partial_tracing_data_;
     DataArrayReleaseFunc return_tracing_data_;
     void InitializeSymbols();
-    struct SymbolConfig {
-        const char* name;
-        std::function<void*(void)> loader;
-        const char* type_name;
+    struct SymbolConfig
+    {
+        const char *name;
+        std::function<void *(void)> loader;
+        const char *type_name;
     };
-    bool LoadSymbol(const SymbolConfig& config);
+    bool LoadSymbol(const SymbolConfig &config);
 };
 
 } // namespace pytorch_tracing

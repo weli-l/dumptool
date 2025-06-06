@@ -32,7 +32,8 @@ PyTorchTrace &PyTorchTrace::getInstance()
 void PyTorchTrace::initialize()
 {
     pytorch_trace_.set_rank(config::GlobalConfig::Instance().rank);
-    STLOG(INFO) << "[PyTorchTrace] Rank set to: " << config::GlobalConfig::Instance().rank;
+    STLOG(INFO) << "[PyTorchTrace] Rank set to: "
+                << config::GlobalConfig::Instance().rank;
 
     pytorch_tracing_library_ =
         new pytorch_tracing::PyTorchTracingLibrary("libsysTrace.so");

@@ -22,7 +22,8 @@ namespace util
 namespace config
 {
 
-struct GlobalConfig {
+struct GlobalConfig
+{
     uint32_t rank{0};
     uint32_t local_rank{0};
     uint32_t world_size{0};
@@ -32,12 +33,13 @@ struct GlobalConfig {
     std::vector<uint64_t> devices;
     std::string rank_str;
 
-    static GlobalConfig& Instance() {
+    static GlobalConfig &Instance()
+    {
         static GlobalConfig instance;
         return instance;
     }
 
-private:
+  private:
     GlobalConfig() = default;
 };
 
@@ -171,16 +173,16 @@ class EnvVarRegistry
         return result;
     }
 
-    // Convert values into variant
-    static inline VarType convert_to_variant(const std::string_view &sv)
-    {
-        return std::string(sv);
-    }
-    static inline VarType convert_to_variant(const char *s)
+    template <typename T>
+    static inline auto convert_to_variant(const T &s)
+        -> std::enable_if_t<std::is_constructible_v<std::string, T>, VarType>
     {
         return std::string(s);
     }
-    template <typename T> static inline VarType convert_to_variant(const T &val)
+
+    template <typename T>
+    static inline auto convert_to_variant(const T &val)
+        -> std::enable_if_t<!std::is_constructible_v<std::string, T>, VarType>
     {
         return val;
     }
@@ -188,7 +190,7 @@ class EnvVarRegistry
   private:
     template <typename T> static constexpr bool is_supported_type()
     {
-        return std::is_same_v<T, int> || std::is_same_v<T, bool> ||
+        return std::is_same_v<T, bool> || std::is_same_v<T, int> ||
                std::is_same_v<T, std::string>;
     }
 
@@ -282,7 +284,7 @@ class EnvVarRegistry
     }
 };
 
-#define REGISTER_ENVIRONMENT_VARIABLE(name, value)                                          \
+#define REGISTER_ENVIRONMENT_VARIABLE(name, value)                             \
     ::systrace::util::env::EnvVarRegistry::RegisterEnvVar(                     \
         name,                                                                  \
         ::systrace::util::env::EnvVarRegistry::convert_to_variant(value))

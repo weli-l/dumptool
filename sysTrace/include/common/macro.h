@@ -11,7 +11,7 @@
         {                                                                      \
             STLOG(WARNING) << "Load fn `" << symbol << "` error in " << msg    \
                            << dlsym_error;                                     \
-            is_usable_ = false;                                                  \
+            is_usable_ = false;                                                \
             return;                                                            \
         }                                                                      \
     } while (0)
