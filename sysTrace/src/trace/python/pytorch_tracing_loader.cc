@@ -63,7 +63,7 @@ PyTorchTracingLibrary::Register(const std::vector<std::string>& names) {
 
     auto error_holder = std::unique_ptr<char*[], std::function<void(char**)>>(
         new char*[names.size()], 
-        [size = names.size()](char**​ ptr) {
+        [size = names.size()](char** ptr) {
             for (size_t i = 0; i < size; ++i) {
                 free(ptr[i]);
             }
