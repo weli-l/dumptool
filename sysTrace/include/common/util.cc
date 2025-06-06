@@ -14,6 +14,12 @@ namespace systrace
 namespace util
 {
 
+namespace env
+{
+std::string_view EnvVarRegistry::DEFAULT_VALUE_STRING = "NONE";
+int EnvVarRegistry::DEFAULT_VALUE_INT = 0;
+bool EnvVarRegistry::DEFAULT_VALUE_BOOL = false;
+} // namespace env
 namespace fs_utils
 {
 
@@ -195,7 +201,7 @@ void RegisterRequiredEnvironmentVariables()
         }
         REGISTER_ENVIRONMENT_VARIABLE(
             "ENV_ARGO_WORKFLOW_NAME",
-            env::EnvVarRegistry::STRING_DEFAULT_VALUE);
+            env::EnvVarRegistry::DEFAULT_VALUE_STRING);
 
         if (!IsValidEnvironmentVariableName("SYSTRACE_SYMS_FILE"))
         {
@@ -203,7 +209,7 @@ void RegisterRequiredEnvironmentVariables()
                 "Invalid env var name: SYSTRACE_SYMS_FILE");
         }
         REGISTER_ENVIRONMENT_VARIABLE(
-            "SYSTRACE_SYMS_FILE", env::EnvVarRegistry::STRING_DEFAULT_VALUE);
+            "SYSTRACE_SYMS_FILE", env::EnvVarRegistry::DEFAULT_VALUE_STRING);
 
         if (!IsValidEnvironmentVariableName("SYSTRACE_LOGGING_DIR"))
         {
@@ -211,7 +217,7 @@ void RegisterRequiredEnvironmentVariables()
                 "Invalid env var name: SYSTRACE_LOGGING_DIR");
         }
         REGISTER_ENVIRONMENT_VARIABLE(
-            "SYSTRACE_LOGGING_DIR", env::EnvVarRegistry::STRING_DEFAULT_VALUE);
+            "SYSTRACE_LOGGING_DIR", env::EnvVarRegistry::DEFAULT_VALUE_STRING);
 
         if (!IsValidEnvironmentVariableName("SYSTRACE_HOST_TRACING_FUNC"))
         {
@@ -220,7 +226,7 @@ void RegisterRequiredEnvironmentVariables()
         }
         REGISTER_ENVIRONMENT_VARIABLE(
             "SYSTRACE_HOST_TRACING_FUNC",
-            env::EnvVarRegistry::STRING_DEFAULT_VALUE);
+            env::EnvVarRegistry::DEFAULT_VALUE_STRING);
 
         REGISTER_ENVIRONMENT_VARIABLE("RANK", 0);
         REGISTER_ENVIRONMENT_VARIABLE("LOCAL_RANK", 0);

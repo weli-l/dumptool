@@ -6,7 +6,6 @@
 #include <filesystem>
 #include <functional>
 #include <iostream>
-#include <memory>
 #include <mutex>
 #include <sstream>
 #include <string>
@@ -64,12 +63,13 @@ template <typename T> class TimerPool
     TimerPool(const TimerPool &) = delete;
     TimerPool &operator=(const TimerPool &) = delete;
 
-    template <bool Init = true>
-    T* getObject() {
+    template <bool Init = true> T *getObject()
+    {
         std::lock_guard<std::mutex> lock(mutex_);
-        
-        T* obj = pool_.empty() ? nullptr : pool_.front();
-        if (obj) {
+
+        T *obj = pool_.empty() ? nullptr : pool_.front();
+        if (obj)
+        {
             pool_.pop_front();
         }
 
@@ -118,13 +118,13 @@ class EnvVarRegistry
   public:
     using VarType = std::variant<int, bool, std::string>;
 
-    static constexpr std::string_view STRING_DEFAULT_VALUE = "NOT_SET";
-    static constexpr int DEFAULT_VALUE_INT = 0;
-    static constexpr bool DEFAULT_VALUE_BOOL = false;
+    static std::string_view DEFAULT_VALUE_STRING;
+    static int DEFAULT_VALUE_INT;
+    static bool DEFAULT_VALUE_BOOL;
 
     static void RegisterEnv(const std::string &name, VarType default_value)
     {
-        auto &registry = GetRegistry();
+        auto &registry = GetRegistryManager();
         LOG(INFO) << "[ENV] Register ENV " << name << " with default "
                   << VariantToString(default_value) << std::endl;
         registry[name] = std::move(default_value);
@@ -136,12 +136,12 @@ class EnvVarRegistry
         static_assert(is_supported_type<T>(),
                       "Unsupported type for environment variable");
 
-        auto &registry = GetRegistry();
-        bool has_env = false;
+        auto &registry = GetRegistryManager();
+        bool set = false;
 
         // Try to get from environment first
-        T result = getEnvInner<T>(name, &has_env);
-        if (has_env)
+        T result = getEnvInner<T>(name, &set);
+        if (set)
         {
             LOG(INFO) << "[ENV] Get " << name << "=" << result
                       << " from environment" << std::endl;
@@ -228,16 +228,16 @@ class EnvVarRegistry
 
     // Get value from real environment
     template <typename T>
-    static T getEnvInner(const std::string &env_name, bool *has_env)
+    static T getEnvInner(const std::string &env_name, bool *set)
     {
         const char *env = std::getenv(env_name.c_str());
         if (!env)
         {
-            *has_env = false;
+            *set = false;
             return {};
         }
 
-        *has_env = true;
+        *set = true;
         return parseEnvValue<T>(env);
     }
 
@@ -254,15 +254,13 @@ class EnvVarRegistry
         }
         else if constexpr (std::is_same_v<T, std::string>)
         {
-            return std::string(STRING_DEFAULT_VALUE);
+            return std::string(DEFAULT_VALUE_STRING);
         }
     }
 
-    // Static registry accessor
-    static std::unordered_map<std::string, VarType> &GetRegistry()
-    {
-        static std::unordered_map<std::string, VarType> registry;
-        return registry;
+    static inline std::unordered_map<std::string, VarType> &GetRegistryManager() {
+        static std::unordered_map<std::string, VarType> registry_manager;
+        return registry_manager;
     }
 
     static std::string VariantToString(const VarType &var)
@@ -279,7 +277,7 @@ class EnvVarRegistry
 };
 
 #define REGISTER_ENVIRONMENT_VARIABLE(name, value)                             \
-    ::systrace::util::env::EnvVarRegistry::RegisterEnv(                     \
+    ::systrace::util::env::EnvVarRegistry::RegisterEnv(                        \
         name,                                                                  \
         ::systrace::util::env::EnvVarRegistry::convert_to_variant(value))
 
