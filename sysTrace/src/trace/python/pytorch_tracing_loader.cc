@@ -55,31 +55,36 @@ bool PyTorchTracingLibrary::LoadSymbol(const SymbolConfig& config) {
     return true;
 }
 
-std::vector<std::string>
-PyTorchTracingLibrary::Register(const std::vector<std::string> &names)
-{
-    if (!is_usable_)
+std::vector<std::string> 
+PyTorchTracingLibrary::Register(const std::vector<std::string>& names) {
+    if (!is_usable_) {
         return {};
-    std::vector<std::string> result;
-    char **errors = (char **)malloc(names.size() * sizeof(char *));
-    std::memset(errors, 0, names.size() * sizeof(char *));
-
-    std::vector<const char *> c_str_array;
-    for (const auto &str : names)
-    {
-        c_str_array.push_back(str.c_str());
     }
-    register_tracing_(c_str_array.data(), c_str_array.size(), errors);
-    for (size_t i = 0; i < names.size(); i++)
-    {
-        if (errors[i])
-        {
-            result.push_back(std::string(errors[i]));
-            free(errors[i]);
+
+    auto error_holder = std::unique_ptr<char*[], std::function<void(char**)>>(
+        new char*[names.size()], 
+        [size = names.size()](char**​ ptr) {
+            for (size_t i = 0; i < size; ++i) {
+                free(ptr[i]);
+            }
+            delete[] ptr;
+        }
+    );
+    std::memset(error_holder.get(), 0, names.size() * sizeof(char*));
+
+    std::vector<const char*> c_str_array;
+    c_str_array.reserve(names.size());
+    std::transform(names.begin(), names.end(), std::back_inserter(c_str_array),
+        [](const std::string& str) { return str.c_str(); });
+
+    register_tracing_(c_str_array.data(), c_str_array.size(), error_holder.get());
+
+    std::vector<std::string> result;
+    for (size_t i = 0; i < names.size(); ++i) {
+        if (error_holder[i]) {
+            result.emplace_back(error_holder[i]);
         }
     }
-
-    free(errors);
     return result;
 }
 
