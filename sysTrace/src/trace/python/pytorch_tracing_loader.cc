@@ -13,21 +13,46 @@ PyTorchTracingLibrary::PyTorchTracingLibrary(const std::string &library_path)
       get_tracing_data_(nullptr), get_partial_tracing_data_(nullptr),
       return_tracing_data_(nullptr)
 {
-    const std::string err =
-        "libsysTrace.so, skip recording python gc in timeline ";
-    SETUP_SYMBOL_FOR_LOAD_LIBRARY(library_handle_, "systrace_register_tracing",
-                                  register_tracing_, TracingRegistrationFunc,
-                                  err);
-    SETUP_SYMBOL_FOR_LOAD_LIBRARY(
-        library_handle_, "systrace_get_full_pytorch_tracing_data_array",
-        get_tracing_data_, DataArrayRetrievalAllFunc, err);
-    SETUP_SYMBOL_FOR_LOAD_LIBRARY(
-        library_handle_, "systrace_return_pytorch_tracing_data_array",
-        return_tracing_data_, DataArrayReleaseFunc, err);
-    SETUP_SYMBOL_FOR_LOAD_LIBRARY(
-        library_handle_, "systrace_get_partial_pytorch_tracing_data_array",
-        get_partial_tracing_data_, GetPartialTracingDataArrayPartFunc, err);
-    is_usable_ = true;
+    if (library_handle_) {
+        InitializeSymbols();
+    }
+}
+
+void PyTorchTracingLibrary::InitializeSymbols() {
+    std::vector<SymbolConfig> configs = {
+        {"systrace_register_tracing", 
+         [this]() { return reinterpret_cast<void*>(&register_tracing_); },
+         "TracingRegistrationFunc"},
+         
+        {"systrace_get_full_pytorch_tracing_data_array",
+         [this]() { return reinterpret_cast<void*>(&get_tracing_data_); },
+         "DataArrayRetrievalAllFunc"},
+         
+        {"systrace_return_pytorch_tracing_data_array",
+         [this]() { return reinterpret_cast<void*>(&return_tracing_data_); },
+         "DataArrayReleaseFunc"},
+         
+        {"systrace_get_partial_pytorch_tracing_data_array",
+         [this]() { return reinterpret_cast<void*>(&get_partial_tracing_data_); },
+         "GetPartialTracingDataArrayPartFunc"}
+    };
+
+    is_usable_ = std::all_of(configs.begin(), configs.end(),
+        [this](const SymbolConfig& config) {
+            return LoadSymbol(config);
+        });
+}
+
+bool PyTorchTracingLibrary::LoadSymbol(const SymbolConfig& config) {
+    void* symbol = dlsym(library_handle_, config.name);
+    if (!symbol) {
+        STLOG(WARNING) << "Failed to load symbol: " << config.name
+                      << " (type: " << config.type_name << "), error: " << dlerror();
+        return false;
+    }
+    
+    *reinterpret_cast<void**>(config.loader()) = symbol;
+    return true;
 }
 
 std::vector<std::string>
