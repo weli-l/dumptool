@@ -1,7 +1,106 @@
 #include "pytorch_tracing.h"
-
 #if PY_MAJOR_VERSION >= 3 && PY_MINOR_VERSION >= 11
 #include <pyframe.h>
+#endif
+
+Stagetype determine_stage_type(const char *function_name)
+{
+    if (function_name == NULL)
+    {
+        return UNKNOWN;
+    }
+
+    if (strcmp(function_name, "GC") == 0)
+    {
+        return GC;
+    }
+    if (strcmp(function_name,
+               "torch.utils.data.dataloader@_BaseDataLoaderIter@__next__") == 0)
+    {
+        return DATALOADER;
+    }
+    if (strcmp(function_name, "torch_npu@npu@synchronize") == 0 ||
+        strcmp(function_name, "torch_npu.npu@Event@synchronize") == 0 ||
+        strcmp(function_name, "torch_npu.npu@Event@wait") == 0 ||
+        strcmp(function_name, "torch_npu.npu@Stream@synchronize") == 0 ||
+        strcmp(function_name, "torch_npu.npu@Stream@wait_event") == 0 ||
+        strcmp(function_name, "torch_npu.npu@Stream@wait_stream") == 0)
+    {
+        return SYNCHRONIZATION;
+    }
+    if (strcmp(function_name, "torch@autograd@backward") == 0 ||
+        strcmp(function_name, "torch@autograd@grad") == 0)
+    {
+        return BACKWARD;
+    }
+    if (strcmp(function_name,
+               "megatron.core.pipeline_parallel@schedules@forward_step") == 0)
+    {
+        return FORWARD;
+    }
+    if (strcmp(function_name,
+               "megatron.core.pipeline_parallel@schedules@backward_step") == 0)
+    {
+        return BACKWARD;
+    }
+    return UNKNOWN;
+}
+
+static int register_tracing_function(const char *name, int index, char **errors)
+{
+    int64_t code_address;
+    int is_native;
+    int ret =
+        GetFuncAddressByPython(name, errors + index, &code_address, &is_native);
+
+    if (ret)
+    {
+        printf("register function `%s` error\n", name);
+        return ret;
+    }
+
+    printf("register function `%s` at address %ld\n", name, code_address);
+    addTracingData(index, name);
+
+    TracingFunction *traced_function =
+        (TracingFunction *)malloc(sizeof(TracingFunction));
+    traced_function->tag_name = index;
+    traced_function->function_name = strdup(name);
+    traced_function->py_code_address = code_address;
+    traced_function->is_native = is_native;
+
+    HASH_ADD(hh, pytorch_tracing_func_map, py_code_address, sizeof(int64_t),
+             traced_function);
+
+    return 0;
+}
+
+static void set_profiler_for_all_threads()
+{
+    PyEval_SetProfile(profiler, NULL);
+
+    PyThreadState *tstate = PyThreadState_Get();
+    PyThreadState *thread_array[PY_TRACING_MAX_THREADS];
+    memset(thread_array, 0, sizeof(thread_array));
+
+    int thread_count = 0;
+    while (tstate != NULL && thread_count < PY_TRACING_MAX_THREADS)
+    {
+        thread_array[thread_count++] = tstate;
+        printf("Set profiler for thread %ld\n", tstate->thread_id);
+        tstate = PyThreadState_Next(tstate);
+    }
+
+    for (int i = 0; i < thread_count; i++)
+    {
+        PyThreadState_Swap(thread_array[i]);
+        PyEval_SetProfile(profiler, NULL);
+    }
+
+    PyThreadState_Swap(thread_array[0]);
+}
+
+#if PY_MAJOR_VERSION >= 3 && PY_MINOR_VERSION >= 11
 static void capture_stack(PyFrameObject *frame, PyTorchTracingData *trace_entry)
 {
     PyGILState_STATE gstate = PyGILState_Ensure();
@@ -75,49 +174,6 @@ static void ensure_python_initialized()
     }
 }
 
-Stagetype determine_stage_type(const char *function_name)
-{
-    if (function_name == NULL)
-    {
-        return UNKNOWN;
-    }
-
-    if (strcmp(function_name, "GC") == 0)
-    {
-        return GC;
-    }
-    if (strcmp(function_name,
-               "torch.utils.data.dataloader@_BaseDataLoaderIter@__next__") == 0)
-    {
-        return DATALOADER;
-    }
-    if (strcmp(function_name, "torch_npu@npu@synchronize") == 0 ||
-        strcmp(function_name, "torch_npu.npu@Event@synchronize") == 0 ||
-        strcmp(function_name, "torch_npu.npu@Event@wait") == 0 ||
-        strcmp(function_name, "torch_npu.npu@Stream@synchronize") == 0 ||
-        strcmp(function_name, "torch_npu.npu@Stream@wait_event") == 0 ||
-        strcmp(function_name, "torch_npu.npu@Stream@wait_stream") == 0)
-    {
-        return SYNCHRONIZATION;
-    }
-    if (strcmp(function_name, "torch@autograd@backward") == 0 ||
-        strcmp(function_name, "torch@autograd@grad") == 0)
-    {
-        return BACKWARD;
-    }
-    if (strcmp(function_name,
-               "megatron.core.pipeline_parallel@schedules@forward_step") == 0)
-    {
-        return FORWARD;
-    }
-    if (strcmp(function_name,
-               "megatron.core.pipeline_parallel@schedules@backward_step") == 0)
-    {
-        return BACKWARD;
-    }
-    return UNKNOWN;
-}
-
 TracingFunction *isTracedPyTorchFunction(PyFrameObject *frame)
 {
     uint64_t code_address = getCodeOfFrame(frame);
@@ -176,104 +232,175 @@ static int profiler(PyObject *obj, PyFrameObject *frame, int what,
     return 0;
 }
 
-int GetFuncAddressByPython(const char *code, char **error_message,
-                           int64_t *address, int *is_native)
-{
-    char *input = strdup(code);
-    char python_code[4096];
-    PyObject *globals = NULL;
-    PyObject *locals = NULL;
+static int set_error_message(char **error_message, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    int size = vsnprintf(NULL, 0, format, args) + 1;
+    va_end(args);
+    
+    *error_message = malloc(size);
+    if (!*error_message) return 0;
+    
+    va_start(args, format);
+    vsnprintf(*error_message, size, format, args);
+    va_end(args);
+    
+    return 1;
+}
 
-    *error_message = NULL;
-
-    snprintf(python_code, sizeof(python_code),
-             "if '@' in '%s':\n"
-             "    tokens = '%s'.split('@')\n"
-             "    if len(tokens) == 3:\n"
-             "        exec(f'from {tokens[0]} import {tokens[1]} as mm')\n"
-             "        obj = getattr(mm, tokens[2])\n"
-             "    elif len(tokens) == 2:\n"
-             "        exec(f'from {tokens[0]} import {tokens[1]} as obj')\n"
-             "    else:\n"
-             "        raise ValueError('Invalid input format')\n"
-             "else:\n"
-             "    obj = globals().get('%s')\n"
-             "    if obj is None:\n"
-             "        raise ValueError('Global object not found: %s')\n"
-
-             "while hasattr(obj, '__wrapped__'):\n"
-             "    obj = getattr(obj, '__wrapped__')\n"
-             "if hasattr(obj, '__code__'):\n"
-             "    address = id(obj.__code__)\n"
-             "    is_native = 0\n"
-             "else:\n"
-             "    address = id(obj)\n"
-             "    is_native = 1\n",
-             input, input, input, input);
-    int use_globals = strchr(input, '@') == NULL;
-    if (use_globals)
-    {
-        globals = PyEval_GetGlobals();
-        locals = PyEval_GetLocals();
+static int parse_input_string(const char *code, char ***tokens, int *token_count) {
+    char *copy = strdup(code);
+    if (!copy) return 0;
+    
+    char *saveptr = NULL;
+    *token_count = 0;
+    *tokens = malloc(3 * sizeof(char*));
+    if (!*tokens) {
+        free(copy);
+        return 0;
     }
-    else
-    {
-        globals = PyDict_New();
-        locals = PyDict_New();
+    
+    for (char *token = strtok_r(copy, "@", &saveptr); 
+         token && *token_count < 3; 
+         token = strtok_r(NULL, "@", &saveptr)) {
+        (*tokens)[(*token_count)++] = strdup(token);
     }
+    
+    free(copy);
+    return 1;
+}
 
-    PyObject *result =
-        PyRun_String(python_code, Py_file_input, globals, locals);
+static char* build_python_code(const char *code, char **tokens, int token_count) {
+    const char *template = 
+        "try:\n"
+        "    obj = None\n"
+        "%s\n"
+        "    while hasattr(obj, '__wrapped__'):\n"
+        "        obj = getattr(obj, '__wrapped__')\n"
+        "    if hasattr(obj, '__code__'):\n"
+        "        address = id(obj.__code__)\n"
+        "        is_native = 0\n"
+        "    else:\n"
+        "        address = id(obj)\n"
+        "        is_native = 1\n"
+        "except Exception as e:\n"
+        "    raise\n";
+    
+    char *import_part = NULL;
+    if (token_count == 3) {
+        asprintf(&import_part, 
+            "    from %s import %s as mm\n"
+            "    obj = getattr(mm, '%s')", 
+            tokens[0], tokens[1], tokens[2]);
+    } else if (token_count == 2) {
+        asprintf(&import_part, 
+            "    from %s import %s as obj", 
+            tokens[0], tokens[1]);
+    } else {
+        asprintf(&import_part, 
+            "    obj = globals().get('%s')\n"
+            "    if obj is None:\n"
+            "        raise ValueError('Global object not found: %s')", 
+            code, code);
+    }
+    
+    char *python_code = NULL;
+    asprintf(&python_code, template, import_part);
+    free(import_part);
+    
+    return python_code;
+}
 
-    if (result == NULL)
-    {
-        if (PyErr_Occurred())
-        {
-            PyObject *ptype, *pvalue, *ptraceback;
-            PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-            PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-
+static int execute_python_code(const char *python_code, int use_globals, 
+                              int64_t *address, int *is_native, char **error_message) {
+    PyObject *globals = use_globals ? PyEval_GetGlobals() : PyDict_New();
+    PyObject *locals = PyDict_New();
+    
+    if (!globals || !locals) {
+        if (!use_globals && globals) Py_DECREF(globals);
+        if (locals) Py_DECREF(locals);
+        return set_error_message(error_message, "Failed to create Python dictionaries");
+    }
+    
+    PyObject *result = PyRun_String(python_code, Py_file_input, globals, locals);
+    if (!result) {
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        
+        if (pvalue) {
             PyObject *py_str = PyObject_Str(pvalue);
-            const char *str_error = PyUnicode_AsUTF8(py_str);
-            *error_message = strdup(str_error ? str_error : "Unknown error");
-
-            Py_XDECREF(py_str);
-            Py_XDECREF(ptype);
-            Py_XDECREF(pvalue);
-            Py_XDECREF(ptraceback);
+            if (py_str) {
+                const char *str_error = PyUnicode_AsUTF8(py_str);
+                set_error_message(error_message, "Python error: %s", str_error ? str_error : "Unknown error");
+                Py_DECREF(py_str);
+            }
         }
-        else
-        {
-            *error_message = strdup("Unknown error occurred");
-        }
+        
+        Py_XDECREF(ptype);
+        Py_XDECREF(pvalue);
+        Py_XDECREF(ptraceback);
         PyErr_Clear();
-        if (!use_globals)
-        {
-            Py_DECREF(globals);
-            Py_DECREF(locals);
-        }
-        free(input);
+        
+        if (!use_globals) Py_DECREF(globals);
+        Py_DECREF(locals);
         return 1;
     }
-
-    *address = PyLong_AsLongLong(PyDict_GetItemString(locals, "address"));
-    *is_native = PyLong_AsLongLong(PyDict_GetItemString(locals, "is_native"));
-
-    if (!use_globals)
-    {
-        Py_DECREF(globals);
+    Py_DECREF(result);
+    
+    PyObject *py_address = PyDict_GetItemString(locals, "address");
+    PyObject *py_is_native = PyDict_GetItemString(locals, "is_native");
+    
+    if (!py_address || !py_is_native) {
+        if (!use_globals) Py_DECREF(globals);
         Py_DECREF(locals);
+        return set_error_message(error_message, "Failed to get address or is_native from execution");
     }
-    free(input);
-
-    size_t msg_size =
-        snprintf(NULL, 0, "Get __code__ attribute for '%s' OK", code) + 1;
-    *error_message = (char *)malloc(msg_size);
-    snprintf(*error_message, msg_size, "Get __code__ attribute for '%s' OK",
-             code);
+    
+    *address = PyLong_AsLongLong(py_address);
+    *is_native = PyLong_AsLongLong(py_is_native);
+    
+    if (!use_globals) Py_DECREF(globals);
+    Py_DECREF(locals);
     return 0;
 }
 
+static int GetFuncAddressByPython(const char *code, char **error_message,
+                         int64_t *address, int *is_native) {
+    *error_message = NULL;
+    *address = 0;
+    *is_native = 0;
+    
+    if (!code || !*code) {
+        return set_error_message(error_message, "Empty or NULL code parameter");
+    }
+    
+    char **tokens = NULL;
+    int token_count = 0;
+    if (!parse_input_string(code, &tokens, &token_count)) {
+        return set_error_message(error_message, "Failed to parse input string");
+    }
+    
+    char *python_code = build_python_code(code, tokens, token_count);
+    if (!python_code) {
+        for (int i = 0; i < token_count; i++) free(tokens[i]);
+        free(tokens);
+        return set_error_message(error_message, "Failed to build Python code");
+    }
+    
+    int use_globals = (token_count == 0);
+    int result = execute_python_code(python_code, use_globals, address, is_native, error_message);
+    
+    free(python_code);
+    for (int i = 0; i < token_count; i++) free(tokens[i]);
+    free(tokens);
+    
+    if (result == 0) {
+        set_error_message(error_message, "Get __code__ attribute for '%s' OK", code);
+    }
+    
+    return result;
+}
 static TracingData *receiveTracingData(int name)
 {
     return pytorch_tracing_data_array + name;
@@ -469,60 +596,6 @@ static void init_tracing_data_array(int count)
         (TracingData *)malloc(sizeof(TracingData) * tracing_data_count);
     memset(pytorch_tracing_data_array, 0,
            sizeof(TracingData) * tracing_data_count);
-}
-
-static int register_tracing_function(const char *name, int index, char **errors)
-{
-    int64_t code_address;
-    int is_native;
-    int ret =
-        GetFuncAddressByPython(name, errors + index, &code_address, &is_native);
-
-    if (ret)
-    {
-        printf("register function `%s` error\n", name);
-        return ret;
-    }
-
-    printf("register function `%s` at address %ld\n", name, code_address);
-    addTracingData(index, name);
-
-    TracingFunction *traced_function =
-        (TracingFunction *)malloc(sizeof(TracingFunction));
-    traced_function->tag_name = index;
-    traced_function->function_name = strdup(name);
-    traced_function->py_code_address = code_address;
-    traced_function->is_native = is_native;
-
-    HASH_ADD(hh, pytorch_tracing_func_map, py_code_address, sizeof(int64_t),
-             traced_function);
-
-    return 0;
-}
-
-static void set_profiler_for_all_threads()
-{
-    PyEval_SetProfile(profiler, NULL);
-
-    PyThreadState *tstate = PyThreadState_Get();
-    PyThreadState *thread_array[PY_TRACING_MAX_THREADS];
-    memset(thread_array, 0, sizeof(thread_array));
-
-    int thread_count = 0;
-    while (tstate != NULL && thread_count < PY_TRACING_MAX_THREADS)
-    {
-        thread_array[thread_count++] = tstate;
-        printf("Set profiler for thread %ld\n", tstate->thread_id);
-        tstate = PyThreadState_Next(tstate);
-    }
-
-    for (int i = 0; i < thread_count; i++)
-    {
-        PyThreadState_Swap(thread_array[i]);
-        PyEval_SetProfile(profiler, NULL);
-    }
-
-    PyThreadState_Swap(thread_array[0]);
 }
 
 void systrace_register_tracing(const char **names, int count, char **errors)
