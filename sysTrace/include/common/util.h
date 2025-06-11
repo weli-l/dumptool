@@ -17,12 +17,14 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <cstring>
+#include <iostream>
 
 namespace systrace
 {
 namespace util
 {
 std::string GetPrimaryIP();
+bool checkAndUpdateTimer(int level);
 namespace config
 {
 

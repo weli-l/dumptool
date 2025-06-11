@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <command> [args]\n"
                   << "Commands:\n"
-                  << "  set <level>=<true|false|1|0>\n"
+                  << "  set <level>=<true|false>\n"
                   << "  interval <level>=<value>\n"
                   << "  print [level|all]\n";
         return 1;

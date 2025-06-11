@@ -12,6 +12,11 @@ bool g_dump_L1 = false;
 bool g_dump_L2 = false;
 unsigned int g_dump_L1_interval = 5;
 unsigned int g_dump_L2_interval = 5;
+bool g_L1_timer_active = false;
+bool g_L2_timer_active = false;
+time_t g_L1_start_time = 0;
+time_t g_L2_start_time = 0;
+pthread_mutex_t g_trace_mutex = PTHREAD_MUTEX_INITIALIZER;  
 
 MonitorServer& MonitorServer::getInstance() {
     std::call_once(init_flag_,
