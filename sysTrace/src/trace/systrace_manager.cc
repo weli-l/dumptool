@@ -195,6 +195,7 @@ void SysTrace::initializeSystem()
         return;
 
     systrace::util::InitializeSystemUtilities();
+    MonitorServer::getInstance().start();
     MSPTITracker::getInstance();
     PyTorchTrace::getInstance();
 
