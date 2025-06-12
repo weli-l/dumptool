@@ -61,6 +61,10 @@ int init_shared_memory()
     shared_data->g_L2_timer_active = false;
     shared_data->g_L1_start_time = 0;
     shared_data->g_L2_start_time = 0;
+    shared_data->dumped_L1 = false;
+    shared_data->dumped_L2 = false;
+    shared_data->need_dump_L1_once = false;
+    shared_data->need_dump_L2_once = false;
     return 0;
 }
 
@@ -106,6 +110,8 @@ bool checkAndUpdateTimer(int level) {
     bool* timer_active = NULL;
     time_t* start_time = NULL;
     const char* level_name = "";
+    bool *dumped = false;
+    bool *need_dump_once = NULL;
 
     switch(level) {
         case 1:  // L1
@@ -114,6 +120,8 @@ bool checkAndUpdateTimer(int level) {
             timer_active = &shared_data->g_L1_timer_active;
             start_time = &shared_data->g_L1_start_time;
             level_name = "L1";
+            dumped = &shared_data->dumped_L1;
+            need_dump_once = &shared_data->need_dump_L1_once;
             break;
         case 2:  // L2
             dump_flag = &shared_data->g_dump_L2;
@@ -121,6 +129,8 @@ bool checkAndUpdateTimer(int level) {
             timer_active = &shared_data->g_L2_timer_active;
             start_time = &shared_data->g_L2_start_time;
             level_name = "L2";
+            dumped = &shared_data->dumped_L2;
+            need_dump_once = &shared_data->need_dump_L2_once;
             break;
         default:
             pthread_mutex_unlock(&shared_data->g_trace_mutex);
@@ -141,6 +151,9 @@ bool checkAndUpdateTimer(int level) {
         if (elapsed >= *interval) {
             *dump_flag = false;
             *timer_active = false;
+            if (!dumped) {
+                *need_dump_once = true;
+            }
         } else {
             result = true;
         }
@@ -148,5 +161,31 @@ bool checkAndUpdateTimer(int level) {
     
     pthread_mutex_unlock(&shared_data->g_trace_mutex);
     
+    return result;
+}
+
+bool need_dump_L1_once() {
+    SharedData* shared_data = get_shared_data();
+    if (!shared_data) {
+        return false;
+    }
+
+    pthread_mutex_lock(&shared_data->g_trace_mutex);
+    bool result = shared_data->need_dump_L1_once;
+    pthread_mutex_unlock(&shared_data->g_trace_mutex);
+    
+    return result;
+}
+
+bool need_dump_L2_once() {
+    SharedData* shared_data = get_shared_data();
+    if (!shared_data) {
+        return false;
+    }
+
+    pthread_mutex_lock(&shared_data->g_trace_mutex);
+    bool result = shared_data->need_dump_L2_once;
+    pthread_mutex_unlock(&shared_data->g_trace_mutex);
+
     return result;
 }

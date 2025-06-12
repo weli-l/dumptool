@@ -24,6 +24,10 @@ extern "C"
         unsigned int g_dump_L2_interval;
         bool g_L1_timer_active;
         bool g_L2_timer_active;
+        bool dumped_L1; // Indicates if L1 has been dumped
+        bool dumped_L2; // Indicates if L2 has been dumped
+        bool need_dump_L1_once; // Indicates if L1 dump is needed once
+        bool need_dump_L2_once; // Indicates if L2 dump is needed once
         time_t g_L1_start_time;
         time_t g_L2_start_time;
         pthread_mutex_t g_trace_mutex;
@@ -35,6 +39,8 @@ extern "C"
 
     void cleanup_shared_memory();
     bool checkAndUpdateTimer(int level);
+    bool need_dump_L1_once();
+    bool need_dump_L2_once();
 
 #ifdef __cplusplus
 }

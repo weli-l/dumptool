@@ -134,7 +134,7 @@ class MSPTIHcclFileWriter
 
     void hcclActivityFormatToJson()
     {
-        if (!checkAndUpdateTimer(1)) {
+        if (!checkAndUpdateTimer(1) && !need_dump_L1_once()) {
             return;
         }
         std::lock_guard<std::mutex> lock(this->buffermtx);
@@ -183,6 +183,13 @@ class MSPTIHcclFileWriter
                 this->root.clear();
             }
             this->markerActivityBuffer->clear();
+            SharedData *shared_data = get_shared_data();
+            if (!shared_data)
+            {
+                return;
+            }
+            shared_data->dumped_L1 = true;
+            shared_data->need_dump_L1_once = false;
         }
         else
         {
