@@ -279,59 +279,5 @@ std::string GetPrimaryIP()
     freeifaddrs(ifaddr);
     return primaryIP;
 }
-
-bool checkAndUpdateTimer(int level) {
-    pthread_mutex_lock(&g_trace_mutex);
-
-    bool* dump_flag = nullptr;
-    unsigned int* interval = nullptr;
-    bool* timer_active = nullptr;
-    time_t* start_time = nullptr;
-    const char* level_name = "";
-
-    switch(level) {
-        case 1:  // L1
-            dump_flag = &g_dump_L1;
-            interval = &g_dump_L1_interval;
-            timer_active = &g_L1_timer_active;
-            start_time = &g_L1_start_time;
-            level_name = "L1";
-            break;
-        case 2:  // L2
-            dump_flag = &g_dump_L2;
-            interval = &g_dump_L2_interval;
-            timer_active = &g_L2_timer_active;
-            start_time = &g_L2_start_time;
-            level_name = "L2";
-            break;
-        default:
-            pthread_mutex_unlock(&g_trace_mutex);
-            std::cerr << "Unsupported trace level: " << level << std::endl;
-            return false;
-    }
-
-    if (*dump_flag && !*timer_active) {
-        *start_time = time(nullptr);
-        *timer_active = true;
-        std::cout << level_name << " dump started, will auto stop after " 
-                  << *interval << " minutes" << std::endl;
-    }
-    else if (*timer_active) {
-        time_t now = time(nullptr);
-        double elapsed = difftime(now, *start_time) / 60;  // 转换为分钟
-        
-        if (elapsed >= *interval) {
-            *dump_flag = false;
-            *timer_active = false;
-            std::cout << level_name << " dump auto stopped after " 
-                      << elapsed << " minutes" << std::endl;
-        }
-    }
-    
-    pthread_mutex_unlock(&g_trace_mutex);
-    
-    return *dump_flag; 
-}
-
 } // namespace util
 } // namespace systrace

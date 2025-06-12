@@ -1,176 +1,292 @@
 #include "monitor_server.hpp"
+#include "../include/common/shared_constants.h"
+#include <sstream>
+#include <stdexcept>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
-#include <stdexcept>
-#include <sstream>
 #include <vector>
 
-MonitorServer* MonitorServer::instance_ = nullptr;
-bool g_dump_L0 = true;
-bool g_dump_L1 = false;
-bool g_dump_L2 = false;
-unsigned int g_dump_L1_interval = 5;
-unsigned int g_dump_L2_interval = 5;
-bool g_L1_timer_active = false;
-bool g_L2_timer_active = false;
-time_t g_L1_start_time = 0;
-time_t g_L2_start_time = 0;
-pthread_mutex_t g_trace_mutex = PTHREAD_MUTEX_INITIALIZER;  
+MonitorServer *MonitorServer::instance_ = nullptr;
 
-MonitorServer& MonitorServer::getInstance() {
+MonitorServer &MonitorServer::getInstance()
+{
     std::call_once(init_flag_,
                    []()
                    {
                        instance_ = new MonitorServer();
+                       instance_->start();
                    });
     return *instance_;
 }
 
-MonitorServer::MonitorServer() {
-    server_fd_ = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (server_fd_ == -1) {
-        throw std::runtime_error("socket creation failed");
+MonitorServer::MonitorServer()
+{
+    if (init_shared_memory() != 0)
+    {
+        throw std::runtime_error("Failed to initialize shared memory");
     }
 }
 
-MonitorServer::~MonitorServer() {
+MonitorServer::~MonitorServer()
+{
     stop();
+    cleanup_shared_memory();
 }
 
-void MonitorServer::start() {
+void MonitorServer::start()
+{
+    if (server_fd_ != -1)
+    {
+        return;
+    }
+
+    server_fd_ = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (server_fd_ == -1)
+    {
+        perror("socket");
+        throw std::runtime_error("Failed to create socket");
+    }
     struct sockaddr_un addr;
     memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
     strncpy(addr.sun_path, SOCKET_PATH, sizeof(addr.sun_path) - 1);
-    
+
     unlink(SOCKET_PATH);
-    if (bind(server_fd_, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-        throw std::runtime_error("socket bind failed");
+
+    if (bind(server_fd_, (struct sockaddr *)&addr, sizeof(addr)) == -1)
+    {
+        perror("bind");
+        close(server_fd_);
+        server_fd_ = -1;
+        throw std::runtime_error("Failed to bind socket");
     }
-    
-    if (listen(server_fd_, 5) == -1) {
-        throw std::runtime_error("socket listen failed");
+
+    if (listen(server_fd_, 5) == -1)
+    {
+        perror("listen");
+        close(server_fd_);
+        server_fd_ = -1;
+        throw std::runtime_error("Failed to listen on socket");
     }
-    
+
     server_thread_ = std::thread(&MonitorServer::server_thread_func, this);
 }
 
-void MonitorServer::stop() {
-    if (server_thread_.joinable()) {
-        int temp_fd = socket(AF_UNIX, SOCK_STREAM, 0);
-        if (temp_fd != -1) {
-            struct sockaddr_un addr;
-            memset(&addr, 0, sizeof(addr));
-            addr.sun_family = AF_UNIX;
-            strncpy(addr.sun_path, SOCKET_PATH, sizeof(addr.sun_path) - 1);
-            connect(temp_fd, (struct sockaddr*)&addr, sizeof(addr));
-            close(temp_fd);
-        }
-        server_thread_.join();
-    }
-    
-    if (server_fd_ != -1) {
+void MonitorServer::stop()
+{
+    if (server_fd_ != -1)
+    {
         close(server_fd_);
         server_fd_ = -1;
     }
+
+    if (server_thread_.joinable())
+    {
+        server_thread_.join();
+    }
+
     unlink(SOCKET_PATH);
 }
 
-void MonitorServer::server_thread_func() {
-    while (true) {
+void MonitorServer::server_thread_func()
+{
+    while (true)
+    {
         struct sockaddr_un client_addr;
         socklen_t client_len = sizeof(client_addr);
-        
-        int client_fd = accept(server_fd_, (struct sockaddr*)&client_addr, &client_len);
-        if (client_fd == -1) {
+
+        int client_fd =
+            accept(server_fd_, (struct sockaddr *)&client_addr, &client_len);
+        if (client_fd == -1)
+        {
             break;
         }
-        
+
         handle_client(client_fd);
     }
 }
 
-void MonitorServer::handle_client(int client_fd) {
-    char buffer[256];
-    ssize_t n = read(client_fd, buffer, sizeof(buffer)-1);
-    if (n > 0) {
-        buffer[n] = '\0';
-        process_command(buffer, [client_fd](const std::string& response) {
-            write(client_fd, response.c_str(), response.size());
-        });
+void MonitorServer::handle_client(int client_fd)
+{
+    char buffer[1024];
+    ssize_t n = read(client_fd, buffer, sizeof(buffer) - 1);
+    if (n <= 0)
+    {
+        return;
     }
-    close(client_fd);
+    buffer[n] = '\0';
+    std::string command(buffer);
+
+    auto send_response = [client_fd](const std::string &response)
+    { write(client_fd, response.c_str(), response.size()); };
+
+    process_command(command, send_response);
 }
 
-void MonitorServer::process_command(const std::string& cmd, 
-                                   const std::function<void(const std::string&)>& send_response) {
-    std::istringstream iss(cmd);
-    std::vector<std::string> tokens;
-    std::string token;
-    
-    while (iss >> token) {
-        tokens.push_back(token);
-    }
-    
-    if (tokens.empty()) {
-        send_response("ERROR: Empty command");
+void MonitorServer::process_command(
+    const std::string &cmd,
+    const std::function<void(const std::string &)> &send_response)
+{
+    SharedData *shared_data = get_shared_data();
+    if (!shared_data)
+    {
+        send_response("Error: Shared memory not initialized\n");
         return;
     }
-    
-    try {
-        if (tokens[0] == "set" && tokens.size() >= 2) {
-            auto eq_pos = tokens[1].find('=');
-            if (eq_pos != std::string::npos) {
-                std::string level = tokens[1].substr(0, eq_pos);
-                std::string value = tokens[1].substr(eq_pos + 1);
-                
-                bool enable = (value == "true" || value == "1");
-                
-                if (level == "L0") g_dump_L0 = enable;
-                else if (level == "L1") g_dump_L1 = enable;
-                else if (level == "L2") g_dump_L2 = enable;
-                else throw std::invalid_argument("Invalid level: " + level);
-                
-                send_response("OK");
-                return;
-            }
-        }
-        else if (tokens[0] == "interval" && tokens.size() >= 2) {
-            auto eq_pos = tokens[1].find('=');
-            if (eq_pos != std::string::npos) {
-                std::string level = tokens[1].substr(0, eq_pos);
-                unsigned int interval = std::stoul(tokens[1].substr(eq_pos + 1));
-                
-                if (level == "L1") g_dump_L1_interval = interval;
-                else if (level == "L2") g_dump_L2_interval = interval;
-                else throw std::invalid_argument("Invalid level for interval: " + level);
-                
-                send_response("OK");
-                return;
-            }
-        }
-        else if (tokens[0] == "print") {
-            std::string level = (tokens.size() >= 2) ? tokens[1] : "all";
-            std::ostringstream oss;
-            
-            auto print_level = [&oss](const std::string& name, bool enabled, unsigned int interval = 0) {
-                oss << name << ": " << (enabled ? "enabled" : "disabled");
-                if (interval > 0) oss << " (interval: " << interval << ")";
-                oss << "\n";
-            };
-            
-            if (level == "all" || level == "L0") print_level("L0", g_dump_L0);
-            if (level == "all" || level == "L1") print_level("L1", g_dump_L1, g_dump_L1_interval);
-            if (level == "all" || level == "L2") print_level("L2", g_dump_L2, g_dump_L2_interval);
-            
-            send_response(oss.str());
+
+    std::istringstream iss(cmd);
+    std::string action;
+    iss >> action;
+
+    if (action == "set")
+    {
+        std::string level_value;
+        iss >> level_value;
+
+        size_t eq_pos = level_value.find('=');
+        if (eq_pos == std::string::npos)
+        {
+            send_response("Error: Invalid set command format. Use 'set "
+                          "<level>=<true|false>'\n");
             return;
         }
-    } catch (const std::exception& e) {
-        send_response("ERROR: " + std::string(e.what()));
-        return;
+
+        std::string level = level_value.substr(0, eq_pos);
+        std::string value_str = level_value.substr(eq_pos + 1);
+        bool value = (value_str == "true");
+
+        pthread_mutex_lock(&shared_data->g_trace_mutex);
+
+        if (level == "L0")
+        {
+            shared_data->g_dump_L0 = value;
+        }
+        else if (level == "L1")
+        {
+            shared_data->g_dump_L1 = value;
+        }
+        else if (level == "L2")
+        {
+            shared_data->g_dump_L2 = value;
+        }
+        else if (level == "L1_timer")
+        {
+            shared_data->g_L1_timer_active = value;
+        }
+        else if (level == "L2_timer")
+        {
+            shared_data->g_L2_timer_active = value;
+        }
+        else
+        {
+            pthread_mutex_unlock(&shared_data->g_trace_mutex);
+            send_response("Error: Unknown level '" + level + "'\n");
+            return;
+        }
+
+        pthread_mutex_unlock(&shared_data->g_trace_mutex);
+        send_response("OK\n");
     }
-    
-    send_response("ERROR: Invalid command");
+    else if (action == "interval")
+    {
+        std::string level_value;
+        iss >> level_value;
+
+        size_t eq_pos = level_value.find('=');
+        if (eq_pos == std::string::npos)
+        {
+            send_response("Error: Invalid interval command format. Use "
+                          "'interval <level>=<value>'\n");
+            return;
+        }
+
+        std::string level = level_value.substr(0, eq_pos);
+        unsigned int value;
+        try
+        {
+            value = std::stoul(level_value.substr(eq_pos + 1));
+        }
+        catch (...)
+        {
+            send_response("Error: Invalid interval value\n");
+            return;
+        }
+
+        pthread_mutex_lock(&shared_data->g_trace_mutex);
+
+        if (level == "L1")
+        {
+            shared_data->g_dump_L1_interval = value;
+        }
+        else if (level == "L2")
+        {
+            shared_data->g_dump_L2_interval = value;
+        }
+        else
+        {
+            pthread_mutex_unlock(&shared_data->g_trace_mutex);
+            send_response("Error: Unknown level '" + level + "'\n");
+            return;
+        }
+
+        pthread_mutex_unlock(&shared_data->g_trace_mutex);
+        send_response("OK\n");
+    }
+    else if (action == "print")
+    {
+        std::string level;
+        iss >> level;
+
+        std::ostringstream oss;
+
+        pthread_mutex_lock(&shared_data->g_trace_mutex);
+
+        if (level.empty() || level == "all")
+        {
+            oss << "Current settings:\n"
+                << "  L0: " << (shared_data->g_dump_L0 ? "true" : "false")
+                << "\n"
+                << "  L1: " << (shared_data->g_dump_L1 ? "true" : "false")
+                << "\n"
+                << "  L2: " << (shared_data->g_dump_L2 ? "true" : "false")
+                << "\n"
+                << "  L1_interval: " << shared_data->g_dump_L1_interval << "\n"
+                << "  L2_interval: " << shared_data->g_dump_L2_interval << "\n";
+        }
+        else if (level == "L0")
+        {
+            oss << "L0: " << (shared_data->g_dump_L0 ? "true" : "false")
+                << "\n";
+        }
+        else if (level == "L1")
+        {
+            oss << "L1: " << (shared_data->g_dump_L1 ? "true" : "false") << "\n"
+                << "L1_interval: " << shared_data->g_dump_L1_interval << "\n"
+                << "L1_timer_active: "
+                << (shared_data->g_L1_timer_active ? "true" : "false") << "\n"
+                << "L1_start_time: " << shared_data->g_L1_start_time << "\n";
+        }
+        else if (level == "L2")
+        {
+            oss << "L2: " << (shared_data->g_dump_L2 ? "true" : "false") << "\n"
+                << "L2_interval: " << shared_data->g_dump_L2_interval << "\n"
+                << "L2_timer_active: "
+                << (shared_data->g_L2_timer_active ? "true" : "false") << "\n"
+                << "L2_start_time: " << shared_data->g_L2_start_time << "\n";
+        }
+        else
+        {
+            pthread_mutex_unlock(&shared_data->g_trace_mutex);
+            send_response("Error: Unknown level '" + level + "'\n");
+            return;
+        }
+
+        pthread_mutex_unlock(&shared_data->g_trace_mutex);
+        send_response(oss.str());
+    }
+    else
+    {
+        send_response("Error: Unknown command '" + action + "'\n");
+    }
 }

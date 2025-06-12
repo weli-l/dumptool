@@ -24,7 +24,6 @@ namespace systrace
 namespace util
 {
 std::string GetPrimaryIP();
-bool checkAndUpdateTimer(int level);
 namespace config
 {
 

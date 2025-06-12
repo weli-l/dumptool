@@ -46,6 +46,7 @@ target_include_directories(common PUBLIC ${PROJECT_SOURCE_DIR}/include ${Python3
 add_subdirectory(protos)
 
 add_library(sysTrace_hook SHARED
+    ${PROJECT_SOURCE_DIR}/include/common/shared_constants.c
     ${PROJECT_SOURCE_DIR}/src/trace/systrace_manager.cc
     ${PROJECT_SOURCE_DIR}/src/trace/library_loader.cc
     ${PROJECT_SOURCE_DIR}/src/trace/python/pytorch_tracing_loader.cc

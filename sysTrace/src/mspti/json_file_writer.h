@@ -134,7 +134,7 @@ class MSPTIHcclFileWriter
 
     void hcclActivityFormatToJson()
     {
-        if (!systrace::util::checkAndUpdateTimer(2)) {
+        if (!checkAndUpdateTimer(1)) {
             return;
         }
         std::lock_guard<std::mutex> lock(this->buffermtx);
